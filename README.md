@@ -65,7 +65,8 @@ rewriting it against the rules above:
   — reviewed sources; ideas rather than text made it in.
 
 Material adapted from the MIT-licensed repositories above is redistributed
-under this repository's own MIT license.
+under this repository's own MIT license. Full upstream copyright and
+permission notices: [NOTICE.md](NOTICE.md).
 
 `dispatching-work` is homegrown: orchestration doctrine distilled from running
 multi-agent coordination sessions.
