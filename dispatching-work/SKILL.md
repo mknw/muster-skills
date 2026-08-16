@@ -86,7 +86,12 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
 
 ## Land the results
 
-- Green CI → merge.
+- Green CI is necessary, never sufficient. A worker's PR ships with tests
+  written by its own author — self-attested green is not a review. Before
+  merging, dispatch an independent reviewer (capable model, generous effort;
+  use the repo's review procedure if it has one); on findings, iterate with
+  the author or a fix dispatch; merge only on positive review.
+- Reviewed + green CI → merge.
 - Stale base ("head branch is not up to date") → update the branch, watch the
   checks, merge on green — as one backgrounded sequence, not a poll loop.
 - Merge conflicts → delegate resolution to a subagent with the repo's
