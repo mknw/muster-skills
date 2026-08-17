@@ -20,7 +20,8 @@ small chores — inline work is for what only the coordinator can do.
 |---|---|
 | Long-running implementation that needs its own branch/worktree, PR provenance, and supervision | Orchestration-runtime worker (dispatched task, lifecycle messages) |
 | Short one-off: conflict resolution, format fixes, board updates, batch renames, research lookups | Native subagent (background task tool) |
-| Verification, decisions, replying to worker questions, merges | Inline — the coordinator itself |
+| Reviewing a worker's PR before merge | Independent worker with more headroom than the author — never the author, never the coordinator |
+| Verifying a worker's self-report, decisions, replying to asks, merges | Inline — the coordinator itself |
 
 Model selection: a capable model for judgment work (design, review,
 implementation); a cheaper model for mechanical work. State the model and
@@ -81,17 +82,55 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
   release a worker for mere idleness. On release, a "retained / user-takeover"
   result is normal (the user touched that terminal) — the dispatch is still
   settled.
+- **Re-engage a finished worker with a fresh dispatch.** A settled dispatch is
+  closed to lifecycle messages: prompt its terminal directly and the work still
+  happens, but its `worker_done` is rejected and the report reaches you only as
+  loose mail. Reuse the terminal (keeping its context) *through* a new task.
 - **Verify results by git state, not the worker's self-report**: the claimed
   commits exist, the tree is clean, CI is green.
 
 ## Land the results
 
-- Green CI is necessary, never sufficient. A worker's PR ships with tests
-  written by its own author — self-attested green is not a review. Before
-  merging, dispatch an independent reviewer (capable model, generous effort;
-  use the repo's review procedure if it has one); on findings, iterate with
-  the author or a fix dispatch; merge only on positive review.
-- Reviewed + green CI → merge.
+**The review gate.** Nothing merges until an independent reviewer returns a
+positive verdict. Two things feel like review and are not:
+
+- **Green CI is self-attestation.** A worker's PR ships with tests written by
+  its own author, so the suite proves the author's beliefs about the code, not
+  the code.
+- **Coordinator inspection shares the author's framing** of what matters, and
+  the coordinator is the party that wants the PR to land. Verifying a
+  self-report is the coordinator's job; reviewing is a different agent's.
+
+The reviewer needs more **headroom** than the author: a top-tier model at a
+higher effort tier (authors at `high` → reviewer Opus 5 at `xhigh`). Use the
+repo's review procedure if it has one. On findings, iterate with the author or
+dispatch a fix; merge on a positive verdict plus green CI.
+
+**Reviewing a test PR**, the decisive question is whether each test is
+*discriminating*: mutate the source and confirm the test fails. A test that
+passes whether or not the code is correct is worse than no test — it
+manufactures a coverage number and the safety feeling that comes with it. Hunt
+**coverage theatre**: asserting that a mock was called rather than that an
+observable outcome happened. Have the verdict separate *verified by mutation*
+from *looks right by reading*.
+
+**Green on the PR's current head SHA**, not on an older commit. A workflow that
+deliberately omits the `synchronize` trigger leaves a stale green on any PR
+updated since its last run. Where required status checks cannot be enforced at
+all — a private repo on a free plan 403s on both branch protection and rulesets
+— say so plainly and document the command that triggers a run: a branch that
+merely looks protected is the more dangerous state.
+
+**Merged without review already?** Retro-review the merged span as one unit
+rather than each PR alone; reviewing them together catches the interactions that
+per-PR review misses.
+
+**Merge mechanics.**
+
+- **Stack on `main`, not on a sibling branch.** Squash-merging a PR and deleting
+  its branch auto-closes every PR based on that branch, and GitHub cannot reopen
+  or retarget a closed PR whose base is gone. The work survives only as the
+  branch, to be reopened as a new PR.
 - Stale base ("head branch is not up to date") → update the branch, watch the
   checks, merge on green — as one backgrounded sequence, not a poll loop.
 - Merge conflicts → delegate resolution to a subagent with the repo's
