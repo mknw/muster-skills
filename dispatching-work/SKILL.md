@@ -102,9 +102,20 @@ positive verdict. Two things feel like review and are not:
   self-report is the coordinator's job; reviewing is a different agent's.
 
 The reviewer needs more **headroom** than the author: a top-tier model at a
-higher effort tier (authors at `high` → reviewer Opus 5 at `xhigh`). Use the
-repo's review procedure if it has one. On findings, iterate with the author or
-dispatch a fix; merge on a positive verdict plus green CI.
+higher effort tier (authors at `high` → reviewer Opus 5 at `xhigh`). Escalate
+with risk: higher effort for security or hardening changes; the strongest
+available model (Fable-tier) for critical infrastructure or high-risk
+vulnerabilities. Use the repo's review procedure/skill if it has one.
+
+**Who commissions, and until when.** Reviews are COORDINATOR-commissioned,
+never author-commissioned — an author picking its own reviewer is a weaker
+guarantee. Medium and large PRs always get one; for small PRs, ask the user
+(they may prefer to review personally). Whenever changes are applied
+post-review, commission a **new** reviewer for the deltas and repeat **until
+convergence** — a review that returns nothing to apply. (Evidence the loop
+earns its cost: a round-2 reviewer once caught that a round-1 security fix
+was under-scoped — a 15-second ReDoS still reachable from a shipped path.)
+Merge on converged review plus green CI.
 
 **Reviewing a test PR**, the decisive question is whether each test is
 *discriminating*: mutate the source and confirm the test fails. A test that
