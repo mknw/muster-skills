@@ -117,6 +117,15 @@ earns its cost: a round-2 reviewer once caught that a round-1 security fix
 was under-scoped — a 15-second ReDoS still reachable from a shipped path.)
 Merge on converged review plus green CI.
 
+**The record lives on the PR.** The reviewer posts its outcome as a PR
+comment; whoever applies fixes posts what they changed, the same way.
+Orchestration messages evaporate on acknowledgement — the PR timeline is the
+durable audit trail. Keep reports high-level, descriptive, short (~500
+characters), with two escape hatches: HIGH-criticality findings get the
+detail they need to act on, and a long report rides in a collapsed
+`<details>` block under the short summary in the same comment — scannable
+timeline, evidence preserved.
+
 **Reviewing a test PR**, the decisive question is whether each test is
 *discriminating*: mutate the source and confirm the test fails. A test that
 passes whether or not the code is correct is worse than no test — it

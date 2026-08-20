@@ -1,0 +1,27 @@
+scripts:
+  setup: |
+    set -eu
+    # Pure-markdown repo with no .gitignore: a fresh worktree is already
+    # complete. Nothing to install, copy, or share.
+    # Non-fatal sanity check: every skill must open with YAML frontmatter.
+    bad=""
+    for f in */SKILL.md; do
+      [ -f "$f" ] || continue
+      head -1 "$f" | grep -q '^---$' || bad="$bad $f"
+    done
+    if [ -n "$bad" ]; then
+      echo "WARNING: SKILL.md missing frontmatter:$bad"
+    fi
+    echo "worktree ready"
+
+issueCommand: |
+  Work the linked item: {{artifact_url}}
+  Repo conventions (full detail in CLAUDE.md):
+  - Skills are stack-agnostic procedures: never name a specific project, path
+    convention, or stack. Say how to find/create an anchor, not where one repo
+    keeps it.
+  - writing-for-agents/ is the house style for every skill edit; read it first.
+  - Keep README's skill table (and NOTICE.md for adapted material) in sync when
+    adding, renaming, or removing skills.
+  - ~/.claude/skills symlinks point at the primary checkout: edits made in this
+    worktree only go live after merging to main.
