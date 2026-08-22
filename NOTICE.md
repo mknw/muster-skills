@@ -13,8 +13,8 @@ which skill came from where.
 
 | Source                                                                   | Vendored into                                                                                                                                            |
 | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`mattpocock/skills`](https://github.com/mattpocock/skills)             | `writing-for-agents/`, `grilling/`, `grill-me/`, `diagnosing-bugs/`, `codebase-design/`, `wizard/`, `resolving-merge-conflicts/`, `domain-modeling/`, `improve-codebase-architecture/` |
-| [`affaan-m/ECC`](https://github.com/affaan-m/ECC)                       | `council/`, `intent-driven-development/`, `loop-design-check/`, `agent-architecture-audit/`, `living-docs-governance/`                                    |
+| [`mattpocock/skills`](https://github.com/mattpocock/skills)             | `writing-for-agents/`, `grilling/`, `grill-me/`, `diagnosing-bugs/`, `codebase-design/`, `wizard/`, `resolving-merge-conflicts/`, `domain-modeling/`, `improve-codebase-architecture/`, `reviewing-changes/` (two-axis structure) |
+| [`affaan-m/ECC`](https://github.com/affaan-m/ECC)                       | `council/`, `intent-driven-development/`, `loop-design-check/`, `agent-architecture-audit/`, `living-docs-governance/`, `reviewing-changes/` (the `code-reviewer` discipline it delegates to)                                    |
 | [`DietrichGebert/ponytail`](https://github.com/DietrichGebert/ponytail) | Conceptual influence only — the code-minimalism ladder credited in the README. No file in this repository is a direct copy of ponytail material, but the notice is recorded anyway: a notice present ahead of a closer future adaptation is harmless, the reverse is a licence breach. |
 
 `dispatching-work/` carries no third-party material — it's homegrown.
