@@ -52,11 +52,16 @@ pointers to where the repo keeps its conventions, its spec-resolution order,
 and its gates — authoritative only for facts stated nowhere else. Follow its
 pointers rather than re-deriving them.
 
-Without one, discover from the usual suspects: `CLAUDE.md` / `AGENTS.md`,
-`CONTRIBUTING`, a glossary, `docs/adr/`, the README, and any README in the
-directories the diff touches. Never fail for lack of a file — a repo with no
-written conventions still gets the Spec axis and the smell baseline. Either
-way, the final report names which sources the Standards brief was built from.
+Either way — map or not — also check any README in the directories the diff
+touches. A map's pointers are curated but not guaranteed exhaustive over every
+area a given diff happens to touch, so this area-README pass adds to what the
+map names rather than being switched off by one.
+
+Without a map, discover the rest from the usual suspects: `CLAUDE.md` /
+`AGENTS.md`, `CONTRIBUTING`, a glossary, `docs/adr/`, the README. Never fail
+for lack of a file — a repo with no written conventions still gets the Spec
+axis and the smell baseline. Either way, the final report names which sources
+the Standards brief was built from.
 
 ### 3. Identify the spec source
 
