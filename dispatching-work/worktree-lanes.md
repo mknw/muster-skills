@@ -1,9 +1,15 @@
 # Worktree lanes — persistent `claude --bg` sessions
 
-Executor mechanics for parallel worktree lanes: each lane is a git worktree
-owned by its own persistent Claude Code session, launched with `claude --bg`,
-surfacing in **Agent View** (`claude agents`, or left arrow from any active
-session) where the user attaches, checks in, and replies. Lane *design* — hot
+**The fallback executor: reach for this when no orchestration runtime is
+available in the environment.** Where one is present, its workers give you
+dispatched tasks, lifecycle messages, worktree creation and supervision as
+one accounted mechanism — use those instead, and read the runtime's own skill
+for the commands. What follows is how to get parallel lanes without it.
+
+Each lane is a git worktree owned by its own persistent Claude Code session,
+launched with `claude --bg`, surfacing in **Agent View** (`claude agents`, or
+left arrow from any active session) where the user attaches, checks in, and
+replies. Lane *design* — hot
 zones, sole writers, base pre-flight, naming conventions, specs, the review
 gate — is the parent skill ([SKILL.md](SKILL.md)); this file is only the
 mechanism.
