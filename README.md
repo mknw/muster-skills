@@ -35,6 +35,7 @@ Two rules keep the set portable:
 | `codebase-design` | Deep-module vocabulary for designing or restructuring code |
 | `domain-modeling` | Building a project's glossary and decision records |
 | `improve-codebase-architecture` | A guided architecture-improvement pass |
+| `architecture-report` | A cited, descriptive report on one named layer or topic |
 | `intent-driven-development` | Keeping implementation tied to stated intent |
 | `diagnosing-bugs` | A diagnosis loop for hard bugs and regressions |
 | `loop-design-check` | Sanity-checking agent/feedback loop designs |
