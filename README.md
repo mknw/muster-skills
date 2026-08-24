@@ -44,7 +44,8 @@ Two rules keep the set portable:
 | `resolving-merge-conflicts` | In-progress merge/rebase conflict procedure |
 | `living-docs-governance` | Keeping long-lived project docs from rotting |
 | `agent-architecture-audit` | 12-layer diagnostic for agent/LLM applications |
-| `dispatching-work` | Coordination doctrine for fanning work out to multiple agents |
+| `dispatching-work` | Coordination doctrine for fanning work out to multiple agents — specs, lanes, supervision, the review gate |
+| `reviewing-changes` | Two-axis review (repo standards + originating spec) of changes since a fixed point |
 
 ## Inspiration
 

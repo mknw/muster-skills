@@ -1,6 +1,6 @@
 ---
 name: dispatching-work
-description: Coordination doctrine for fanning work out to multiple agents. Use when dispatching or supervising workers, splitting a task across subagents or worktree lanes, deciding which agent type or model should handle a piece of work, or running a coordinator loop over worker messages.
+description: Coordination doctrine for fanning work out to multiple agents — how to split the work, which executor and model take each piece, the task spec, supervision, and the review gate before merge. Use when dispatching or supervising workers, splitting a task across subagents or parallel worktree lanes, spinning up persistent per-worktree `claude --bg` sessions (INSTRUCTIONS.md / STATE.md lane briefs), or deciding which agent type or model should handle a piece of work. For Orca's command surface and message mechanics, use `orchestration`.
 ---
 
 # Dispatching Work
@@ -21,6 +21,7 @@ small chores — inline work is for what only the coordinator can do.
 | Long-running implementation that needs its own branch/worktree, PR provenance, and supervision | Orchestration-runtime worker (dispatched task, lifecycle messages) |
 | Short one-off: conflict resolution, format fixes, board updates, batch renames, research lookups | Native subagent (background task tool) |
 | Reviewing a worker's PR before merge | Independent worker with more headroom than the author — never the author, never the coordinator |
+| Parallel lanes the user supervises personally in Agent View, resumable across runs | Persistent per-worktree `claude --bg` session — launch mechanics and INSTRUCTIONS.md / STATE.md lane-brief templates: [worktree-lanes.md](worktree-lanes.md) |
 | Verifying a worker's self-report, decisions, replying to asks, merges | Inline — the coordinator itself |
 
 Model selection: a capable model for judgment work (design, review,
