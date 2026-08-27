@@ -1,6 +1,6 @@
 ---
 name: self-improve
-description: Turn a lesson from this session into a durable edit — a mistake just recovered from, a user correction or countermand, rework caused by a process gap, or the user saying "this must not happen again" / "learn from this". Finds the home (an existing skill, a new one, or memory), drafts the minimal edit, and asks the user before writing anything.
+description: Turn a lesson from this session into a durable edit. Fires the moment you own a mistake to the user — an apology, a "that was me", a recovery report — and on a user correction or countermand, rework caused by a process gap, or the user saying "this must not happen again" / "learn from this". Finds the home (an existing skill, a new one, or memory), drafts the minimal edit, and asks the user before writing anything.
 ---
 
 # self-improve — from lesson to durable edit
@@ -16,6 +16,16 @@ correct behaviour was, and the **mechanism** — the missing flag, the unstated
 rule, the wrong default — not just the symptom. A lesson without a mechanism
 is a war story; only the mechanism generalises. If the session merely feels
 improvable but nothing concrete surfaced, there is no lesson yet — stop.
+
+Owning a mistake to the user IS the firing moment: the same message that says
+"here is what happened and here is the repair" names the lesson — deferring it
+until the user demands durability is the failure mode this trigger exists to
+close. The noise gate is severity, applied silently: a lesson is worth asking
+about when the recovery required repairing state or redoing work, or when the
+same mistake has now happened twice. A stumble the next tool call absorbed — a
+retried command, a transient error, a wrong guess self-corrected — produces no
+proposal; over-asking teaches the user to decline reflexively, which kills the
+channel.
 
 ## 2. Find the home
 
