@@ -55,7 +55,24 @@ no apology, no restatement of what the document already says.
 
 ## 4. Ask, then apply
 
-Present to the user: the lesson (one line), the chosen home and why, and the
-draft edit verbatim. Ask whether to apply it — the user may redirect the home
-or trim the edit; their word is the gate. On approval, apply it, and commit it
-wherever the home is version-controlled. On decline, drop it without residue.
+The user's word is the gate — always, including when the user's own message
+suggested the improvement: they approve the *edit*, not the idea. Skills drift
+one unreviewed "obvious" change at a time; this step is what prevents that.
+
+Ask with the structured question tool (`AskUserQuestion` in Claude Code; plain
+text where no such tool exists), shaped by the decision:
+
+- **Home** — when more than one candidate home is defensible, a single-choice
+  question listing them, each with a one-line why; the recommended one first.
+- **Changes** — one question per lesson: **multi-select** when the draft
+  decomposes into independent additions the user can take à la carte;
+  **single-select** when the drafts are alternatives (two wordings, two
+  placements — taking both would be wrong). Each option's description carries
+  the proposed text verbatim or names exactly where it goes.
+- **Refinements** — at most one or two extra questions, only where the user's
+  answer genuinely changes the edit: scope (this project or the generic set?),
+  strictness (hard rule or default-with-exceptions?), trigger breadth.
+
+State the lesson in one line above the questions. On approval, apply exactly
+the selected options and commit wherever the home is version-controlled. On
+decline, drop it without residue.
