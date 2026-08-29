@@ -24,6 +24,8 @@ small chores — inline work is for what only the coordinator can do.
 | Any of the above, in an environment with **no orchestration runtime** | Persistent per-worktree `claude --bg` session — the fallback: [worktree-lanes.md](worktree-lanes.md) carries its launch mechanics and the INSTRUCTIONS.md / STATE.md lane briefs |
 | Verifying a worker's self-report, decisions, replying to asks, merges | Inline — the coordinator itself |
 
+Routing authority: where the owner has ruled on how lanes are dispatched (for example, "lanes go through the orchestration runtime"), that ruling overrides this table until the owner retracts it. When a row's precondition is ambiguous or a runtime's capabilities are in doubt, surface the choice with evidence instead of resolving it silently — and verify capability claims against the runtime's registry of record (official docs), never against examples in help text or skills.
+
 Model selection: a capable model for judgment work (design, review,
 implementation); a cheaper model for mechanical work. State the model and
 effort explicitly at dispatch; don't rely on defaults you haven't checked.
