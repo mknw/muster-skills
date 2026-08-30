@@ -30,6 +30,20 @@ Model selection: a capable model for judgment work (design, review,
 implementation); a cheaper model for mechanical work. State the model and
 effort explicitly at dispatch; don't rely on defaults you haven't checked.
 
+First-try dispatch: a lane's environment must exist before work lands in it.
+Runtimes bootstrap new workspaces (dependency installs, env approval, codegen
+— often tens of seconds), and a prompt arriving mid-bootstrap stalls or fails
+without a diagnosable error. Confirm the executor's bootstrap has completed
+before dispatching — for a fresh workspace, wait out the runtime's setup phase
+once; reusing a warm workspace avoids the race entirely. Then dispatch ONCE
+and wait on the agreed completion signal (done / ask / escalate) — intermediate
+runtime states ("dispatched", "accepted", an idle-looking terminal) are not
+verdicts, and polling them converts one slow start into several spurious
+retries. On a failure signal, one calm retry, then surface to the owner.
+Before declaring any failure from your own observation, re-read the FULL
+output — truncated listings and filtered greps hide live state, and a false
+failure diagnosis is more expensive than the wait would have been.
+
 ## Write the task spec
 
 The spec is the worker's whole world — it will not infer your intent. Skeleton:
