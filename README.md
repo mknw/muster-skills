@@ -35,6 +35,7 @@ Two rules keep the set portable:
 | `codebase-design` | Deep-module vocabulary for designing or restructuring code |
 | `domain-modeling` | Building a project's glossary and decision records |
 | `improve-codebase-architecture` | A guided architecture-improvement pass |
+| `architecture-report` | A cited, descriptive report on one named layer or topic |
 | `intent-driven-development` | Keeping implementation tied to stated intent |
 | `diagnosing-bugs` | A diagnosis loop for hard bugs and regressions |
 | `loop-design-check` | Sanity-checking agent/feedback loop designs |
@@ -43,7 +44,8 @@ Two rules keep the set portable:
 | `resolving-merge-conflicts` | In-progress merge/rebase conflict procedure |
 | `living-docs-governance` | Keeping long-lived project docs from rotting |
 | `agent-architecture-audit` | 12-layer diagnostic for agent/LLM applications |
-| `dispatching-work` | Coordination doctrine for fanning work out to multiple agents |
+| `dispatching-work` | Coordination doctrine for fanning work out to multiple agents — specs, lanes, supervision, the review gate |
+| `reviewing-changes` | Two-axis review (repo standards + originating spec) of changes since a fixed point |
 
 ## Inspiration
 

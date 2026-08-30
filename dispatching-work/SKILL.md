@@ -1,6 +1,6 @@
 ---
 name: dispatching-work
-description: Coordination doctrine for fanning work out to multiple agents. Use when dispatching or supervising workers, splitting a task across subagents or worktree lanes, deciding which agent type or model should handle a piece of work, or running a coordinator loop over worker messages.
+description: Coordination doctrine for fanning work out to multiple agents — how to split the work, which executor and model take each piece, the task spec, supervision, and the review gate before merge. Use when dispatching or supervising workers, splitting a task across subagents or parallel worktree lanes, or deciding which agent type or model should handle a piece of work; also carries the `claude --bg` lane fallback (INSTRUCTIONS.md / STATE.md briefs) for environments with no orchestration runtime. For Orca's command surface and message mechanics, use `orchestration`.
 ---
 
 # Dispatching Work
@@ -21,7 +21,10 @@ small chores — inline work is for what only the coordinator can do.
 | Long-running implementation that needs its own branch/worktree, PR provenance, and supervision | Orchestration-runtime worker (dispatched task, lifecycle messages) |
 | Short one-off: conflict resolution, format fixes, board updates, batch renames, research lookups | Native subagent (background task tool) |
 | Reviewing a worker's PR before merge | Independent worker with more headroom than the author — never the author, never the coordinator |
+| Any of the above, in an environment with **no orchestration runtime** | Persistent per-worktree `claude --bg` session — the fallback: [worktree-lanes.md](worktree-lanes.md) carries its launch mechanics and the INSTRUCTIONS.md / STATE.md lane briefs |
 | Verifying a worker's self-report, decisions, replying to asks, merges | Inline — the coordinator itself |
+
+Routing authority: where the owner has ruled on how lanes are dispatched (for example, "lanes go through the orchestration runtime"), that ruling overrides this table until the owner retracts it. When a row's precondition is ambiguous or a runtime's capabilities are in doubt, surface the choice with evidence instead of resolving it silently — and verify capability claims against the runtime's registry of record (official docs), never against examples in help text or skills.
 
 Model selection: a capable model for judgment work (design, review,
 implementation); a cheaper model for mechanical work. State the model and
