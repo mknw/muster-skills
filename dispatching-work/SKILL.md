@@ -30,20 +30,6 @@ Model selection: a capable model for judgment work (design, review,
 implementation); a cheaper model for mechanical work. State the model and
 effort explicitly at dispatch; don't rely on defaults you haven't checked.
 
-First-try dispatch: a lane's environment must exist before work lands in it.
-Runtimes bootstrap new workspaces (dependency installs, env approval, codegen
-— often tens of seconds), and a prompt arriving mid-bootstrap stalls or fails
-without a diagnosable error. Confirm the executor's bootstrap has completed
-before dispatching — for a fresh workspace, wait out the runtime's setup phase
-once; reusing a warm workspace avoids the race entirely. Then dispatch ONCE
-and wait on the agreed completion signal (done / ask / escalate) — intermediate
-runtime states ("dispatched", "accepted", an idle-looking terminal) are not
-verdicts, and polling them converts one slow start into several spurious
-retries. On a failure signal, one calm retry, then surface to the owner.
-Before declaring any failure from your own observation, re-read the FULL
-output — truncated listings and filtered greps hide live state, and a false
-failure diagnosis is more expensive than the wait would have been.
-
 ## Write the task spec
 
 The spec is the worker's whole world — it will not infer your intent. Skeleton:
@@ -84,12 +70,25 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
 
 ## Supervise
 
+- **Dispatch into a finished environment.** Runtimes bootstrap new
+  workspaces (dependency installs, env approval, codegen — often tens of
+  seconds), and a prompt arriving mid-bootstrap stalls or fails without a
+  diagnosable error. Confirm the executor's bootstrap has completed before
+  dispatching: wait out a fresh workspace's setup phase once; reusing a warm
+  workspace avoids the race entirely.
+- **Diagnose from full output.** Before declaring any failure from your own
+  observation, re-read the FULL output — truncated listings and filtered
+  greps hide live state, and a false failure diagnosis costs more than the
+  wait would have. A status name on a task row (queued, accepted, dispatched)
+  is a receipt, not a verdict.
 - **Verify every dispatch actually started.** Read the worker's terminal after
   dispatch: a pasted-but-unsubmitted prompt looks dispatched and sits idle for
   hours. If the prompt is sitting in the input box, submit it and re-verify.
 - **Wait typed, not polled.** Block on the message types that require action
   (worker_done, escalation, question) in a re-arming loop; filter heartbeats
   and status noise out of the wake condition.
+- **One retry, then surface.** On a failure signal, retry once calmly, then
+  put the failure in front of the owner with the evidence.
 - **Process whole deliveries.** Acknowledge each batch after handling it;
   an unacknowledged delivery replays and re-wakes you.
 - **Answer asks decisively.** Workers send one consolidated question; reply
