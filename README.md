@@ -47,6 +47,9 @@ Two rules keep the set portable:
 | `dispatching-work` | Coordination doctrine for fanning work out to multiple agents — specs, lanes, supervision, the review gate |
 | `reviewing-changes` | Three-axis review (originating spec, repo standards, empirical correctness) of changes since a fixed point, size-gated into one-wave and two-wave patterns |
 | `init-code-reviewer` | Scaffolding a repo-specific code-reviewer agent — the correctness reviewer the reviewing flow dispatches |
+| `self-improve` | Turning owner corrections, countermands, and failures into re-engineered decisions, not prose lessons — a five-step correction loop |
+
+Setup skills (the `init-` prefix) run **once per repo**, not per task: reach for `init-code-reviewer` when a repo joins the reviewing flow, when it has no code-reviewer agent yet, or when the kernel changes and its generated reviewer must be regenerated.
 
 ## Inspiration
 
