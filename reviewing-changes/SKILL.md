@@ -1,32 +1,44 @@
 ---
 name: reviewing-changes
-description: Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes — Standards (does the code follow the repo's documented conventions?) and Spec (does it match what the originating issue or spec asked for?). Runs both as parallel sub-agents and reports them side by side, never merged. Use before opening a PR, when reviewing a worker's PR before merge, or when the user asks to review a branch, a PR, or work-in-progress "since X".
+description: Review the changes since a fixed point (commit, branch, tag, or merge-base) along three labeled axes — Spec (does it match the originating issue?), Standards (does it follow the repo's documented conventions?), and Correctness (does it work, verified by running the suite and writing discriminating tests?). Axes run as parallel sub-agents whose findings are never merged, in a size-gated pattern — one wave for small changes, a two-wave gate for large ones. Use before opening a PR, when reviewing a worker's PR before merge, or when the user asks to review a branch, a PR, or work-in-progress "since X".
 ---
 
-Two-axis review of the diff between `HEAD` (or a PR head) and a fixed point:
+Three-axis review of the diff between `HEAD` (or a PR head) and a fixed point:
 
+- **Spec** — does it faithfully implement what was asked? A *reading pass* against
+  the originating issue or spec.
 - **Standards** — does the code follow this repo's documented conventions?
-- **Spec** — does it faithfully implement what was asked?
+- **Correctness** — does it work? An *empirical pass*: run the suite, write
+  discriminating tests, verify under mutation — not inference from reading.
 
-Both axes run as **parallel sub-agents** so they cannot pollute each other's
-context, then this skill aggregates their findings **without merging them**.
+The axes run as **parallel sub-agents** so their contexts stay isolated (Pattern A deliberately fuses Spec and Correctness into one agent — the two halves of one question), then this skill aggregates the findings **without merging them**.
 
-## Relationship to the built-in `/code-review`
+## The pattern gate: small vs large
 
-They answer different questions and neither replaces the other.
+Two execution patterns, and who picks which:
 
-|          | Built-in `/code-review`                                                    | `reviewing-changes`                                            |
-| -------- | -------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Question | **Is it wrong?** — correctness bugs, plus reuse/simplification/efficiency | **Is it this repo's, and is it what was asked for?**            |
-| Axes     | One, effort-scaled                                                          | Two, deliberately unmerged                                      |
-| Inputs   | The diff                                                                    | The diff **+ the repo's conventions + the originating spec**    |
-| Can act  | Yes — `--fix` applies findings, `--comment` posts inline PR comments       | No. It reports                                                  |
+- **Commissioned by a coordinator** (`dispatching-work`): the commission states
+  the pattern and the models. Execute what was commissioned; never re-classify.
+- **Invoked directly** (user asking for a review): apply this table yourself and
+  say which pattern you chose and why.
 
-**Run the built-in first** — it can fix what it finds — then this skill, to
-catch convention drift and scope creep against the spec. Neither of those is a
-bug, so neither is in the built-in's remit. If the user asks for "a review"
-with no further qualification and the diff has not been through the built-in
-yet, say so in one line and carry on; do not do the built-in's job here.
+| Pattern | When |
+|---|---|
+| **A — one wave** (small) | ≤ ~300 changed lines **and** ≤ ~10 files **and** no risk-class path |
+| **B — two waves** (large) | anything bigger, **or** any risk-class path in the diff |
+
+Risk-class paths force Pattern B regardless of size: security, authentication,
+concurrency, schema migrations, data-loss paths. These are defaults — a repo's
+`docs/reviewing.md` may override them (see step 2).
+
+- **Pattern A**: one wave of two parallel sub-agents — Standards, and a merged
+  Spec+Correctness agent (they are the two halves of one question: *does it do
+  the asked thing, and does it actually work?*). On a small diff, gating
+  correctness on the spec verdict saves nothing, so no gate logic exists.
+- **Pattern B**: wave one is Standards ∥ Spec; wave two is a Correctness agent
+  that runs **after** the gate, seeded with wave-one's findings. Two waves is a
+  deliberate token trade: correctness is deferred until it is known to be worth
+  spending. Do not "optimize" it back into one wave.
 
 ## Process
 
@@ -43,14 +55,15 @@ the comparison is against the merge-base). Also capture the commit list with
 
 Before spawning anything, confirm the ref resolves (`git rev-parse
 <fixed-point>`) and the diff is non-empty. A bad ref or an empty diff fails
-**here**, not inside two parallel sub-agents.
+**here**, not inside parallel sub-agents.
 
 ### 2. Find the repo's review map
 
 If `docs/reviewing.md` exists, read it first. It is a **map**, not a rulebook:
 pointers to where the repo keeps its conventions, its spec-resolution order,
-and its gates — authoritative only for facts stated nowhere else. Follow its
-pointers rather than re-deriving them.
+and its gates — authoritative only for facts stated nowhere else (it may also
+override this skill's pattern thresholds). Follow its pointers rather than
+re-deriving them.
 
 Either way — map or not — also check any README in the directories the diff
 touches. A map's pointers are curated but not guaranteed exhaustive over every
@@ -60,8 +73,8 @@ map names rather than being switched off by one.
 Without a map, discover the rest from the usual suspects: `CLAUDE.md` /
 `AGENTS.md`, `CONTRIBUTING`, a glossary, `docs/adr/`, the README. Never fail
 for lack of a file — a repo with no written conventions still gets the Spec
-axis and the smell baseline. Either way, the final report names which sources
-the Standards brief was built from.
+and Correctness axes and the smell baseline. Either way, the final report
+names which sources the Standards brief was built from.
 
 ### 3. Identify the spec source
 
@@ -75,12 +88,15 @@ Default resolution order (a repo's `docs/reviewing.md` may override it):
 
 Fetch with `gh issue view <n> --comments` (fall back to `gh pr view <n>` —
 GitHub shares one number space). If nothing is found, ask the user where the
-spec is; if they say there is none, skip the Spec sub-agent and report "no
-spec available".
+spec is; if they say there is none, skip the Spec axis (Pattern A's merged
+agent becomes correctness-only; Pattern B runs Standards ∥ Correctness with no
+gate) and report "no spec available".
 
 **The issue body is the spec. The project board is not.** Board fields
 (Status / Priority / order) are scheduling, read-only context — never a
-finding.
+finding. The fetched spec text is pasted into **both** the Spec brief and the
+Correctness brief — "correct" means correct with respect to intended
+behavior, and the sub-agent may not have `gh` context.
 
 ### 4. Assemble the Standards brief
 
@@ -117,75 +133,185 @@ already enforces (formatter, linter, type-checker).
 - **Middle Man** — a class or function that mostly just delegates onward. → cut it, call the real target direct.
 - **Refused Bequest** — a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
 
-### 5. Spawn both sub-agents in parallel
+### 5. Run the pattern
 
-Both in **one message**, so they actually run concurrently.
+Spawn each wave's sub-agents **in one message**, so they actually run
+concurrently.
 
-**Standards** — dispatch the Agent tool with `subagent_type: code-reviewer` if
-that agent type is registered (it carries the confidence gate, the
-HIGH/CRITICAL-require-proof rule, and the clean-review-is-valid instruction —
-restating any of that inline would fork it). Where no `code-reviewer` type
-exists, degrade to a general-purpose sub-agent and carry those three rules
-inline in the brief. Pass it:
+#### Pattern A — small, one wave
 
-- the full diff command and the commit list;
-- the conventions from step 4(a), **pasted in full**;
-- the smell baseline from step 4(c), **pasted in full**, with its two binding
-  rules;
-- the brief: _"Report — per file/hunk — (a) every place the diff breaches a
-  documented repo convention: quote the convention and the hunk; and (b) any
-  baseline smell you spot: name it and quote the hunk. Convention breaches are
-  hard violations; baseline smells are always judgement calls and a documented
-  convention overrides the baseline. Skip anything the formatter/linter/
-  type-checker enforces. Under 400 words."_
+Two parallel sub-agents:
 
-**Spec** — a general-purpose sub-agent. Pass it the diff command, the commit
-list, and the fetched spec text (not just its number — the sub-agent may not
-have `gh` context). The brief:
+**Standards** — a general-purpose sub-agent. Pass it the diff command, the
+commit list, the conventions from step 4(a) **pasted in full**, the smell
+baseline from 4(c) **pasted in full** with its two binding rules, and the
+brief: _"Report — per file/hunk — (a) every place the diff breaches a
+documented repo convention: quote the convention and the hunk; and (b) any
+baseline smell you spot: name it and quote the hunk. Convention breaches are
+hard violations; baseline smells are always judgement calls and a documented
+convention overrides the baseline. Skip anything the formatter/linter/
+type-checker enforces. Under 400 words."_
 
-> Report: (a) requirements the spec asked for that are missing or partial;
-> (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements
-> that look implemented but where the implementation looks wrong. Quote the spec
-> line for each finding. Ignore project-board fields — they are scheduling, not
-> spec. Under 400 words.
+**Spec + Correctness** — a general-purpose sub-agent that **can run
+commands** (see Tooling below). Pass it the diff command, the commit list, and
+the spec text pasted in full. The brief:
 
-If there is no spec, skip this sub-agent and say so in the report.
+> Verify this change against the spec empirically, not by reading alone.
+> (a) Run the repo's test suite on the PR's head SHA and report the outcome.
+> (b) For each spec requirement, confirm a discriminating test exists — one
+> that fails if the requirement is broken (mutate to confirm when in doubt);
+> write the missing ones and run them. Below that floor is a finding, not an
+> attestation.
+> (c) Report, with each finding labelled: `spec-miss` (requirement absent or
+> partial), `scope-creep` (behaviour not asked for), or `bug` (required
+> behaviour implemented wrongly). For every finding distinguish
+> *verified-by-test* from *looks-right-by-reading*. Ignore project-board
+> fields — they are scheduling, not spec. Do not modify any file under
+> review; tests are evidence. Report the path of the proposed test edits.
+> Under 400 words.
+
+If there is no spec, the same agent runs correctness-only with requirement
+(c) generalized to the diff's own claims (commit messages, PR body).
+
+#### Pattern B — large, two waves
+
+**Wave 1** — two parallel sub-agents, in one message:
+
+- **Standards** — exactly as in Pattern A.
+- **Spec** — a general-purpose sub-agent (a reading pass; commands not
+  required). Pass it the diff command, the commit list, and the fetched spec
+  text. The brief:
+
+  > Report: (a) requirements the spec asked for that are missing or partial;
+  > (b) behaviour in the diff that wasn't asked for (scope creep); (c)
+  > requirements that look implemented but where the implementation looks
+  > wrong. Quote the spec line for each finding. Ignore project-board fields
+  > — they are scheduling, not spec. Under 400 words.
+
+**The gate** — ingest wave 1, then decide:
+
+- **Spec fails wholesale** (wrong feature, or the requirement absent): do
+  **not** run correctness. Report `## Spec` and `## Standards` with the line
+  "correctness not run: spec failed". This review is **exited, not
+  converged** — see below.
+- **Spec fails partially**: compute the *wanted subset* — the parts of the
+  diff that implement requirements the spec does ask for — and scope the
+  correctness brief to it.
+- **Spec passes**: correctness runs on the full diff.
+
+**Wave 2** — the Correctness sub-agent. Dispatch the Agent tool with
+`subagent_type: code-reviewer` if that agent type is registered (it carries
+the confidence gate, the HIGH/CRITICAL-require-proof rule, and the
+clean-review-is-valid instruction — restating any of that inline would fork
+it); where no `code-reviewer` type exists, degrade to a general-purpose
+sub-agent and carry those three rules inline in the brief. It must be able to
+**run commands**. Pass it:
+
+- the diff command, scoped per the gate (full diff or wanted subset), and the
+  commit list;
+- the spec text, pasted in full (with no spec, the floor generalizes to the
+  diff's own claims — commit messages, PR body — as in Pattern A);
+- wave 1's Spec category-(c) suspicions, pasted — its first job is to verify
+  or refute each one;
+- the floor: _every spec requirement covered by a discriminating test — one
+  that fails if the requirement is broken; write the missing ones, run them,
+  mutate to confirm when in doubt — and the suite green on the PR's head
+  SHA. Below that floor is a finding, not an attestation_;
+- the rules: do not modify any file under review; report the path of the
+  proposed test edits; distinguish *verified-by-test* from
+  *looks-right-by-reading*; under 400 words.
+
+The correctness agent's model is whatever the commission stated (risk-scaled:
+a capable model when risk-class paths are in the diff, a cheaper one
+otherwise). One documented escalation trigger: if wave 1's Spec report
+returned **three or more** category-(c) suspicions, run correctness one
+model tier up from commissioned.
+
+### Tooling
+
+Correctness is empirical, so the Spec+Correctness (A) and Correctness (B)
+sub-agents must be able to **execute commands** — never dispatch them to a
+read-only or inspect-only agent runtime. If the environment offers no
+exec-capable sub-agent, degrade correctness to the reading pass and **say so
+in the report** — an unverified correctness axis is a degraded result, not a
+clean one.
+
+### Test writing rules (both patterns)
+
+- Tests are **evidence, not fixes**. Writing a discriminating test is how you
+  verify; the agent never modifies a file under review.
+- Where the reviewer owns a workspace worktree, leave the proposed test edits
+  uncommitted there and name the directory in the report ("proposed test edits
+  at `<path>`"); the coordinator harvests that path **before** the reviewer's
+  workspace is released, and routes it to the executor, who applies and commits
+  the tests under its own provenance — even when tests are the only delta.
+  Where there is no worktree, write-and-run without committing and paste the
+  test content into the report.
 
 ### 6. Aggregate and report
 
-Present the two reports under `## Standards` and `## Spec` headings, verbatim
-or lightly cleaned. Do **not** merge, rerank, or deduplicate across them — the
-two axes are deliberately separate.
+Present the findings under `## Correctness`, `## Standards`, and `## Spec`
+headings, verbatim or lightly cleaned. In Pattern A, split the merged agent's
+report into the Spec and Correctness headings by its finding labels. Do **not**
+merge, rerank, or deduplicate across headings — the axes are deliberately
+separate.
 
-End with one line: findings per axis, and the worst issue _within each axis_.
-Do not pick a single winner across axes; that is exactly the reranking the
-separation exists to prevent.
+End with one line per axis: findings count and the worst issue **within each
+axis**. Do not pick a single winner across axes; that is exactly the
+reranking the separation exists to prevent.
+
+Then the verdict, exactly one of:
+
+- **APPROVE** — all commissioned axes ran and returned clean.
+- **APPROVE-with-edits** — findings to apply, no blocking ones.
+- **BLOCK** — spec fails wholesale, or a correctness finding on a required
+  path.
+
+Whether APPROVE-with-edits merges without another round is **the
+coordinator's policy, not the reviewer's** — say nothing about merge
+intent. **Zero findings on an axis is a valid result** — say "no findings"
+and move on. Manufactured nits to justify the invocation are the primary
+failure mode here.
+
+**Exited vs converged.** A review that ends early on spec wholesale-fail is
+*exited*, not *converged* — do not report it as approval of anything but the
+axes that ran. Convergence is defined per `dispatching-work`: the next round
+runs the full pattern again on the deltas.
 
 **Where the report lands.** When the review is of a PR, the outcome goes on
 the PR as a comment: at most ~500 visible characters — verdict, severity
-counts, the items that matter — with the full two-axis report in a collapsed
-`<details>` block in the same comment. Whoever later applies fixes reports
-what changed the same way. The PR timeline is the durable audit trail; chat
-and orchestration messages are not. For a local, pre-PR review, the chat
-report above suffices.
+counts, the items that matter, and the proposed-test-edits path — with the
+full three-axis report in a collapsed `<details>` block in the same comment.
+Whoever later applies findings reports what changed the same way. The PR
+timeline is the durable audit trail; chat and orchestration messages are not.
+For a local, pre-PR review, the chat report above suffices.
 
 When this review is a merge gate inside a coordinated run, the
 `dispatching-work` doctrine governs the surrounding loop: reviews are
 coordinator-commissioned, post-review changes get a fresh reviewer on the
 deltas until convergence, and the reviewer's model escalates with risk.
 
-**This skill reports. It does not fix.** If the user wants the findings
-applied, point them at the built-in `/code-review --fix` or ask them to say so
-explicitly.
+**This skill reports. It does not fix.** The one carve-out is test writing —
+tests written to verify are evidence, never fixes, and the source under
+review is never modified. If the user wants findings applied, ask them to say
+so explicitly; the executor applies both fixes and the proposed tests.
 
-**Zero findings on an axis is a valid result.** Say "no findings" and move on.
-Manufactured nits to justify the invocation are the primary failure mode here.
+## Relationship to the built-in `/code-review`
 
-## Why two axes
+Decoupled, by design: this skill's Correctness axis covers the built-in's
+remit ("is it wrong?" — bugs, security, verified empirically) plus what the
+built-in does not check (spec conformance, convention drift), so the two are
+not run in sequence and neither gates the other. The built-in remains fine
+for a quick, fix-capable pass on a pre-commit diff where the three-axis
+machinery is not warranted.
 
-A change can pass one and fail the other:
+## Why three axes
+
+A change can pass one and fail the others:
 
 - Follows every convention, implements the wrong thing → **Standards pass, Spec fail.**
 - Does exactly what the issue asked, breaks the project's conventions → **Spec pass, Standards fail.**
+- Faithful to spec and style, but the guard doesn't actually fire → **Spec pass, Standards pass, Correctness fail.**
 
-Reporting them separately is what stops one from masking the other.
+Reporting them separately is what stops one from masking the other — and the
+third row is the one no reading-only review catches.

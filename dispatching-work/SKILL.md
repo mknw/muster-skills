@@ -20,7 +20,7 @@ small chores — inline work is for what only the coordinator can do.
 |---|---|
 | Long-running implementation that needs its own branch/worktree, PR provenance, and supervision | Orchestration-runtime worker (dispatched task, lifecycle messages) |
 | Short one-off: conflict resolution, format fixes, board updates, batch renames, research lookups | Native subagent (background task tool) |
-| Reviewing a worker's PR before merge | Independent worker with more headroom than the author — never the author, never the coordinator |
+| Reviewing a worker's PR before merge | Independent worker with more headroom than the author — never the author, never the coordinator — commissioned with the review's classification and models (see The review gate) |
 | Any of the above, in an environment with **no orchestration runtime** | Persistent per-worktree `claude --bg` session — the fallback: [worktree-lanes.md](worktree-lanes.md) carries its launch mechanics and the INSTRUCTIONS.md / STATE.md lane briefs |
 | Verifying a worker's self-report, decisions, replying to asks, merges | Inline — the coordinator itself |
 
@@ -123,15 +123,44 @@ with risk: higher effort for security or hardening changes; the strongest
 available model (Fable-tier) for critical infrastructure or high-risk
 vulnerabilities. Use the repo's review procedure/skill if it has one.
 
+**Classify before dispatching.** The review commission carries the review's
+classification, so the reviewer executes rather than re-classifies. Classify
+the PR with the review procedure's pattern table — size from
+`gh pr diff --stat`, risk class from the diff's paths (any risk-class path
+forces the large pattern regardless of size — the table's list) — and state
+in the dispatch: the pattern
+(one wave, or the two-wave gate), the reviewer's model, and each sub-agent's
+model. Capable model for judgment work (the reviewer, and the empirical
+correctness agent whenever risk-class paths are in the diff); cheaper model
+for the mechanical reading passes.
+
+**The verdict and the merge policy are different hands.** The reviewer
+returns `APPROVE` / `APPROVE-with-edits` / `BLOCK` and nothing about merge
+intent. Whether APPROVE-with-edits lands without another round is coordinator
+policy, stated in the pattern's terms: reviews run under the large pattern
+(two waves) always converge — the edits are applied and the deltas
+re-reviewed; under the small pattern, ask the user, who may prefer to apply
+the edits personally.
+
+**Harvest artifacts before release.** A correctness review leaves proposed
+test edits in the reviewer's workspace worktree, named in its report.
+Harvest that path **before** releasing or archiving the reviewer's workspace,
+and route it to the executor or author, who applies and commits the tests
+under its own provenance — even when tests are the only delta. A path lost to
+workspace release is evidence lost.
+
 **Who commissions, and until when.** Reviews are COORDINATOR-commissioned,
 never author-commissioned — an author picking its own reviewer is a weaker
-guarantee. Medium and large PRs always get one; for small PRs, ask the user
-(they may prefer to review personally). Whenever changes are applied
+guarantee. Reviews under the large pattern always get one; under the small
+pattern, ask the user (they may prefer to review personally). Whenever changes are applied
 post-review, commission a **new** reviewer for the deltas and repeat **until
-convergence** — a review that returns nothing to apply. (Evidence the loop
-earns its cost: a round-2 reviewer once caught that a round-1 security fix
-was under-scoped — a 15-second ReDoS still reachable from a shipped path.)
-Merge on converged review plus green CI.
+convergence** — a full review in which every commissioned axis ran and
+returned clean. A review that exits early (spec fails wholesale before
+correctness runs) is **exited, not converged**; the next round runs the full
+pattern on the deltas. (Evidence the loop earns its cost: a round-2 reviewer
+once caught that a round-1 security fix was under-scoped — a 15-second
+ReDoS still reachable from a shipped path.) Merge on converged review plus
+green CI.
 
 **The record lives on the PR.** The reviewer posts its outcome as a PR
 comment; whoever applies fixes posts what they changed, the same way.
