@@ -30,6 +30,22 @@ Model selection: a capable model for judgment work (design, review,
 implementation); a cheaper model for mechanical work. State the model and
 effort explicitly at dispatch; don't rely on defaults you haven't checked.
 
+**Re-run, not grandfathered.** The executor decision expires when the task
+changes shape. Three tells: a capability you didn't plan for; a file or
+conflict count past the one you sized; a "while I'm here" addition. On any
+tell, re-run the sizing with current facts — write the from-scratch plan as if
+nothing were underway, diff it against the current state, then salvage or
+discard. Context you already hold is an argument for **writing the handoff
+spec**, since inline coordinator work grows past the review gate unreviewed
+(see The review gate).
+
+When this trip-wire fires — or a second same-class worker failure lands in one
+run — write the **incident extract** and dispatch a `self-improve` subagent
+(independent context) to run its loop on it. The extract contract lives in that
+skill (~400 words: expected / observed / decisions made and why / attempts and
+outcomes). Writing the extract is the stop-and-name step: it comes before
+recovery, not after.
+
 ## Write the task spec
 
 The spec is the worker's whole world — it will not infer your intent. Skeleton:
