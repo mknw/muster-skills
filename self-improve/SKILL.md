@@ -25,6 +25,10 @@ Fires on:
 3. **The second occurrence of the same correction class in one session** — the
    skill then fires itself; the owner should never have to invoke it by name
    for a repeat.
+4. **A trip-wire in a running skill fired** — the skill's body routed here
+   with an incident extract (`dispatching-work`'s executor re-decision on scope
+   creep; a second same-class worker failure in one run). The extract, not the
+   dispatcher's session context, is the incident record.
 
 Not a trigger: a stumble the next tool call absorbed — a retried command, a
 transient error. Apply severity silently.
@@ -113,6 +117,27 @@ For correction-class lessons, draft trigger conditions **from the owner's
 quoted words** and have them confirm the reading — the agent's paraphrase is
 where shallowness enters.
 
+## Dispatched runs — the extract contract
+
+A trip-wire reaches this loop by dispatching it as a subagent, in a context
+that cannot see the dispatcher's session. That independence is the point: the
+dispatcher shares the framing that produced the snag — the same reason the
+review gate bars the author and the coordinator from reviewing.
+
+So the **extract is the whole record**: self-contained, ~400 words, four parts.
+
+- **Expected** — what the plan said would happen.
+- **Observed** — what happened instead, with the facts that diverged.
+- **Decisions made and why** — each decision at the moment it was taken, with
+  the reasoning available then.
+- **Attempts and outcomes** — what was tried after the divergence, and what
+  each attempt returned.
+
+Run the five steps on the extract alone; where it is silent, name the silence
+as a gap in the record rather than reconstructing from the dispatch prompt.
+Propose in the same fixed four-field format, and land the outputs through the
+same proportionate gates — tracked-file changes go branch → PR.
+
 ## Design record — the recursion, made textual
 
 **Convention:** every change to this skill is itself produced by running this
@@ -136,3 +161,15 @@ before concluding, with push-back as a duty; earliest-moment anchoring; stack
 autopsy for active opposition; ensurance over recording; fixed-format
 proposal); proportionate gates with the live contract; owner-words drafting;
 and this design record.
+
+**2026-09-18 — trip-wire branch and the extract contract.** Incident: a
+2026-08-24 session drafted a course-correcting skill that never landed; its
+capture gate and user-rejection branch duplicated this skill's trigger and its
+step-5 gates. Step that failed: the **trigger** — every branch routed through
+the owner, so a flow skill that detected its own snag mid-run had nowhere to
+send it. Change (owner-approved fold rather than a second skill): trip-wires in
+flow skills now route here as branch 4, via a dispatched subagent, and the
+extract contract above defines what that subagent receives. The description
+pointer is unchanged — the trip-wire line in the calling skill's body is the
+pointer that reaches here, and restating that branch in the description would
+be one branch written twice.
