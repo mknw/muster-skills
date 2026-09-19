@@ -41,9 +41,8 @@ spec**, since inline coordinator work grows past the review gate unreviewed
 
 When this trip-wire fires — or a second same-class worker failure lands in one
 run — write the **incident extract** and dispatch a `self-improve` subagent
-(independent context) to run its loop on it. The extract contract lives in that
-skill (~400 words: expected / observed / decisions made and why / attempts and
-outcomes). Writing the extract is the stop-and-name step: it comes before
+(independent context) to run its loop on it. The extract contract lives in
+that skill. Writing the extract is the stop-and-name step: it comes before
 recovery, not after.
 
 ## Write the task spec
