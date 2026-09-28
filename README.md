@@ -44,7 +44,7 @@ Two rules keep the set portable:
 | `resolving-merge-conflicts` | In-progress merge/rebase conflict procedure |
 | `living-docs-governance` | Keeping long-lived project docs from rotting |
 | `agent-architecture-audit` | 12-layer diagnostic for agent/LLM applications |
-| `dispatching-work` | Coordination doctrine for fanning work out to multiple agents — specs, lanes, supervision, the review gate |
+| `dispatching-work` | Coordination doctrine for fanning work out to multiple agents — specs, lanes, supervision, the review gate; fires on any file-changing task that arrives while coordinating |
 | `reviewing-changes` | Three-axis review (originating spec, repo standards, empirical correctness) of changes since a fixed point, size-gated into one-wave and two-wave patterns |
 | `init-code-reviewer` | Scaffolding a repo-specific code-reviewer agent — the correctness reviewer the reviewing flow dispatches |
 | `self-improve` | Turning owner corrections, countermands, and failures into re-engineered decisions, not prose lessons — a five-step correction loop |
