@@ -1,6 +1,6 @@
 ---
 name: dispatching-work
-description: Coordination doctrine for fanning work out to multiple agents — how to split the work, which executor and model take each piece, the task spec, supervision, and the review gate before merge. Use when dispatching or supervising workers, splitting a task across subagents or parallel worktree lanes, or deciding which agent type or model should handle a piece of work; also carries the `claude --bg` lane fallback (INSTRUCTIONS.md / STATE.md briefs) for environments with no orchestration runtime. For Orca's command surface and message mechanics, use `orchestration`.
+description: Coordination doctrine for fanning work out to multiple agents — how to split the work, which executor and model take each piece, the task spec, supervision, and the review gate before merge. Use when dispatching or supervising workers, splitting a task across subagents or parallel worktree lanes, or deciding which agent type or model should handle a piece of work. Also use when a task ARRIVES that would change files, open a PR, or sweep several files while you hold the coordinator role — before the first edit, however small. It also carries the `claude --bg` lane fallback (INSTRUCTIONS.md / STATE.md briefs) for environments with no orchestration runtime. For Orca's command surface and message mechanics, use `orchestration`.
 ---
 
 # Dispatching Work
