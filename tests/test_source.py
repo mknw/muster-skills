@@ -107,6 +107,25 @@ class SourceGuardTests(unittest.TestCase):
         self.skill.write_text(self.original + '\n```md\n[example](missing.md)\n[x]: missing.md\n```\n')
         self.check_result(True)
 
+    def test_markdown_source_containment(self):
+        # This tracked source is unreferenced: link-target checks cannot catch it.
+        source = self.root / 'extra-source.md'
+        source.write_text('Test-owned tracked Markdown\n')
+        subprocess.run(['git', 'add', source.name], cwd=self.root, check=True)
+        self.check_result(True)
+
+        outside = self.root.parent / 'outside-source.md'
+        outside.write_text('Test-owned external Markdown\n')
+        for label, target, accepted in (
+            ('internal-source-symlink', 'README.md', True),
+            ('external-source-symlink', outside, False),
+        ):
+            with self.subTest(source=label):
+                source.unlink()
+                source.symlink_to(target)
+                subprocess.run(['git', 'add', source.name], cwd=self.root, check=True)
+                self.check_result(accepted)
+
 
 if __name__ == '__main__':
     unittest.main()
