@@ -30,7 +30,11 @@ policy in the owning project's instructions, rather than in this shared skill.
    confine alternative shell, file, network, proxy and tool paths. Verify that
    restriction empirically; a prompt instruction is not enforcement. If the
    provider cannot support it, report the inspected blocker and keep that
-   acceptance cell blocked rather than silently changing mode.
+   acceptance cell blocked rather than silently changing mode. Keep workloads
+   unable to reach the coordinator's Herdr socket, saved connection registry,
+   Docker socket or management credentials. Socket file permissions protect an
+   OS account boundary; same-user panes do not gain separate capabilities merely
+   by using different named sessions.
 
 Done when the installed contract and admitted binding agree, including source
 identity and enforcement. Carry immutable-reference-only repository exclusions
