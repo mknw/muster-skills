@@ -1,14 +1,24 @@
 ---
 name: dispatching-work
-description: Coordination doctrine for fanning work out to multiple agents — how to split the work, which executor and model take each piece, the task spec, supervision, and the review gate before merge. Use when dispatching or supervising workers, splitting a task across subagents or parallel worktree lanes, or deciding which agent type or model should handle a piece of work; also carries the `claude --bg` lane fallback (INSTRUCTIONS.md / STATE.md briefs) for environments with no orchestration runtime. For Orca's command surface and message mechanics, use `orchestration`.
+description: Resolve owner-defined general-coordinator versus operational-PM roles before choosing commands. Coordination doctrine for fanning work out to multiple agents — how to split the work, which executor and model take each piece, the task spec, supervision, and the review gate before merge. Use when dispatching or supervising workers, splitting a task across subagents or parallel worktree lanes, or deciding which agent type or model should handle a piece of work; also carries the `claude --bg` lane fallback (INSTRUCTIONS.md / STATE.md briefs) for environments with no orchestration runtime. For Orca's command surface and message mechanics, use `orchestration`.
 ---
 
 # Dispatching Work
 
-Doctrine for the coordinator role: choosing the executor, writing the task
-spec, supervising without waste, and landing the results. It is
-runtime-agnostic — where an orchestration runtime (e.g. Orca) is present, get
-its exact command surface from the runtime itself (`orca skills get
+**Resolve the role first.** When the owner assigns a general coordinator,
+that agent keeps the global picture, delivers key milestones and owner decisions,
+and discusses alternatives. Delegate each coherent delivery stream to an
+operational PM before loading its runtime loop or running its commands. The PM
+owns dispatch, status/waits, evidence verification, failure follow-through,
+GitHub updates, review/merge gates and cleanup; implementation stays with worker
+lanes and review stays independent. A quick check or stalled worker stays with
+the PM. If PM placement fails, surface that concrete blocker; the general
+coordinator retains its assigned role. Owner-defined boundaries override the
+inline defaults below.
+
+For the operational coordinator/PM, this doctrine covers choosing executors,
+supervising and landing results. It is runtime-agnostic: where a runtime is
+present, get its exact command surface from the runtime itself (`orca skills get
 orchestration`); never encode CLI flags here or from memory.
 
 ## Choose the executor
@@ -22,7 +32,7 @@ small chores — inline work is for what only the coordinator can do.
 | Short one-off: conflict resolution, format fixes, board updates, batch renames, research lookups | Native subagent (background task tool) |
 | Reviewing a worker's PR before merge | Independent worker with more headroom than the author — never the author, never the coordinator — commissioned with the review's classification and models (see The review gate) |
 | Any of the above, in an environment with **no orchestration runtime** | Persistent per-worktree `claude --bg` session — the fallback: [worktree-lanes.md](worktree-lanes.md) carries its launch mechanics and the INSTRUCTIONS.md / STATE.md lane briefs |
-| Verifying a worker's self-report, decisions, replying to asks, merges | Inline — the coordinator itself |
+| Verifying a worker's self-report, operational decisions, replying to asks, merges | Inline — the operational coordinator/PM within the owner-assigned role |
 
 Routing authority: where the owner has ruled on how lanes are dispatched (for example, "lanes go through the orchestration runtime"), that ruling overrides this table until the owner retracts it. When a row's precondition is ambiguous or a runtime's capabilities are in doubt, surface the choice with evidence instead of resolving it silently — and verify capability claims against the runtime's registry of record (official docs), never against examples in help text or skills.
 
