@@ -1,0 +1,40 @@
+name: Skill source
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Check whitespace and disclosed references
+        shell: bash
+        run: |
+          git show --format= --check HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import subprocess
+
+          paths = subprocess.check_output(['git', 'ls-files', '-z'], text=True).split('\0')
+          markdown = [Path(p) for p in paths if p.endswith('.md')]
+          errors = []
+          for path in markdown:
+              text = path.read_text()
+              if path.name == 'SKILL.md':
+                  match = re.match(r'\A---\n(.*?)\n---\n', text, re.S)
+                  if not match or not all(re.search(rf'^{key}:\s*\S', match[1], re.M) for key in ('name', 'description')):
+                      errors.append(f'{path}: missing skill frontmatter')
+              for target in re.findall(r'\[[^\]]+\]\(([^\s)]+)\)', text):
+                  if target.startswith(('https://', 'http://', '#', '/', 'mailto:')):
+                      continue
+                  resolved = (path.parent / target.split('#')[0]).resolve()
+                  if not resolved.is_relative_to(Path.cwd().resolve()) or not resolved.is_file():
+                      errors.append(f'{path}: missing or external local reference {target}')
+          if errors:
+              raise SystemExit('\n'.join(errors))
+          print(f'Checked {len(markdown)} Markdown files; source references only, no behavioral acceptance.')
+          PY
