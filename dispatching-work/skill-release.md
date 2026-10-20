@@ -48,10 +48,14 @@ receipts; preparing them does not itself install anything.
    exclusions. Have an independent verifier assess those receipts. A copied
    directory is not proof of invocation. If any required role remains untested,
    report it pending or blocked rather than marking the release deployed.
-8. **Retain rollback.** Restore only the deployment-owned discovery entries to
-   their recorded previous identities; preserve the failed release and its
-   evidence. Verify restored hashes and a disposable invocation. Keep old
-   releases until session/dependency continuity permits removal.
+8. **Retain rollback.** After successful invocation proof, leave the new release
+   active and retain the previous entry identities, hashes and rollback commands.
+   If activation or required invocation fails, or an authorized rollback is
+   requested, restore only deployment-owned discovery entries to their recorded
+   previous identities. Verify restored hashes and a disposable invocation;
+   preserve the failed release and evidence and report the release failed or
+   rolled back. Scope rollback rehearsals to disposable targets. Keep old releases
+   until session/dependency continuity permits removal.
 
 Complete with one manifest and evidence index mapping each required role from
 canonical source hash to destination hash to invocation outcome. Return exact

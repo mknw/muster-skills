@@ -51,7 +51,7 @@ Two rules keep the set portable:
 
 Setup skills (the `init-` prefix) run **once per repo**, not per task: reach for `init-code-reviewer` when a repo joins the reviewing flow, when it has no code-reviewer agent yet, or when the kernel changes and its generated reviewer must be regenerated.
 
-The `Skill source` CI check validates frontmatter and local Markdown references on
+The `Skill source` CI check validates YAML frontmatter and local Markdown references on
 each PR update. Runtime invocation and server deployment require separate evidence;
 source checks do not establish agent behavior.
 

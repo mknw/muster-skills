@@ -106,10 +106,13 @@ checks.
 
 ## Prepare owner entry
 
-Have the operator supply the verified SSH route to the Incus coordinator and
-selected named Herdr session. Prepare an exact `herdr --remote TARGET --session
-SESSION` command with real values, or the verified SSH-then-Herdr alternative.
-Neither command proves the destination is inside Incus; verify that separately.
+Resolve the coordinator's required placement from the owning project's admitted
+execution binding. Have the operator verify that placement and supply its SSH
+route and selected named Herdr session. When the project requires Incus, verify
+that the coordinator and every model agent reside inside their admitted Incus
+VMs. Prepare an exact `herdr --remote TARGET --session SESSION` command with real
+values, or the verified SSH-then-Herdr alternative. Neither command proves
+placement; retain the operator's separate placement evidence.
 Remote bootstrap can install/update software, so use the reviewed installation
 and check compatibility before a connection that could prompt for changes.
 

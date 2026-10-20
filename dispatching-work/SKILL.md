@@ -1,6 +1,6 @@
 ---
 name: dispatching-work
-description: Dispatch and supervise agents, choose executors and models, or route a delivery request while coordinating. Resolve owner-defined general-coordinator and operational-PM roles before dispatch. Covers task briefs, lane ownership, recovery, independent review and landing; includes Herdr-native control and the persistent-worktree fallback when no runtime is available.
+description: Dispatch and supervise agents, choose executors and models, route a delivery request while coordinating, or install and upgrade canonical skills across agent environments. Resolve owner-defined general-coordinator and operational-PM roles before dispatch. Covers task briefs, lane ownership, recovery, independent review and landing; includes Herdr-native control and the persistent-worktree fallback when no runtime is available.
 ---
 
 # Dispatching Work
