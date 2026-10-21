@@ -1,15 +1,29 @@
 ---
 name: dispatching-work
-description: Coordination doctrine for fanning work out to multiple agents — how to split the work, which executor and model take each piece, the task spec, supervision, and the review gate before merge. Use when dispatching or supervising workers, splitting a task across subagents or parallel worktree lanes, or deciding which agent type or model should handle a piece of work; also carries the `claude --bg` lane fallback (INSTRUCTIONS.md / STATE.md briefs) for environments with no orchestration runtime. For Orca's command surface and message mechanics, use `orchestration`.
+description: Dispatch and supervise agents, choose executors and models, route a delivery request while coordinating, or install and upgrade canonical skills across agent environments. Resolve owner-defined general-coordinator and operational-PM roles before dispatch. Covers task briefs, lane ownership, recovery, independent review and landing; includes Herdr-native control and the persistent-worktree fallback when no runtime is available.
 ---
 
 # Dispatching Work
 
-Doctrine for the coordinator role: choosing the executor, writing the task
-spec, supervising without waste, and landing the results. It is
-runtime-agnostic — where an orchestration runtime (e.g. Orca) is present, get
-its exact command surface from the runtime itself (`orca skills get
-orchestration`); never encode CLI flags here or from memory.
+**Resolve the role first.** Follow the owner's current assignment. When a
+separate general coordinator and operational PM are assigned, the general
+coordinator owns global priorities, alternatives, owner decisions and selected
+milestones; the PM owns the delivery loop: dispatch, waits, evidence, failure
+recovery, tracking, review gates and cleanup. Implementation belongs to authors;
+review belongs to independent reviewers commissioned by the PM. An assigned
+worker completes its lane and reports to that PM, rather than creating another
+PM. Bounded checks explicitly allowed by the owner remain allowed; they do not
+transfer the operational loop. Failed PM placement is a concrete blocker for the
+general coordinator to surface, not an implicit role transfer.
+
+For the operational coordinator/PM, this doctrine covers choosing executors,
+supervising and landing results. Before editing or dispatching a newly arrived
+delivery request, resolve the role and executor. Obtain the runtime's exact
+commands and capabilities from its installed schema and official version-matched
+docs. For Herdr, read [herdr-native.md](herdr-native.md) before controlling
+agents, reconnecting or preparing owner entry. For deploying these skills to
+coordinators or agents, read [skill-release.md](skill-release.md). Runtime
+mechanics implement this doctrine; they do not define task acceptance.
 
 ## Choose the executor
 
@@ -22,7 +36,7 @@ small chores — inline work is for what only the coordinator can do.
 | Short one-off: conflict resolution, format fixes, board updates, batch renames, research lookups | Native subagent (background task tool) |
 | Reviewing a worker's PR before merge | Independent worker with more headroom than the author — never the author, never the coordinator — commissioned with the review's classification and models (see The review gate) |
 | Any of the above, in an environment with **no orchestration runtime** | Persistent per-worktree `claude --bg` session — the fallback: [worktree-lanes.md](worktree-lanes.md) carries its launch mechanics and the INSTRUCTIONS.md / STATE.md lane briefs |
-| Verifying a worker's self-report, decisions, replying to asks, merges | Inline — the coordinator itself |
+| Verifying a worker's self-report, operational decisions, replying to asks, merges | Inline — the operational coordinator/PM within its assigned authority |
 
 Routing authority: where the owner has ruled on how lanes are dispatched (for example, "lanes go through the orchestration runtime"), that ruling overrides this table until the owner retracts it. When a row's precondition is ambiguous or a runtime's capabilities are in doubt, surface the choice with evidence instead of resolving it silently — and verify capability claims against the runtime's registry of record (official docs), never against examples in help text or skills.
 
@@ -58,7 +72,17 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
    build, CI green) and any house rules (e.g. no attribution trailers).
 4. **Parallel-lane warnings**: name the other in-flight lanes that touch nearby
    files, and the merge order (see below).
-5. **Communication contract** — append verbatim:
+5. **Execution boundary**: identify coordinator, model-agent and workload
+   placement; admitted environment, egress mode and external enforcement;
+   source/attempt identity; and the scoped helper authority. A worktree or pane
+   alone provides no network boundary. Keep model inference/control outside an
+   isolated workload with a restricted execution bridge, or report the inspected
+   dependency. Carry read-only repository exclusions into every worker, review
+   and operator brief: use immutable API reads/exports and prohibit checkout,
+   index, worktree, status-refresh and remote writes for those repositories.
+6. **Communication contract** — bind the following outcomes to the installed
+   runtime or project's verified durable task/result adapter. Use its exact
+   commands in the brief; the event names below are labels, not portable CLI:
 
    > COMMUNICATION: do NOT send periodic heartbeats. Send 'ask' if blocked
    > (ONE consolidated ask, not a drip), 'escalation' if coordinator
@@ -96,27 +120,32 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
   greps hide live state, and a false failure diagnosis costs more than the
   wait would have. A status name on a task row (queued, accepted, dispatched)
   is a receipt, not a verdict.
-- **Verify every dispatch actually started.** Read the worker's terminal after
-  dispatch: a pasted-but-unsubmitted prompt looks dispatched and sits idle for
-  hours. If the prompt is sitting in the input box, submit it and re-verify.
-- **Wait typed, not polled.** Block on the message types that require action
-  (worker_done, escalation, question) in a re-arming loop; filter heartbeats
-  and status noise out of the wake condition.
+- **Verify every dispatch actually started.** Use the native start/readiness
+  result and observe task-specific activity or a durable receipt. Inspect only
+  the assigned worker's permitted output when necessary; preserve private user
+  sessions. A timeout after submission leaves execution uncertain: reconcile
+  before retrying so the same work is not submitted twice.
+- **Wait on actionable state.** Use the runtime's native lifecycle waits or
+  events and the durable task/result channel for completion, blockers and
+  questions. A lifecycle transition is a wake to inspect task evidence, not a
+  task verdict. Re-arm waits after processing and reconcile after disconnect.
 - **One retry, then surface.** On a failure signal, retry once calmly, then
   put the failure in front of the owner with the evidence.
-- **Process whole deliveries.** Acknowledge each batch after handling it;
-  an unacknowledged delivery replays and re-wakes you.
+- **Process whole deliveries.** Where the task channel has consuming batches
+  and acknowledgement, handle the full batch before acknowledging. For a
+  non-durable event stream, reconcile authoritative state and durable receipts
+  after reconnect; do not assume replay or invent an acknowledgement API.
 - **Answer asks decisively.** Workers send one consolidated question; reply
   with a decision and rationale, not options back. If the decision is genuinely
   the user's, surface it — don't guess.
 - **Heartbeats and terminal activity mean alive, not done.** Never stop or
   release a worker for mere idleness. On release, a "retained / user-takeover"
-  result is normal (the user touched that terminal) — the dispatch is still
-  settled.
+  result, where supported, preserves the user's terminal after settlement.
+  Clean up only positively identified resources owned by this attempt.
 - **Re-engage a finished worker with a fresh dispatch.** A settled dispatch is
   closed to lifecycle messages: prompt its terminal directly and the work still
-  happens, but its `worker_done` is rejected and the report reaches you only as
-  loose mail. Reuse the terminal (keeping its context) *through* a new task.
+  happens without a current task identity. Reuse the terminal (keeping its
+  context) through a new task/attempt and verify its current occupant first.
 - **Verify results by git state, not the worker's self-report**: the claimed
   commits exist, the tree is clean, CI is green.
 
@@ -179,8 +208,8 @@ green CI.
 
 **The record lives on the PR.** The reviewer posts its outcome as a PR
 comment; whoever applies fixes posts what they changed, the same way.
-Orchestration messages evaporate on acknowledgement — the PR timeline is the
-durable audit trail. Keep reports high-level, descriptive, short (~500
+Preserve the review in the PR timeline as a durable audit trail even when a
+runtime's task messages are transient. Keep reports high-level, descriptive, short (~500
 characters), with two escape hatches: HIGH-criticality findings get the
 detail they need to act on, and a long report rides in a collapsed
 `<details>` block under the short summary in the same comment — scannable

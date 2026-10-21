@@ -1,10 +1,12 @@
 # Worktree lanes — persistent `claude --bg` sessions
 
 **The fallback executor: reach for this when no orchestration runtime is
-available in the environment.** Where one is present, its workers give you
-dispatched tasks, lifecycle messages, worktree creation and supervision as
-one accounted mechanism — use those instead, and read the runtime's own skill
-for the commands. What follows is how to get parallel lanes without it.
+available in the environment.** Where one is present, use its native agent
+control and the project's verified task/result channel; read the runtime's own
+contracts for commands. Runtime features vary: terminal lifecycle and layout do
+not imply durable tasks or resource isolation. For Herdr, read
+[herdr-native.md](herdr-native.md). What follows is the fallback launch mechanism;
+it must still satisfy the parent's execution-boundary and read-only exclusions.
 
 Each lane is a git worktree owned by its own persistent Claude Code session,
 launched with `claude --bg`, surfacing in **Agent View** (`claude agents`, or
