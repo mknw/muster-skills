@@ -1,11 +1,13 @@
 ---
 name: explain-mechanism
-description: Explain one mechanism through one concrete case as a single visual HTML page built for a decision — the steps the case takes, the exact decision rule with its real numbers, where and why it fails with evidence, what else the weakness reaches, and options with a recommendation. Use when the user asks to explain how X works, why X failed or missed a case, or to show them the mechanism behind a behaviour. One mechanism, one case; a whole layer's inventory belongs to architecture-report.
+description: Explain one mechanism by tracing one concrete case through it, as a single visual HTML page that ends in a decision. Use when the user asks to explain how X works, why X failed or missed a case, or to show them the mechanism behind a behaviour, and wants to understand it or decide on it rather than have it fixed. One mechanism, one case; a whole layer's inventory belongs to architecture-report.
 ---
 
 # Explain Mechanism
 
 One **mechanism**, one **case**, one page, one **decision**. The reader leaves able to predict what the mechanism does with an input they have not seen yet, and able to choose between the options at the bottom of the page.
+
+A question one function answers in a few sentences gets a chat answer; this skill is for a mechanism spanning several steps, a failure, or a decision.
 
 | | architecture-report | explain-mechanism | diagnosing-bugs |
 |---|---|---|---|
@@ -29,13 +31,13 @@ Write three lines before reading any code:
 - **Case:** the input, verbatim or redacted, and where it came from.
 - **Decision:** what the reader must choose. "None, understanding only" is allowed; the options section then becomes "what would change the outcome".
 
-Then classify the material (see [Sensitivity](#sensitivity)). The class decides where every file goes and what you may run, so it comes first.
+Then classify the material (see [Sensitivity](#sensitivity)). The class decides where every file goes and what you may run, so it comes first. For sensitive material, name the one target its runs may reach in the same three lines.
 
 Done when: the three lines exist and the sensitivity class is set.
 
 ### 2. Trace the case
 
-Read the source at one pinned commit and record its SHA. Walk the case from the entry point to the step that decides its outcome. For each step, write down what the case looks like as it enters, what the step does to it, and `path:line`. Read the configuration that sets the step's behaviour, the test that pins it and the fixture the case came from, and cite each of them.
+Read the source at one pinned commit and record its SHA. Confirm the SHA is reachable on the remote (`git branch -r --contains <sha>` is non-empty) before using link chips; if it is not, cite with the local-path chip form instead. Walk the case from the entry point to the step that decides its outcome. For each step, write down what the case looks like as it enters, what the step does to it, and `path:line`. Read the configuration that sets the step's behaviour, the test that pins it and the fixture the case came from, and cite each of them.
 
 Evidence is often taken at a different seam from the one production runs: a test or an eval may call the deciding step directly, on an input built the way production would build it. Say which steps the evidence covers and which you only read.
 
@@ -73,19 +75,25 @@ Done when: every option is scored against the same evidence rows and one is reco
 
 ### 7. Render the page
 
-Build the page by following [HTML-FORMAT.md](HTML-FORMAT.md). The sections follow the **teach order**: each one builds only on what came before it, so the reader is never asked to hold a term that has not been introduced. Every visual replaces a paragraph. A section's prose stays at three sentences or fewer, and a sentence that could be a table row becomes one.
+Build the page by following [HTML-FORMAT.md](HTML-FORMAT.md). The sections follow the **teach order**: each one builds only on what came before it, so the reader is never asked to hold a term that has not been introduced. Every visual replaces a paragraph, and takes the most compact form that carries its question (HTML-FORMAT.md, "Picking the form"). A section's prose stays at three sentences or fewer, and a sentence that could be a table row becomes one.
+
+Done when: every section in the teach-order table is present or dropped by its stated rule, every gauge and contrast row is generated from the recorded output files (the build reads them, not a copy), and the build leaves no unexpanded citation token.
 
 ### 8. Verify and deliver
 
-Re-open every cited `path:line` and confirm it still says what the page claims. Check that the tags balance. If a headless browser is available, screenshot the page at 390px wide in the light scheme and at desktop width in the dark scheme, then look at both: unreadable labels, clipped chips and squashed shapes only show up there. Screenshots of sensitive material go in the same private directory. For sensitive material, confirm the file's mode with `ls -l`. Then give the user the absolute path, the one-line answer and the decision being asked for.
+Re-open every cited `path:line` and confirm it still says what the page claims. Check that the tags balance. Run a terms pass: list each term at its first use, and fail on any term used before the section that introduces it. If a headless browser is available, screenshot the file at the path you deliver, after its last write — 390px wide in the light scheme and desktop width in the dark scheme — then look at both: unreadable labels, clipped chips, a table that needs sideways scrolling, and squashed shapes only show up there. Screenshots of sensitive material go in the same private directory. For sensitive material, confirm the file's mode with `ls -l`. Then give the user the absolute path, the one-line answer and the decision being asked for.
 
-Done when: every citation has been re-read and the path delivered.
+Done when: every citation has been re-read, every term is introduced before its first use, and the path delivered.
 
 ## Sensitivity
 
 Material is **sensitive** when it holds a security weakness that is not yet fixed, real personal or company data, credentials, or measurements the user keeps private. For sensitive material:
 
-- The page and every working file (scripts, run logs, scratch notes) go to a private local directory outside any repository. Create them under a restrictive umask (`umask 077`), check `ls -l` shows owner-only access, and keep them out of shared temporary directories.
+- The page and every working file (scripts, run logs, scratch notes) go to the private local directory the user or the project's instructions name for private material; if none is named, ask once before writing anything. Create them under a restrictive umask (`umask 077`), check `ls -l` shows owner-only access, keep them outside any repository, and keep them out of shared temporary directories.
+- A reproduction may send the case only to a target the material is already allowed to reach. That target is named in step 1, and the step 4 script asserts it and refuses every other one.
+- Screenshots use a local headless browser on a `file://` URL. Never a remote or hosted browser service, and never a server bound beyond loopback.
+- A run that costs money needs the user's go, unless a standing budget covers it. This is what step 4's "cheap and permitted" means.
+- A private page loads nothing remote: no CDN, no web fonts, no hosted renderer. A diagram library such as Mermaid ships from a local vendored copy kept in the same private directory.
 - Nothing about it leaves the machine: no publishing, no commit, no issue or PR text. Anything written elsewhere about the work (a summary, a PR, an example in a doc) calls it "a private worked example" and borrows none of its wording, names or numbers. Invent the values for examples.
 - Redact secrets everywhere, sensitive or not: write `<REDACTED>` in their place.
 
@@ -94,5 +102,7 @@ Everything else is written where the user asks for it. When they don't say, use 
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
+
+**2026-10-28 — fix round 1 (Opus review on PR #8).** Prompted by the review's 1 BLOCKING, 6 SHOULD, 4 NIT. Sensitivity now states a run rule beside the file rule: a reproduction goes only to a target named in step 1 and asserted by the script, screenshots use a local headless browser on `file://`, paid runs need the user's go, and a private page loads nothing remote (local vendored diagram library). Narrow-screen table rule (`data-label` block cells, wrapping cites) and an outcome-named gauge with `role="group"`, axis rows, and outcome-named classes replace side-of-threshold classes. Description loses its deliverables list (the body carries them) and gains the "understand or decide rather than fix" discriminator; a one-line gate in the body keeps single-function questions in chat. Step 7 gained its Done when; step 8 gained the terms pass, sideways-scroll check, and screenshot-after-last-write; step 2 confirms the pinned SHA is on the remote before link chips. Reach grid gained a **who** column; the one-line answer and the verdict card merged into one; the README inspiration note now links its two sources.
 
 **2026-10-28 — v1.** Prompted by the owner's request for a skill that explains one mechanism for a decision, delivered as a visual page rather than a Markdown file. Shaped by two outside ideas, rewritten here: compact visual representations in place of prose (HumanLayer's `show-me`) and building understanding one step at a time towards a concrete win (Matt Pocock's `teach`). Kept distinct from `architecture-report`: one mechanism traced through one case towards a decision, not a layer's inventory. Dogfooded on a private worked example before review, which added: marking which steps the evidence measured (step 2), the three ablation controls, rates over verdicts and variant definitions printed with results (step 4), uncovered failing variants as reach rows (step 5), the headless screenshot check (step 8), the no-borrowed-values rule for examples (Sensitivity), and HTML rather than SVG gauges (HTML-FORMAT.md).

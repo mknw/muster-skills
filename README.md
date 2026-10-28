@@ -84,6 +84,7 @@ permission notices: [NOTICE.md](NOTICE.md).
 multi-agent coordination sessions.
 
 `explain-mechanism` is homegrown too. Two published skills shaped its ideas,
-but no text was adapted from either: HumanLayer's `show-me` (compact visuals in
-place of prose) and Matt Pocock's `teach` (build understanding one step at a
-time towards a concrete win).
+but no text was adapted from either: [HumanLayer's
+`show-me`](https://humanlayer.dev/blog/show-me-skill) (compact visuals in
+place of prose) and [Matt Pocock's `teach`](https://aihero.dev/skills-teach)
+(build understanding one step at a time towards a concrete win).
