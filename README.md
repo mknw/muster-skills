@@ -36,6 +36,7 @@ Two rules keep the set portable:
 | `domain-modeling` | Building a project's glossary and decision records |
 | `improve-codebase-architecture` | A guided architecture-improvement pass |
 | `architecture-report` | A cited, descriptive report on one named layer or topic |
+| `explain-mechanism` | A visual HTML page tracing one concrete case through one mechanism — its rule and real numbers, why it fails, its reach — ending in a decision |
 | `intent-driven-development` | Keeping implementation tied to stated intent |
 | `diagnosing-bugs` | A diagnosis loop for hard bugs and regressions |
 | `loop-design-check` | Sanity-checking agent/feedback loop designs |
@@ -81,3 +82,8 @@ permission notices: [NOTICE.md](NOTICE.md).
 
 `dispatching-work` is homegrown: orchestration doctrine distilled from running
 multi-agent coordination sessions.
+
+`explain-mechanism` is homegrown too. Two published skills shaped its ideas,
+but no text was adapted from either: HumanLayer's `show-me` (compact visuals in
+place of prose) and Matt Pocock's `teach` (build understanding one step at a
+time towards a concrete win).
