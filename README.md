@@ -37,6 +37,7 @@ Two rules keep the set portable:
 | `improve-codebase-architecture` | A guided architecture-improvement pass |
 | `architecture-report` | A cited, descriptive report on one named layer or topic |
 | `explain-mechanism` | A visual HTML page tracing one concrete case through one mechanism — its rule and real numbers, why it fails, its reach — ending in a decision |
+| `syncing-board` | The one private page an owner and their coordinator sync through: what each party waits on, next actor, age, outcome checks, dependencies — dense table, report-only checker, anchor-based edits |
 | `intent-driven-development` | Keeping implementation tied to stated intent |
 | `diagnosing-bugs` | A diagnosis loop for hard bugs and regressions |
 | `loop-design-check` | Sanity-checking agent/feedback loop designs |

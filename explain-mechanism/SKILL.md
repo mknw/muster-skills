@@ -81,7 +81,7 @@ Done when: every section in the teach-order table is present or dropped by its s
 
 ### 8. Verify and deliver
 
-Re-open every cited `path:line` and confirm it still says what the page claims. Check that the tags balance. Run a terms pass: list each term at its first use, and fail on any term used before the section that introduces it. If a headless browser is available, screenshot the file at the path you deliver, after its last write — 390px wide in the light scheme and desktop width in the dark scheme — then look at both: unreadable labels, clipped chips, a table that needs sideways scrolling, and squashed shapes only show up there. Screenshots of sensitive material go in the same private directory. For sensitive material, confirm the file's mode with `ls -l`. Then give the user the absolute path, the one-line answer and the decision being asked for.
+Re-open every cited `path:line` and confirm it still says what the page claims. Check that the tags balance. Run a terms pass: list each term at its first use, and fail on any term used before the section that introduces it. If a headless browser is available, screenshot the file at the path you deliver, after its last write — 390px wide in the light scheme and desktop width in the dark scheme — then look at both: unreadable labels, clipped chips, a table that needs sideways scrolling, and squashed shapes only show up there. Screenshots of sensitive material go in the same private directory. For sensitive material, confirm the file's mode with `ls -l`. Then give the user the absolute path, the one-line answer and the decision being asked for. When the case was an item on a syncing board, record the delivered path on that item (`syncing-board`, events to edits).
 
 Done when: every citation has been re-read, every term is introduced before its first use, and the path delivered.
 
@@ -102,6 +102,8 @@ Everything else is written where the user asks for it. When they don't say, use 
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
+
+**2026-10-29 — board hook.** Prompted by the `syncing-board` skill: a mechanism page delivered for a board item is recorded on the item, so the board shows which items can be visualized. One sentence in step 8.
 
 **2026-10-28 — fix round 1 (Opus review on PR #8).** Prompted by the review's 1 BLOCKING, 6 SHOULD, 4 NIT. Sensitivity now states a run rule beside the file rule: a reproduction goes only to a target named in step 1 and asserted by the script, screenshots use a local headless browser on `file://`, paid runs need the user's go, and a private page loads nothing remote (local vendored diagram library). Narrow-screen table rule (`data-label` block cells, wrapping cites) and an outcome-named gauge with `role="group"`, axis rows, and outcome-named classes replace side-of-threshold classes. Description loses its deliverables list (the body carries them) and gains the "understand or decide rather than fix" discriminator; a one-line gate in the body keeps single-function questions in chat. Step 7 gained its Done when; step 8 gained the terms pass, sideways-scroll check, and screenshot-after-last-write; step 2 confirms the pinned SHA is on the remote before link chips. Reach grid gained a **who** column; the one-line answer and the verdict card merged into one; the README inspiration note now links its two sources.
 
