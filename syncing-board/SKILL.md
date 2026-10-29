@@ -32,7 +32,7 @@ Every event is one edit, stamped on the item:
 
 An id is never reused, Done and archive included. `changed` is stamped on every edit. A next action is one sentence naming what the actor does; an item in Needs you always has one. Edit by anchor: a tool that rejects a stale read rather than applying it, so two agents cannot silently overwrite each other on the one file. If the tool applies the ops of one patch against the pre-edit line numbers, a move is two patches: cut and paste, then re-read and retarget the state.
 
-Done when: the item reflects the event, `changed` is stamped, and `check.py --stamp` reports 0 flags.
+Done when: the item reflects the event, `changed` is stamped, and `check.py --stamp` reports 0 flags and no CHECK line reading DONE.
 
 ## Reading it for the owner
 
@@ -46,9 +46,9 @@ Done when: the answer cites every id whose actor is the owner.
 
 ## Rendering at a glance
 
-Position before colour: Needs you is the first section; the owner's rows are tinted wherever they sit, with the next action in full weight; Done is muted. A dense table, one line per item, the same aligned columns in every state. Titles are plain text; the PR or issue number is the link chip; an item with a mechanism page shows a diagram glyph where the others show a faint explain button. Badges only where they mean something. Above the table, panels that each answer one question the table cannot; the forms and the reasons are in BOARD-FORMAT.md.
+Position before colour: Needs you is the first section; the owner's rows are tinted wherever they sit, with the next action in full weight; Done is muted. A dense table, one line per item, the same aligned columns in every state; what each cell shows is in BOARD-FORMAT.md. Above the table, panels that each answer one question the table cannot; the forms and the reasons are in BOARD-FORMAT.md.
 
-Verify as in `explain-mechanism` step 8: a local headless browser on the `file://` URL, desktop width in both schemes and 390 px, with one item planted per badge and glyph so every rendering path is seen. Then hand the screenshots to a critic that has not seen the design; apply its layout findings, and take its content findings to the owner.
+Verify with a local headless browser on the `file://` URL (the same check as `explain-mechanism` step 8): desktop width in both schemes and 390 px, with one item planted per badge and glyph so every rendering path is seen. Then hand the screenshots to a critic that has not seen the design; apply its layout findings, and take its content findings to the owner.
 
 Done when: the three screenshots have been looked at; 0 remote requests, 0 console errors, scroll width equal to the viewport; every layout finding applied.
 

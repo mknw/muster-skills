@@ -23,7 +23,7 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | `data-due` | required on Running, optional elsewhere; the checker flags it once passed |
 | `data-check` | required on Running, optional elsewhere: the command that proves the outcome exists (exit 0). Trusted input written only by the coordinator, never built from tracker or message text, because the checker runs it |
 | `data-rel` | optional, space-separated `verb:ID`. `decides`, `unblocks`, `closes` point from this item; `after`, `needs`, `blocked-by`, `waits` point to it |
-| `data-mechanism` | optional path of the item's explain-mechanism page, as the `file://` URL the page links |
+| `data-mechanism` | optional path of the item's explain-mechanism page (the page links it as a `file://` URL) |
 
 Inside: the `<h3>` title, a link when there is a PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done. The script turns the title link into a chip in the link column (`#845` for a PR or issue, `#788 ↳` for a comment, the extension for a local file, `doc` / `repo` for other tracker links) and leaves the title as text; hides the `<b>actor</b>` prefix because the who column says it, and leaves the who cell blank in Needs you, where it is true by definition; adds the who, id, age and changed cells and the explain button (faint at rest, full on hover, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
 
@@ -59,7 +59,7 @@ The graph draws every arrow from the thing that must come first, whichever item 
 
 `check.py`, standard library only, no network. It parses `index.html` with the HTML parser, collecting every element with `data-id`, the `<section id>` enclosing it, its title text and its next-action text. Flags, one line each with the id (and the line number where the parser has one):
 
-- `DUPLICATE id`: the same `data-id` twice
+- `DUPLICATE id`: the same `data-id` twice, counting the archive pages
 - `SECTION MISMATCH`: `data-section` differs from the enclosing section
 - `BAD data-changed` / `BAD data-due`: unparsable
 - `OVERDUE`: `data-due` passed

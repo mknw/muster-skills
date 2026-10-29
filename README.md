@@ -77,16 +77,16 @@ rewriting it against the rules above:
   and **[nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)**
   — reviewed sources; ideas rather than text made it in.
 
-`syncing-board` is homegrown; three ideas shaped it without lending text:
-HumanLayer's [show-me](https://humanlayer.dev/blog/show-me-skill) (the most compact
-form per question), Matt Pocock's [teach](https://www.aihero.dev/skills-teach) (state in
-files rather than chat, small pages sharing one assets folder) and
-[hashline](https://github.com/quangdang46/hashline) (hash-anchored edits that reject
-stale reads, which is what makes one file safe as a record several agents write).
-
 Material adapted from the MIT-licensed repositories above is redistributed
 under this repository's own MIT license. Full upstream copyright and
 permission notices: [NOTICE.md](NOTICE.md).
+
+`syncing-board` is homegrown; three ideas shaped it without lending text:
+HumanLayer's [show-me](https://humanlayer.dev/blog/show-me-skill) (the most compact
+form per question), Matt Pocock's [teach](https://aihero.dev/skills-teach) (state in
+files rather than chat, small pages sharing one assets folder) and
+[hashline](https://github.com/quangdang46/hashline) (hash-anchored edits that reject
+stale reads, which is what makes one file safe as a record several agents write).
 
 `dispatching-work` is homegrown: orchestration doctrine distilled from running
 multi-agent coordination sessions.
