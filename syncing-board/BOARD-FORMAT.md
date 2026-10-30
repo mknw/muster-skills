@@ -9,7 +9,8 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 ```html
 <li class="item" data-id="L5" data-section="loose-ends" data-actor="owner" data-since="2026-10-28" data-changed="2026-10-28T17:17:00Z" data-rel="after:N1">
   <h3><a href="https://host/owner/repo/pull/845">Title as the owner would read it</a></h3>
-  <p class="next"><b>owner</b> the one next action</p>
+  <p class="next"><b>owner</b> the one next action, after #845 and #851</p>
+  <p class="links"><a href="https://host/owner/repo/pull/851">851</a> <a href="https://host/owner/repo/issues/840">840</a></p>
 </li>
 ```
 
@@ -25,7 +26,7 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | `data-rel` | optional, space-separated `verb:ID`. `decides`, `unblocks`, `closes` point from this item; `after`, `needs`, `blocked-by`, `waits` point to it |
 | `data-mechanism` | optional path of the item's explain-mechanism page (the page links it as a `file://` URL) |
 
-Inside: the `<h3>` title, a link when there is a PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done. The script turns the title link into a chip in the link column (`#845` for a PR or issue, `#788 ↳` for a comment, the extension for a local file, `doc` / `repo` for other tracker links) and leaves the title as text; hides the `<b>actor</b>` prefix because the who column says it, and leaves the who cell blank in Needs you, where it is true by definition; adds the who, id, age and changed cells and the explain button (faint at rest, full on hover, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
+Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done; then, when the item cites more than one reference, `<p class="links">` with one `<a>` per further PR, issue, comment or page, so a `#NNN` written in the text always has a link to click. The script turns the title link and each anchor in the links row into chips in the link column (a link repeated in both appears once), removes the row, and leaves the title as text. A chip reads `#845` for a PR or issue, `#788 ↳` for a comment, the extension for a local file, `doc` / `repo` for other tracker links. The script also hides the `<b>actor</b>` prefix because the who column says it, and leaves the who cell blank in Needs you, where it is true by definition; adds the who, id, age and changed cells and the explain button (faint at rest, full on hover, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
 
 **Badges**, in the changed cell, short and relative, allowed to wrap: `overdue 3 d`, `due 10-30`, `stale`, `check` (the item has an outcome check; the command is the tooltip). Nothing else.
 
@@ -43,7 +44,7 @@ Stylesheet in `assets/`: tokens on `:root`, dark by `prefers-color-scheme`, the 
 
 ## The panels: which form answers which question
 
-Per panel, the most compact form that carries its question (`explain-mechanism`, [HTML-FORMAT.md, "Picking the form"](../explain-mechanism/HTML-FORMAT.md)). The board's own questions and the forms that answer them:
+Per panel, the most compact form that carries its question (`visualizing`, [FORMS.md](../visualizing/FORMS.md)). The board's own questions and the forms that answer them:
 
 | question | form | reason |
 |---|---|---|
@@ -57,7 +58,7 @@ The graph draws every arrow from the thing that must come first, whichever item 
 
 ## The checker
 
-`check.py`, standard library only, no network. It parses `index.html` with the HTML parser, collecting every element with `data-id`, the `<section id>` enclosing it, its title text and its next-action text. Flags, one line each with the id (and the line number where the parser has one):
+`check.py`, standard library only, no network. It parses `index.html` with the HTML parser, collecting every element with `data-id`, the `<section id>` enclosing it, its title text, its next-action text and its links. Flags, one line each with the id (and the line number where the parser has one):
 
 - `DUPLICATE id`: the same `data-id` twice, counting the archive pages
 - `SECTION MISMATCH`: `data-section` differs from the enclosing section
@@ -65,6 +66,7 @@ The graph draws every arrow from the thing that must come first, whichever item 
 - `OVERDUE`: `data-due` passed
 - `NO NEXT ACTION`: a Needs-you item with no next action, or one that only names the actor
 - `NO CHECK`: a Running item without `data-due` or without `data-check`
+- `UNLINKED REF`: a `#NNN` in an open item's title or next action that no link in the item points at (`/pull/NNN` or `/issues/NNN`); Done items are exempt
 - `STALE`: `data-changed` older than three days on an open item
 
 Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERDUE when it fails past `due`, else pending, and whether it ran without a shell or through `sh -c`; a command with no shell metacharacter runs without one, under a timeout either way); then the lane-deadline ledger the coordinator keeps, whose overdue lines also count as flags; then the counts per state. Exit 1 on any flag. `--stamp` rewrites the last-checked line through the same anchor tool used for items, falling back to a direct write. The mutation run that proves it: a scratch copy with one planted instance of each defect, all flagged, exit 1.

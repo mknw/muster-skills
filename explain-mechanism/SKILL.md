@@ -75,9 +75,9 @@ Done when: every option is scored against the same evidence rows and one is reco
 
 ### 7. Render the page
 
-Build the page by following [HTML-FORMAT.md](HTML-FORMAT.md). The sections follow the **teach order**: each one builds only on what came before it, so the reader is never asked to hold a term that has not been introduced. Every visual replaces a paragraph, and takes the most compact form that carries its question (HTML-FORMAT.md, "Picking the form"). A section's prose stays at three sentences or fewer, and a sentence that could be a table row becomes one.
+Build the page by following [HTML-FORMAT.md](HTML-FORMAT.md). The sections follow the **teach order**: each one builds only on what came before it, so the reader is never asked to hold a term that has not been introduced. Every visual replaces a paragraph, and takes the form `visualizing` picks for that section's question. A mechanism is a path through decisions, so the mechanism section carries a **control-flow diagram** with the case's path marked, and the rule section carries **pseudocode** of the deciding step: the reader predicts by following the branches. A section's prose stays at three sentences or fewer, and a sentence that could be a table row becomes one.
 
-Done when: every section in the teach-order table is present or dropped by its stated rule, every gauge and contrast row is generated from the recorded output files (the build reads them, not a copy), and the build leaves no unexpanded citation token.
+Done when: every section in the teach-order table is present or dropped by its stated rule, the mechanism section shows the flow and the rule section the pseudocode, every gauge and contrast row is generated from the recorded output files (the build reads them, not a copy), and the build leaves no unexpanded citation token.
 
 ### 8. Verify and deliver
 
@@ -102,6 +102,8 @@ Everything else is written where the user asks for it. When they don't say, use 
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
+
+**2026-10-30 — control flow and pseudocode by default.** Prompted by the owner: pages lacked variety, and a mechanism almost always wants a control-flow diagram and pseudocode (HumanLayer's `show-me`). Form choice now lives in `visualizing`; step 7 requires the flow in the mechanism section and the pseudocode in the rule section; HTML-FORMAT.md gained the two visuals (flow, pseudocode block) and lost its own "Picking the form".
 
 **2026-10-29 — board hook.** Prompted by the `syncing-board` skill: a mechanism page delivered for a board item is recorded on the item, so the board shows which items have been visualized. One sentence in step 8.
 

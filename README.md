@@ -36,6 +36,7 @@ Two rules keep the set portable:
 | `domain-modeling` | Building a project's glossary and decision records |
 | `improve-codebase-architecture` | A guided architecture-improvement pass |
 | `architecture-report` | A cited, descriptive report on one named layer or topic |
+| `visualizing` / `show-me` | The most compact visual form for one question (control flow, pseudocode, call stack, diagram, diff, layout) in place of prose; the form-choice doctrine other skills point to |
 | `explain-mechanism` | A visual HTML page tracing one concrete case through one mechanism — its rule and real numbers, why it fails, its reach — ending in a decision |
 | `syncing-board` | The one private page an owner and their coordinator sync through: what each party waits on, next actor, age, outcome checks, dependencies — dense table, report-only checker, anchor-based edits |
 | `intent-driven-development` | Keeping implementation tied to stated intent |
@@ -96,3 +97,10 @@ but no text was adapted from either: [HumanLayer's
 `show-me`](https://humanlayer.dev/blog/show-me-skill) (compact visuals in
 place of prose) and [Matt Pocock's `teach`](https://aihero.dev/skills-teach)
 (build understanding one step at a time towards a concrete win).
+
+`visualizing` is homegrown as well, with the same two sources and no adapted
+text: the lightest form per question, elided, with `+`/`−` for change
+([HumanLayer's `show-me`](https://www.humanlayer.com/blog/show-me-skill)),
+and claims grounded in sources, with reference cards kept apart from lessons
+([Matt Pocock's `teach`](https://www.aihero.dev/skills-teach)). `show-me` is
+its user-typed alias, as `grill-me` is for `grilling`.

@@ -27,6 +27,7 @@ Every event is one edit, stamped on the item:
 | the owner decides | move the item where the decision points; Done when the decision closes it |
 | something is owed and no lane holds it | item in Loose ends, with the next actor and one next action |
 | an item blocks or follows another | `rel` on the item (verbs in BOARD-FORMAT.md) |
+| an event names a PR, issue, comment or page | link each one: the title links the primary, every other goes in the item's links row (BOARD-FORMAT.md); the checker flags a `#NNN` in an open item's text that nothing links to |
 | `explain-mechanism` delivers a page for an item | `mechanism` = the page's path |
 | a Done item is older than the archive window | move it to the archive page (BOARD-FORMAT.md, The folder) |
 
@@ -46,7 +47,7 @@ Done when: the answer cites every id whose actor is the owner.
 
 ## Rendering at a glance
 
-Position before colour: Needs you is the first section; the owner's rows are tinted wherever they sit, with the next action in full weight; Done is muted. A dense table, one line per item, the same aligned columns in every state; what each cell shows is in BOARD-FORMAT.md. Above the table, panels that each answer one question the table cannot; the forms and the reasons are in BOARD-FORMAT.md.
+Position before colour: Needs you is the first section; the owner's rows are tinted wherever they sit, with the next action in full weight; Done is muted. A dense table, one line per item, the same aligned columns in every state; what each cell shows is in BOARD-FORMAT.md. Above the table, panels that each answer one question the table cannot; `visualizing` picks each panel's form, and BOARD-FORMAT.md records the board's choices.
 
 Verify with a local headless browser on the `file://` URL (the same check as `explain-mechanism` step 8): desktop width in both schemes and 390 px, with one item planted per badge and glyph so every rendering path is seen. Then hand the screenshots to a critic that has not seen the design; apply its layout findings, and take its content findings to the owner.
 
@@ -59,6 +60,8 @@ Each open item carries an explain button that copies `Use explain-mechanism on s
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
+
+**2026-10-30 — links row and `visualizing`.** Prompted by the owner having to tell the coordinator to add links for an item that carried several PRs. The live board had already grown a links row for it; the skill now records it (BOARD-FORMAT.md, The item), adds the event row that says to link every reference, and adds the `UNLINKED REF` flag so the omission is caught by the checker (proved by a planted `#999`; Done items are exempt, since their deliverable link is the record). Form choice for the panels moved to `visualizing`.
 
 **2026-10-29 — fix round 1 (independent review with visual validation on PR #9).** Prompted by 1 BLOCKING, 12 SHOULD, 11 NIT. `due` and `check` are now required on Running items and the checker flags their absence (the live board had six Running rows with neither, passing clean). Badges got a short relative form; the explain button is visible at rest; the checker description matches a real checker (CHECK lines report, line numbers only where the parser has them, the deadline ledger affects the exit code); a `data-check` trust sentence; an archive window for Done; the two-patch move stated as conditional on the tool; the description lost its attribute list and gained the "existing board" guard; every section has a Done-when; lists and rendering detail live only in BOARD-FORMAT.md, whose panels rule points at explain-mechanism's "Picking the form".
 

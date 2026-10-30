@@ -18,9 +18,9 @@ Each section answers one question, introduces at most one new term, and uses onl
 |---|---|---|---|
 | 0 | Header | What is this page, how sure is it? | title, meta line, evidence badge |
 | 1 | The answer | What happened, in one sentence? | verdict card |
-| 2 | The mechanism | What are the steps? | step strip |
+| 2 | The mechanism | What are the steps, and where does it branch? | flow, the case's path marked |
 | 3 | The case | What did this input look like at each step? | step strip with the case's values, deciding step marked |
-| 4 | The rule | What exactly decided it? | rule card + gauge |
+| 4 | The rule | What exactly decided it? | pseudocode + rule card + gauge |
 | 5 | Predict | Can the reader now apply the rule? | one `<details>` reveal |
 | 6 | Why | Which feature of the input caused it? | contrast table + gauge with variants |
 | 7 | Reach | What else does this reach, and who? | reach grid |
@@ -40,12 +40,14 @@ The one-line answer is the verdict card in §1, not a second line here.
 
 ## Picking the form
 
-Per section, pick the most compact form that carries its question, and omit everything the question does not need. In ascending weight: types or signatures, pseudocode, a table, a diagram, a paragraph of prose. A structure — a component tree, a call stack, the step strip, a file layout — shows what changed with `+`/`−` marks on the structure rather than a before/after pair. HTML visuals (cards, gauges, strips) only where a lighter form does not carry it: a section one pseudocode block answers gets the block.
+`visualizing` picks the form for each section's question (its FORMS.md). This file holds how each form lands on the page. A call stack, sequence or state diagram, file layout or diff that a section needs becomes a `<pre>` block in the same monospace style as the pseudocode.
 
 ## Visual vocabulary
 
 Use these visuals, and invent a new one only when none fits.
 
+- **Flow.** The mechanism's control flow as a vertical list of nodes (snippet below), in HTML so that labels stay readable at 390px, where a scaled SVG shrinks its text. A decision node carries its predicate as a question and lists its exits; the case's path is marked by the accent border and by the words `case ▸` on the exit it took; the deciding node carries a `decides` tag. At most nine nodes: a mechanism with more splits into a flow of its stages and one flow per stage that matters.
+- **Pseudocode block.** The deciding step as `<pre class="pseudo">`: one line per decision, constants named, the deciding line in `<mark>` ending in the word `decides`, and the source cite and constants' values in one comment on the first line. Lines stay under about 38 characters, so a phone shows them without wrapping.
 - **Step strip.** A row of numbered boxes, one per step, wrapping on narrow screens (flex with `flex-wrap`). Under each box, the case's value at that step, in monospace. Mark the deciding step with the accent border and a label.
 - **Rule card.** The predicate in monospace, then one row per constant: name, value, where it is set (cite chip), measured or placeholder.
 - **Gauge.** A number line for the rule's quantity, with the threshold as a dashed marker and one dot per observation. Repeats of the same input are separate dots on one row, so variance shows at a glance. Build it in HTML (snippet below): a two-column grid with the row labels as text and the dots positioned by `left: <value>%`, so labels wrap and dots stay round at any width. The container is `role="group"` with an `aria-label` — `role="img"` makes its descendants presentational, so the rows' values in words for screen readers would never be read. Name the dot classes by outcome (`.right` / `.wrong`), not by side of the threshold: which side is good depends on the rule (for an error budget it is the reverse of a score). Include an axis row — 0, threshold, max — under the dots; dots with no scale cannot be read against the threshold. Give each row its values in words for screen readers.
@@ -112,9 +114,21 @@ td .cite { white-space: normal; overflow-wrap: anywhere; }
 .track i.wrong { background: var(--panel); border: 2.5px solid var(--bad); }
 .track-axis { display: flex; justify-content: space-between; margin: 0 8px; font-size: .75rem; color: var(--muted); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.flow { list-style: none; margin: 0; padding: 0 0 0 16px; border-left: 2px solid var(--rule); }
+.flow .node { position: relative; margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); }
+.flow .node::before { content: ""; position: absolute; left: -23px; top: 14px; width: 8px; height: 8px; border-radius: 50%; background: var(--rule); }
+.flow .on-path { border-color: var(--accent); }
+.flow .on-path::before { background: var(--accent); }
+.flow .decides { border-width: 2px; }
+.flow .exits { list-style: none; margin: 4px 0 0; padding: 0; font-size: .9rem; }
+.flow .taken { font-weight: 600; }
+.flow .tag { font: 12px var(--mono); color: var(--accent); }
+.pseudo mark { background: var(--warn-bg); color: inherit; }
+.pseudo .cmt { color: var(--muted); }
 @media (max-width: 600px) {
+  thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   td { display: block; }
-  td::before { content: attr(data-label); font-weight: 600; }
+  td::before { content: attr(data-label); display: block; font-weight: 600; color: var(--muted); }
 }
 </style>
 </head>
@@ -133,6 +147,24 @@ One gauge row, threshold at 0.5 on a 0–1 scale; a value `v` sits at `left: v �
   <div></div>
   <div class="track-axis"><span>0</span><span>threshold 0.5</span><span>1</span></div>
 </div>
+```
+
+A two-decision flow with the case rejected at the second, and the pseudocode that matches it:
+
+```html
+<ol class="flow" aria-label="Control flow; the case's path is marked">
+  <li class="node on-path"><b>request arrives</b></li>
+  <li class="node on-path"><b>token valid?</b>
+    <ul class="exits"><li>no → reject 401</li><li class="taken">yes → next <span class="tag">case ▸</span></li></ul></li>
+  <li class="node on-path decides"><b>count below limit?</b> <span class="tag">decides</span>
+    <ul class="exits"><li class="taken">no → REJECT 429 <span class="tag">case ▸</span></li><li>yes → run handler</li></ul></li>
+</ol>
+<pre class="pseudo"><span class="cmt">// gate.ts:40  LIMIT = 100 (env)</span>
+admit(request)
+  if not valid(token)  -&gt; 401
+  count = window.count(client, 60s)
+<mark>  if count &gt;= LIMIT    -&gt; 429  decides</mark>
+  -&gt; handler(request)</pre>
 ```
 
 ## Build
