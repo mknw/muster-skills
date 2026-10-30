@@ -24,7 +24,7 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | `data-due` | required on Running, optional elsewhere; the checker flags it once passed |
 | `data-check` | required on Running, optional elsewhere: the command that proves the outcome exists (exit 0). Trusted input written only by the coordinator, never built from tracker or message text, because the checker runs it |
 | `data-rel` | optional, space-separated `verb:ID`. `decides`, `unblocks`, `closes` point from this item; `after`, `needs`, `blocked-by`, `waits` point to it |
-| `data-mechanism` | optional path of the item's explain-mechanism page (the page links it as a `file://` URL) |
+| `data-mechanism` | optional path of the item's `spell-it-out` page (the page links it as a `file://` URL) |
 
 Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done; then, when the item cites more than one reference, `<p class="links">` with one `<a>` per further PR, issue, comment or page, so a `#NNN` written in the text always has a link to click. The script turns the title link and each anchor in the links row into chips in the link column (a link repeated in both appears once), removes the row, and leaves the title as text. A chip reads `#845` for a PR or issue, `#788 ↳` for a comment, the extension for a local file, `doc` / `repo` for other tracker links. The script also hides the `<b>actor</b>` prefix because the who column says it, and leaves the who cell blank in Needs you, where it is true by definition; adds the who, id, age and changed cells and the explain button (faint at rest, full on hover, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
 
@@ -44,7 +44,7 @@ Stylesheet in `assets/`: tokens on `:root`, dark by `prefers-color-scheme`, the 
 
 ## The panels: which form answers which question
 
-Per panel, the form below, drawn as `visualizing` ([FORMS.md](../visualizing/FORMS.md)) says. The board's own questions and the forms that answer them:
+Per panel, the form below, drawn as `graph-it` ([FORMS.md](../graph-it/FORMS.md)) says. The board's own questions and the forms that answer them:
 
 | question | form | reason |
 |---|---|---|

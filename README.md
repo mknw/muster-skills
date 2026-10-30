@@ -36,8 +36,8 @@ Two rules keep the set portable:
 | `domain-modeling` | Building a project's glossary and decision records |
 | `improve-codebase-architecture` | A guided architecture-improvement pass |
 | `architecture-report` | A cited, descriptive report on one named layer or topic |
-| `visualizing` / `show-me` | How to draw one visual form (control flow, pseudocode, types, call stack, diagram, diff, gauge) as text or HTML, in place of prose; the recipes other skills' pages are built from |
-| `explain-mechanism` | A visual HTML page tracing one concrete case through one mechanism — its rule and real numbers, why it fails, its reach — ending in a decision |
+| `graph-it` / `show-me` | How to draw one visual form (control flow, pseudocode, types, call stack, diagram, diff, gauge) as text or HTML, in place of prose; the recipes other skills' pages are built from |
+| `spell-it-out` | A visual HTML page tracing one concrete case through one mechanism — its rule and real numbers, why it fails, its reach — ending in a decision |
 | `syncing-board` | The one private page an owner and their coordinator sync through: what each party waits on, next actor, age, outcome checks, dependencies — dense table, report-only checker, anchor-based edits |
 | `intent-driven-development` | Keeping implementation tied to stated intent |
 | `diagnosing-bugs` | A diagnosis loop for hard bugs and regressions |
@@ -92,13 +92,13 @@ stale reads, which is what makes one file safe as a record several agents write)
 `dispatching-work` is homegrown: orchestration doctrine distilled from running
 multi-agent coordination sessions.
 
-`explain-mechanism` is homegrown too. Two published skills shaped its ideas,
+`spell-it-out` is homegrown too. Two published skills shaped its ideas,
 but no text was adapted from either: [HumanLayer's
 `show-me`](https://www.humanlayer.com/blog/show-me-skill) (compact visuals in
 place of prose) and [Matt Pocock's `teach`](https://www.aihero.dev/skills-teach)
 (build understanding one step at a time towards a concrete win).
 
-`visualizing` is homegrown as well, with the same two sources and no adapted
+`graph-it` is homegrown as well, with the same two sources and no adapted
 text: the lightest form per question, elided, with `+`/`−` for change
 ([HumanLayer's `show-me`](https://www.humanlayer.com/blog/show-me-skill)),
 and grounded claims in a short instruction, since a model copies the length

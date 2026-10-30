@@ -1,6 +1,6 @@
 # Page format
 
-One self-contained HTML file: CSS inline, no script, `<details>` for the only interactive parts. A page for private material loads nothing remote. The forms are drawn by [`visualizing`](../visualizing/FORMS.md); this file says which form goes where.
+One self-contained HTML file: CSS inline, no script, `<details>` for the only interactive parts. A page for private material loads nothing remote. The forms are drawn by [`graph-it`](../graph-it/FORMS.md); this file says which form goes where.
 
 ## Contract
 
@@ -65,7 +65,7 @@ code.cite, td .cite { white-space: normal; overflow-wrap: anywhere; }
 tr.rec { background: var(--good-bg); }
 details { margin-top: 20px; border-top: 1px solid var(--rule); padding-top: 8px; }
 summary { cursor: pointer; color: var(--muted); }
-/* then the flow, pseudo, table and gauge rules from visualizing/FORMS.md */
+/* then the flow, pseudo, table and gauge rules from graph-it/FORMS.md */
 </style>
 </head>
 <body><main>

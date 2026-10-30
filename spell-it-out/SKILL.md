@@ -1,15 +1,15 @@
 ---
-name: explain-mechanism
+name: spell-it-out
 description: Explain one mechanism by tracing one concrete case through it, as one visual page read at a glance that ends in a decision. Use when the user asks to explain how X works, why X failed or missed a case, or to show them the mechanism behind a behaviour, and wants to understand it or decide on it rather than have it fixed. One mechanism, one case; a whole layer's inventory belongs to architecture-report.
 ---
 
-# Explain Mechanism
+# Spell it out
 
 One **mechanism**, one **case**, one page read **at a glance**, one **decision**. The reader leaves able to predict what the mechanism does with an input they have not seen, and to choose between the options at the bottom. The page carries what one look needs; everything found on the way goes in a notes file beside it, linked from the page's details.
 
 A question one function answers in a few sentences gets a chat answer. When the user wants the fix built, hand over to `diagnosing-bugs` after the decision; this skill builds nothing.
 
-| | architecture-report | explain-mechanism | diagnosing-bugs |
+| | architecture-report | spell-it-out | diagnosing-bugs |
 |---|---|---|---|
 | Scope | a whole layer | one mechanism | one bug |
 | Ends with | the description | a decision for the reader | a fix, built |
@@ -23,19 +23,21 @@ Investigate fully, show little. Steps 1 to 5 fill the notes file; step 6 draws t
 3. **Extract the rule.** The deciding predicate in code form; for each constant its value, where it is set, and measured or placeholder; the case's numbers beside it; the types or fields the predicate reads. Done when: a reader could compute the case's outcome by hand.
 4. **Diagnose.** Skip when nothing fails or surprises. Otherwise **ablate** when a reproduction is cheap and permitted: one edit per variant; for the suspect feature, remove it, swap it for a neutral one of the same size, move it; at least two runs each, reported as k of n. The script carries its target and refuses any other, prints each variant's definition beside its result, and records UTC time and cost. Done when: the cause is pinned by a flipping pair, or marked as inferred from reading.
 5. **Reach and options.** The **reach**: other inputs (a failing variant no test covers is the first row), call sites, tiers and configurations that run the same rule, the controls in front of it, and who is affected. Then two to four **options**, each scored against the same evidence rows with cost and reversibility, "accept" included when legitimate, one recommended. Done when: every reach row cites a run or a `path:line` or is marked unmeasured, and every option is scored.
-6. **Render.** Build the page from the notes by following [HTML-FORMAT.md](HTML-FORMAT.md), then screenshot it as `visualizing` says, after the last write, and re-open every cite. Done when: the page meets the three bounds in HTML-FORMAT.md as measured there, both screenshots were looked at, every cite still says what the page claims, `ls -l` shows owner-only files for sensitive material, and the user has the absolute path, the one-line answer and the decision asked. When the case was an item on a syncing board, record the path on that item.
+6. **Render.** Build the page from the notes by following [HTML-FORMAT.md](HTML-FORMAT.md), then screenshot it as `graph-it` says, after the last write, and re-open every cite. Done when: the page meets the three bounds in HTML-FORMAT.md as measured there, both screenshots were looked at, every cite still says what the page claims, `ls -l` shows owner-only files for sensitive material, and the user has the absolute path, the one-line answer and the decision asked. When the case was an item on a syncing board, record the path on that item.
 
 ## Sensitivity
 
 Material is **sensitive** when it holds an unfixed security weakness, real personal or company data, credentials, or measurements the user keeps private. Then: page, notes, scripts and screenshots go to the private local directory the project names for private material (ask once if none is named), created under `umask 077`, outside any repository; a reproduction reaches only the target named in step 1, and a paid run needs the user's go unless a standing budget covers it; screenshots come from a local headless browser on `file://`; the page loads nothing remote, a diagram library ships as a local vendored copy; nothing about it leaves the machine, and anything written elsewhere calls it "a private worked example" with invented values. Secrets are `<REDACTED>` everywhere, sensitive or not.
 
-Everything else goes where the user asks, else `<tmpdir>/explain-<mechanism>-<timestamp>.html` with its notes beside it.
+Everything else goes where the user asks, else `<tmpdir>/spell-it-out-<mechanism>-<timestamp>.html` with its notes beside it.
 
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
 
-**2026-10-30 — at a glance.** Prompted by the owner: pages ran to ten dense sections, which is the chat answer again in another format, and lacked control flow, pseudocode and data shapes. The page is now five parts (answer, flow, rule with its data shapes, options, collapsed details), the answer and flow on the first screen, with a 200-word bound, and the investigation moves to a notes file the details link; the lesson from Matt Pocock's `wait-what` applies to the skill itself, since a model copies the length of its instructions, so this file went from 110 lines to half. How each form is drawn moved to `visualizing`; this skill keeps only where each form goes. The independent review on PR #10 (round 1: 11 SHOULD, 12 NIT; round 2: 2 BLOCKING, 4 SHOULD, 6 NIT) was folded in: one screenshot rule, one source for each section's form, cites on the flow and pseudocode, the phone table fix; then reach and options as a step that always runs, and bounds the parts can meet at their own maxima, measured on a page built at those maxima.
+**2026-10-30 — renamed `spell-it-out`.** The owner's name, replacing `explain-mechanism`: it names what the reader gets rather than what the skill does. Callers and the board's explain button use the new name.
+
+**2026-10-30 — at a glance.** Prompted by the owner: pages ran to ten dense sections, which is the chat answer again in another format, and lacked control flow, pseudocode and data shapes. The page is now five parts (answer, flow, rule with its data shapes, options, collapsed details), the answer and flow on the first screen, with a 200-word bound, and the investigation moves to a notes file the details link; the lesson from Matt Pocock's `wait-what` applies to the skill itself, since a model copies the length of its instructions, so this file went from 110 lines to half. How each form is drawn moved to `graph-it`; this skill keeps only where each form goes. The independent review on PR #10 (round 1: 11 SHOULD, 12 NIT; round 2: 2 BLOCKING, 4 SHOULD, 6 NIT) was folded in: one screenshot rule, one source for each section's form, cites on the flow and pseudocode, the phone table fix; then reach and options as a step that always runs, and bounds the parts can meet at their own maxima, measured on a page built at those maxima.
 
 **2026-10-29 — board hook.** Prompted by the `syncing-board` skill: a mechanism page delivered for a board item is recorded on the item. One sentence in the render step.
 

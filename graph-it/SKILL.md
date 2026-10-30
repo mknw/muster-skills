@@ -1,9 +1,9 @@
 ---
-name: visualizing
+name: graph-it
 description: Draw one visual form as text or as HTML, in place of prose. Use when the user says "show me" or finds a message too long, or when another skill has chosen a form for a section and needs it drawn.
 ---
 
-# Visualizing
+# Graph it
 
 Draws one **form** so the reader takes it in **at a glance**. The skill that calls this one decides which form goes where; this one decides how the form is drawn. Called directly ("show me"), restate the last message as the form in [FORMS.md](FORMS.md) whose "shows" line matches the reader's question, one form per question.
 
@@ -20,4 +20,6 @@ Done when: removing any remaining line would lose part of the answer, the answer
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
 
-**2026-10-30 — v1.** Prompted by the owner: `explain-mechanism` pages lacked variety (control flow and pseudocode were expected almost every time) and ran too long. The owner set the split: this skill says how to draw each form, and the skills that build pages say where each form goes (`explain-mechanism` for its page, `syncing-board` for its panels). Shaped by two published skills, rewritten here with no text adapted: HumanLayer's `show-me` (the lightest form, elided, `+`/`−` for change) and Matt Pocock's `teach` and `wait-what` (grounded claims; a long instruction yields a long answer, so this one stays short). `show-me` is the one-line user-invoked alias, as `grill-me` is for `grilling`.
+**2026-10-30 — named `graph-it`.** The owner's name for the skill, replacing the working name `visualizing` before the first merge.
+
+**2026-10-30 — v1.** Prompted by the owner: `spell-it-out` pages lacked variety (control flow and pseudocode were expected almost every time) and ran too long. The owner set the split: this skill says how to draw each form, and the skills that build pages say where each form goes (`spell-it-out` for its page, `syncing-board` for its panels). Shaped by two published skills, rewritten here with no text adapted: HumanLayer's `show-me` (the lightest form, elided, `+`/`−` for change) and Matt Pocock's `teach` and `wait-what` (grounded claims; a long instruction yields a long answer, so this one stays short). `show-me` is the one-line user-invoked alias, as `grill-me` is for `grilling`.
