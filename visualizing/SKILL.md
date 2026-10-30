@@ -1,6 +1,6 @@
 ---
 name: visualizing
-description: Draw one visual form (control flow, pseudocode, types, call stack, diagram, diff) as text or as HTML, in place of prose. Use when the user says "show me" or finds a message too long, or when another skill has chosen a form for a section and needs it drawn.
+description: Draw one visual form as text or as HTML, in place of prose. Use when the user says "show me" or finds a message too long, or when another skill has chosen a form for a section and needs it drawn.
 ---
 
 # Visualizing

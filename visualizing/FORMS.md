@@ -37,20 +37,21 @@ request
     <ul class="exits"><li>no → reject 401</li><li class="taken">▸ case: yes → next</li></ul></li>
   <li class="node on-path decides"><b>count below limit?</b> <span class="tag">◆ decides</span> <a class="cite" href="…">gate.ts:40</a>
     <ul class="exits"><li class="taken">▸ case: no → REJECT 429</li><li>yes → run handler</li></ul></li>
-  <li class="node"><b>run handler</b></li>
+  <li class="node"><b>run handler</b> <span class="cmt">(not reached)</span></li>
 </ol>
 ```
 
 ```css
 .flow { list-style: none; margin: 0; padding: 0 0 0 16px; border-left: 2px solid var(--rule); }
-.flow .node { position: relative; margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); }
-.flow .node::before { content: ""; position: absolute; left: -23px; top: 14px; width: 8px; height: 8px; border-radius: 50%; background: var(--rule); }
+.flow .node { position: relative; margin: 0 0 6px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); }
+.flow .node::before { content: ""; position: absolute; left: -23px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--rule); }
 .flow .on-path { border-color: var(--accent); }
 .flow .on-path::before { background: var(--accent); }
 .flow .decides { border-width: 2px; }
 .flow .exits { list-style: none; margin: 4px 0 0; padding: 0; font-size: .9rem; }
 .flow .taken { font-weight: 600; }
 .flow .tag { font: 12px var(--mono); color: var(--accent); }
+.flow .cmt { color: var(--muted); font-weight: 400; }
 ```
 
 ## Pseudocode
@@ -88,18 +89,19 @@ pre .cmt { color: var(--muted); }
 
 Shows: the shape of what crosses a boundary, or the fields a rule reads.
 
-**Text.** Names and types, details elided with `// …`. The fields the question is about stay; the rest is one elision. A contract between two sides is the signature line.
+**Text.** Names and types, details elided with `// …`. The fields the question is about stay; the rest is one elision. A contract between two sides is the signature line. The same 40-character line bound as pseudocode; a long signature breaks after the opening parenthesis.
 
 ```
+// gate.ts:12
 interface Request {
   client: ClientId
-  token: Token
-  // …
+  token: Token   // …
 }
-window.count(client: ClientId, span: Seconds) -> number   // ◆ what the rule reads
+window.count(
+  client, span) -> number  ◆ reads
 ```
 
-**HTML.** The same text in `<pre>`, the fields the rule reads in `<mark>`, the cite a chip in a `.cmt` comment on the first line.
+**HTML.** The same text in `<pre>`, the lines the rule reads in `<mark>`, the cite a chip in a `.cmt` comment on the first line; the pseudocode CSS covers it.
 
 ## Diff on a structure
 
@@ -114,7 +116,12 @@ Shows: what changed, on the unchanged structure as context. Works on trees, call
 +  if n >= limitFor(client) -> 429
 ```
 
-**HTML.** `<pre class="diff">` with `+` lines in `.add` and `−` lines in `.del`, tinted by the page's good and bad tokens.
+**HTML.** `<pre class="diff">` with each `+` line wrapped in `<span class="add">` and each `−` line in `<span class="del">`.
+
+```css
+.diff .add { background: var(--good-bg); }
+.diff .del { background: var(--bad-bg); }
+```
 
 ## Call stack
 
@@ -127,7 +134,7 @@ handleOrder
   publish(order.created)
     Worker.run
       …
-      callModel          ◆ the slow step
+      callModel          ◆ slow step
       persist
 ```
 
@@ -142,7 +149,7 @@ sequenceDiagram
   participant S as store
   U->>A: submit
   A->>S: insert
-  S--xA: timeout ◆
+  S--xA: timeout ◆ fails here
   A-->>U: "try again"
 ```
 
@@ -159,7 +166,7 @@ stateDiagram-v2
   running --> done: exit 0
   running --> failed: exit non-zero
   failed --> queued: retry [attempts < 3]
-  failed --> abandoned: [attempts = 3] ◆
+  failed --> abandoned: [attempts = 3] ◆ gives up
   done --> [*]
   abandoned --> [*]
 ```
@@ -174,7 +181,7 @@ Shows: what contains what (a component tree, a path per node), or where things l
 src/
 ├── commands/        # parses user actions into intents
 ├── sessions/        # owns session state and lifecycle
-│   └── store.ts     # insert / list / open   ◆
+│   └── store.ts     # insert / list / open   ◆ lives here
 └── transport/       # talks to the API, knows nothing about sessions
 ```
 
@@ -225,8 +232,8 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rule
 
 ## Numbers and bars
 
-Shows: counts (a number, or a count matrix of integers) and durations (one bar per item on a shared axis, a now line, a tick per deadline). Position and length are read more accurately than colour, and a count of three is a number: a chart of three adds ink and no precision.
+Shows: counts (a number in text, or a count matrix of integers with the row and column that matter marked) and durations (one bar per item on a shared axis with a labelled scale, a now line, a tick per deadline).
 
 ## Dependency graph
 
-Shows: what depends on what. Node-link up to twelve edges; an adjacency matrix beyond, which stays legible at any density and hides paths. Draw every arrow from the thing that comes first, whichever side declared the relation.
+Shows: what depends on what, as node-link or as an adjacency matrix (the caller chooses by density). Every arrow points from the thing that comes first, whichever side declared the relation; an edge label names the relation in the reader's words.

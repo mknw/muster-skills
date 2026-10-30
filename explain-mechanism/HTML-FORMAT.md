@@ -4,7 +4,7 @@ One self-contained HTML file: CSS inline, no script, `<details>` for the only in
 
 ## Contract
 
-- **One screen.** The answer, the flow and the rule are all visible on a 1280 × 800 viewport without scrolling; with the details closed the whole page is under 1200 px tall and its open text is under 200 words. What does not fit goes in the notes file, linked from the details.
+- **One look.** Three bounds, measured in a headless browser at 1280 × 800 with the details closed: the answer and the whole flow are inside the first 800 px (the flow's bottom edge as the browser reports it); the rule ends under 1200 px and the page under 1500 px; the **open text**, every word outside `<style>`, `<pre>`, `<table>` and `<details>` once tags are stripped, is under 200 words. The parts' caps below are what make the bounds reachable: a page built at every cap measures 739, 1101 and 1453 px and 153 words. What does not fit goes in the notes file, linked from the details.
 - **Phone width.** A 760 px column with 16 px gutters; at 390 px nothing scrolls sideways (the table and pseudocode recipes in FORMS.md are built for it).
 - **Both schemes.** Tokens on `:root`, redefined under `prefers-color-scheme: dark`; `body` sets its background.
 - **Cited.** Every name and number carries a cite chip: `<a class="cite" href="https://<host>/<owner>/<repo>/blob/<sha>/<path>#L12-L20">path:12-20</a>` for code the reader can open, `<code class="cite">~/private/run.txt</code>` (text, never a link) for private material. The answer line cites by part (`§rule`).
@@ -15,8 +15,8 @@ One self-contained HTML file: CSS inline, no script, `<details>` for the only in
 | part | question it answers | form (FORMS.md) | bound |
 |---|---|---|---|
 | **Answer** | what happened, and what must I choose? | one sentence, then the decision in one line, then the meta line (repo @ SHA · date · `recorded run` / `reproduced` / `read only` · `PRIVATE` badge when sensitive) | 3 lines |
-| **Flow** | where did the case branch? | control flow, the case's path marked, the deciding node tagged | 9 nodes |
-| **Rule** | what exactly decided it, on what data? | pseudocode with the case's numbers inline; under it, the types or fields the predicate reads | 8 lines + 6 lines |
+| **Flow** | where did the case branch? | control flow, the case's path marked, the deciding node tagged | 6 nodes, 2 exits each; a longer mechanism shows its stages and links a per-stage page from the details |
+| **Rule** | what exactly decided it, on what data? | pseudocode with the case's numbers inline; under it, the types or fields the predicate reads | 8 lines + 7 lines |
 | **Options** | what could change it? | table: option · changes · cost · reversible; the recommended row marked, one sentence why | 4 rows |
 | **Details** (closed) | how sure, and what else? | `<details>` holding: a gauge or table of the variants when there was an ablation; the reach as a table (surface · reached? · who · evidence); the evidence line (what ran, when, cost); the link to the notes file | — |
 
@@ -59,7 +59,6 @@ h2 { font-size: .9rem; margin: 14px 0 6px; color: var(--muted); text-transform: 
 .decision { font-weight: 600; }
 pre, code { font-family: var(--mono); font-size: 0.88em; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0; line-height: 1.4; }
-.flow .node { margin-bottom: 6px; padding: 6px 10px; }
 .cite { font: 12px var(--mono); color: var(--accent); }
 a.cite { white-space: nowrap; }
 code.cite, td .cite { white-space: normal; overflow-wrap: anywhere; }

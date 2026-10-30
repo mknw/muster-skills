@@ -44,7 +44,7 @@ Stylesheet in `assets/`: tokens on `:root`, dark by `prefers-color-scheme`, the 
 
 ## The panels: which form answers which question
 
-Per panel, the most compact form that carries its question (`visualizing`, [FORMS.md](../visualizing/FORMS.md)). The board's own questions and the forms that answer them:
+Per panel, the form below, drawn as `visualizing` ([FORMS.md](../visualizing/FORMS.md)) says. The board's own questions and the forms that answer them:
 
 | question | form | reason |
 |---|---|---|
@@ -54,7 +54,7 @@ Per panel, the most compact form that carries its question (`visualizing`, [FORM
 | what unblocks what? | chips on the rows always; a node-link graph of only the connected items while there are at most twelve edges; an adjacency matrix beyond that | node-link reads for sparse chains and becomes a hairball past a dozen edges; a matrix stays legible at any density but hides paths |
 | counts by category | numbers in the section headers and a one-line flow (opened, closed, touched in 24 h; stale and overdue each shown only when non-zero) | three numbers read faster than three areas |
 
-The graph draws every arrow from the thing that must come first, whichever item declared the relation: an inbound verb (`after`) is rendered reversed and relabelled (`before`).
+An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed and relabelled (`before`, `needed by`, `blocks`, `awaited by`), so the graph keeps FORMS.md's arrow direction.
 
 ## The checker
 
