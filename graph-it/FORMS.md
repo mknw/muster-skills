@@ -6,52 +6,51 @@ The reference half of [`graph-it`](SKILL.md): one recipe per form, as text and a
 
 Shows: the decisions a case passes through and the exit it took.
 
-**Text.** Mermaid where the surface renders it; otherwise the exits as an indented list. At most nine nodes. A decision is a predicate ending in `?`, each exit is labelled with its branch value, each end names its outcome as a word. The taken exits carry `▸ case` and thick edges; the deciding node carries `◆ decides`.
+**Text.** Mermaid where the surface renders it; otherwise the exits as an indented list. At most eight nodes. Labels say what happens in the reader's words; function names and codenames stay in the pseudocode. A decision is a question, each exit is labelled with its branch value, each end names its outcome. The case's path is coloured (`classDef` on its nodes, `linkStyle` on its edges) and its exits say `▸ this case`; the deciding node says `◆ decides`. A second finding off the main path is a dotted edge.
 
 ```mermaid
 flowchart TD
-  A([request]) ==> B{token valid?}
-  B -- no --> X[reject 401]
-  B == "yes ▸ case" ==> C{"count below limit?<br>◆ decides"}
-  C == "no ▸ case" ==> Y[REJECT 429]
-  C -- yes --> D[run handler]
+  A(["request arrives"]) ==> B{"token valid?"}
+  B -- no --> X["rejected: 401"]
+  B == "yes ▸ this case" ==> C{"under the rate limit?<br>◆ decides"}
+  C == "no ▸ this case" ==> Y["REJECTED: 429"]
+  C -- yes --> D["handler runs"]
+  classDef hit fill:#fdf1dc,stroke:#c27c0e,stroke-width:3px,color:#1d232b
+  class C,Y hit
+  linkStyle 0,2,3 stroke:#c27c0e,stroke-width:3px
 ```
 
 Text-only form of the same flow:
 
 ```
-request
-  token valid?            no → reject 401
+request arrives
+  token valid?            no → rejected: 401
   ▸ yes
-  count below limit?      ◆ decides
-  ▸ no → REJECT 429
-    yes → run handler
+  under the rate limit?   ◆ decides
+  ▸ no → REJECTED: 429
+    yes → handler runs
 ```
 
-**HTML.** A vertical list of nodes, so labels stay readable on a phone, where a scaled SVG shrinks its text. The on-path nodes carry the accent border, the taken exits `▸ case`, the deciding node `◆ decides`; an off-path node stays plain.
+**HTML.** The same Mermaid source in `<pre class="mermaid">`, drawn on the page by one script: a local vendored copy of Mermaid next to the page (a private page loads nothing remote). Under the diagram, one legend line names the colour. The settings below keep it compact; on a phone the diagram keeps a legible width inside a box that scrolls sideways, the only sideways scroll a page has.
 
 ```html
-<ol class="flow" aria-label="Control flow; the case's path is marked">
-  <li class="node on-path"><b>request arrives</b> <a class="cite" href="…">gate.ts:31</a></li>
-  <li class="node on-path"><b>token valid?</b>
-    <ul class="exits"><li>no → reject 401</li><li class="taken">▸ case: yes → next</li></ul></li>
-  <li class="node on-path decides"><b>count below limit?</b> <span class="tag">◆ decides</span> <a class="cite" href="…">gate.ts:40</a>
-    <ul class="exits"><li class="taken">▸ case: no → REJECT 429</li><li>yes → run handler</li></ul></li>
-  <li class="node"><b>run handler</b> <span class="cmt">(not reached)</span></li>
-</ol>
+<div class="flow"><pre class="mermaid">flowchart TD
+  …</pre></div>
+<p class="legend">Orange: the path this case took.</p>
+<script src="mermaid-12.2.0.min.js"></script>
+<script>
+var dark = matchMedia('(prefers-color-scheme: dark)').matches;
+mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: dark ? 'dark' : 'default',
+  themeVariables: { fontSize: '15px' },
+  flowchart: { useMaxWidth: true, wrappingWidth: 320, nodeSpacing: 28, rankSpacing: 32, padding: 8 } });
+</script>
 ```
 
 ```css
-.flow { list-style: none; margin: 0; padding: 0 0 0 16px; border-left: 2px solid var(--rule); }
-.flow .node { position: relative; margin: 0 0 6px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); }
-.flow .node::before { content: ""; position: absolute; left: -23px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--rule); }
-.flow .on-path { border-color: var(--accent); }
-.flow .on-path::before { background: var(--accent); }
-.flow .decides { border-width: 2px; }
-.flow .exits { list-style: none; margin: 4px 0 0; padding: 0; font-size: .9rem; }
-.flow .taken { font-weight: 600; }
-.flow .tag { font: 12px var(--mono); color: var(--accent); }
-.flow .cmt { color: var(--muted); font-weight: 400; }
+.flow { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 8px; }
+.flow svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.legend { font-size: .82rem; color: var(--muted); margin: 4px 0 0; }
+@media (max-width: 600px) { .flow { overflow-x: auto; } .flow svg { min-width: 600px; } }
 ```
 
 ## Pseudocode

@@ -1,24 +1,24 @@
 # Page format
 
-One self-contained HTML file: CSS inline, no script, `<details>` for the only interactive parts. A page for private material loads nothing remote. The forms are drawn by [`graph-it`](../graph-it/FORMS.md); this file says which form goes where.
+One HTML file: CSS inline, one script (a local vendored copy of Mermaid beside the page, which draws the flow), `<details>` for the collapsed part. A page for private material loads nothing remote. The forms are drawn by [`graph-it`](../graph-it/FORMS.md); this file says which form goes where.
 
 ## Contract
 
-- **One look.** The bounds, measured in a headless browser at 1280 × 800 with the details closed: the answer and the whole flow are inside the first 800 px (the flow's bottom edge as the browser reports it); the rule ends under 1200 px and the page under 1500 px; the **open text**, every word outside `<style>`, `<pre>`, `<table>` and `<details>` once tags are stripped, is under 200 words. The parts' caps below are what make the bounds reachable: a page built at every cap measures 739, 1101 and 1453 px and 153 words. What does not fit goes in the notes file, linked from the details.
+- **First screen, plain words.** The answer and the decision fit the first screen at 1280 × 800 and the flow starts on it. The answer, the flow and the options read for someone who has not read the code: what happens, in plain words, with identifiers and internal codenames kept to the rule and the sources. The answer is at most four sentences; what does not fit goes in the notes file, linked from the details.
 - **Phone width.** A 760 px column with 16 px gutters; at 390 px nothing scrolls sideways (the table and pseudocode recipes in FORMS.md are built for it).
 - **Both schemes.** Tokens on `:root`, redefined under `prefers-color-scheme: dark`; `body` sets its background.
-- **Cited.** Every name and number carries a cite chip: `<a class="cite" href="https://<host>/<owner>/<repo>/blob/<sha>/<path>#L12-L20">path:12-20</a>` for code the reader can open, `<code class="cite">~/private/run.txt</code>` (text, never a link) for private material. The answer line cites by part (`§rule`).
+- **Cited.** Every name and number is cited, in the rule's comments or in a Sources list inside the details; the answer, the flow and the options carry no chips, so the picture stays clean. Chip forms: `<a class="cite" href="https://<host>/<owner>/<repo>/blob/<sha>/<path>#L12-L20">path:12-20</a>` for code the reader can open, `<code class="cite">~/private/run.txt</code>` (text, never a link) for private material.
 - **Accessible.** Every outcome is a word as well as a colour; text contrast checked in both schemes.
 
 ## Parts, top to bottom
 
 | part | question it answers | form (FORMS.md) | bound |
 |---|---|---|---|
-| **Answer** | what happened, and what must I choose? | one sentence, then the decision in one line, then the meta line (repo @ SHA · date · `recorded run` / `reproduced` / `read only` · `PRIVATE` badge when sensitive) | 3 lines |
-| **Flow** | where did the case branch? | control flow, the case's path marked, the deciding node tagged | 6 nodes, 2 exits each; a longer mechanism shows its stages and links a per-stage page from the details |
+| **Answer** | what happened, and what must I choose? | the meta line (repo @ SHA · date · `recorded run` / `reproduced` / `read only` · `PRIVATE` badge when sensitive), then what happened in plain words, then the decision in one line | 4 sentences + 1 line |
+| **Flow** | where did the case branch? | control flow as a Mermaid diagram (`graph-it`): the case's path coloured, the deciding node tagged, a second finding as a dotted edge, one legend line | 8 nodes; a longer mechanism shows its stages and links a per-stage page from the details |
 | **Rule** | what exactly decided it, on what data? | pseudocode with the case's numbers inline; under it, the types or fields the predicate reads | 8 lines + 7 lines |
-| **Options** | what could change it? | table: option · changes · cost · reversible; the recommended row marked, one sentence why | 4 rows, each cell one line at desktop width (about five words); a longer "changes" goes in the notes |
-| **Details** (closed) | how sure, and what else? | `<details>` holding: a gauge or table of the variants when there was an ablation; the reach as a table (surface · reached? · who · evidence); the evidence line (what ran, when, cost); the link to the notes file | — |
+| **Options** | what could change it? | table: option · what changes · what it fixes · cost and reversibility; the recommended row marked, one sentence why | 4 rows, each cell a plain phrase |
+| **Details** (closed) | how sure, and what else? | `<details>` holding: a gauge or table of the variants when there was an ablation; the reach as a table (surface · reached? · who · evidence); the evidence line (what ran, when, cost); the Sources list; the link to the notes file | — |
 
 Drop the variants when nothing was ablated. Everything else stays in every page.
 
@@ -71,13 +71,16 @@ summary { cursor: pointer; color: var(--muted); }
 <body><main>
 <h1>Why the limiter rejected the burst</h1>
 <p class="meta">repo @ a1b2c3d · 2026-10-30 · reproduced</p>
-<div class="answer"><p>The fourth request in the burst took the count past the limit of 100 (<a class="cite" href="#rule">§rule</a>).</p>
+<div class="answer"><p>Each client may send 100 requests a minute. The fourth request of the burst was number 104 in that minute, so the limiter rejected it.</p>
 <p class="decision">Decide: raise the limit (A), count per route (B), or accept it (C). Recommended: B.</p></div>
 <h2>Flow</h2> …
 <h2 id="rule">Rule</h2> …
 <h2>Options</h2> …
 <details><summary>Details: variants, reach, evidence, notes</summary> …</details>
-</main></body>
+</main>
+<script src="mermaid-12.2.0.min.js"></script>
+<script>/* mermaid.initialize exactly as in graph-it/FORMS.md, Control flow */</script>
+</body>
 </html>
 ```
 
