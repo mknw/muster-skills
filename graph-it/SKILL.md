@@ -10,12 +10,12 @@ Draws one **form** so the reader takes it in **at a glance**. The skill that cal
 ## Drawing a form
 
 1. **Elide.** Keep what the question needs; mark what was cut with `…`.
-2. **Plain words.** Labels and sentences say what happens in the reader's words, as for someone who has not read the code. Function names, field names and internal codenames belong in pseudocode, types and cites only.
+2. **Plain words** in the reader-facing forms: sentences, table cells, and the labels of flow, sequence and state diagrams say what happens in the reader's words, as for someone who has not read the code. The code-shaped forms (pseudocode, types, call stack, tree and layout, diff) keep their identifiers; that is what they show.
 3. **Mark the answer point**: the deciding branch, the changed line, the failure path, the field the rule reads. Mark it with a word as well as with weight or colour.
 4. **Ground it.** Every name, path and number comes from source opened in this session, cited as `path:line`; the model's memory of a codebase is untrusted. A form for a design that has no code yet takes its names from the agreed design and is labelled `proposed`.
 5. **Render it for its surface.** Chat and terminal take the text recipe; Mermaid only where the surface renders it. A page takes the HTML recipe, and is screenshot at 390 px in the light scheme and at desktop width in the dark scheme.
 
-Done when: removing any remaining line would lose part of the answer, no identifier or codename appears outside pseudocode, types and cites, the answer point is marked, each name resolves in the source or the form is labelled `proposed`, and the form was seen the way the reader will see it.
+Done when: removing any remaining line would lose part of the answer, no identifier or codename appears in a sentence, a table cell or a diagram label, the answer point is marked, each name resolves in the source or the form is labelled `proposed`, and the form was seen the way the reader will see it.
 
 ## Design record
 

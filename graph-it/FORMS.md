@@ -6,37 +6,40 @@ The reference half of [`graph-it`](SKILL.md): one recipe per form, as text and a
 
 Shows: the decisions a case passes through and the exit it took.
 
-**Text.** Mermaid where the surface renders it; otherwise the exits as an indented list. At most eight nodes. Labels say what happens in the reader's words; function names and codenames stay in the pseudocode. A decision is a question, each exit is labelled with its branch value, each end names its outcome. The case's path is coloured (`classDef` on its nodes, `linkStyle` on its edges) and its exits say `▸ this case`; the deciding node says `◆ decides`. A second finding off the main path is a dotted edge.
+**Text.** Mermaid where the surface renders it; otherwise the exits as an indented list. At most eight nodes, each label at most two short lines in plain words. A decision is a question in a hexagon (`{{…}}`), which stays far shorter than Mermaid's diamond for the same label; each exit is labelled with its branch value; each end names its outcome. Every node and edge on the case's path is coloured (`classDef`, `linkStyle`), its exits say `▸ this case`, and the deciding node says `◆ decides`. `linkStyle` counts edges in the order they are written, so write the case's path first and colour indices `0` to `n−1`. A second finding off the main path is a dotted edge (`-.->`).
 
 ```mermaid
 flowchart TD
-  A(["request arrives"]) ==> B{"token valid?"}
-  B -- no --> X["rejected: 401"]
-  B == "yes ▸ this case" ==> C{"under the rate limit?<br>◆ decides"}
-  C == "no ▸ this case" ==> Y["REJECTED: 429"]
+  A(["request arrives"]) ==> B{{"signed in?"}}
+  B == "yes ▸ this case" ==> C{{"under the rate limit?<br>◆ decides"}}
+  C == "no ▸ this case" ==> Y["REJECTED: too many requests"]
+  B -- no --> X["rejected: not signed in"]
   C -- yes --> D["handler runs"]
+  A -. "same counter" .-> Z["other routes share the limit"]
   classDef hit fill:#fdf1dc,stroke:#c27c0e,stroke-width:3px,color:#1d232b
-  class C,Y hit
-  linkStyle 0,2,3 stroke:#c27c0e,stroke-width:3px
+  class A,B,C,Y hit
+  linkStyle 0,1,2 stroke:#c27c0e,stroke-width:3px
 ```
 
 Text-only form of the same flow:
 
 ```
 request arrives
-  token valid?            no → rejected: 401
+  signed in?              no → rejected: not signed in
   ▸ yes
   under the rate limit?   ◆ decides
-  ▸ no → REJECTED: 429
+  ▸ no → REJECTED: too many requests
     yes → handler runs
+  (other routes share the same counter)
 ```
 
-**HTML.** The same Mermaid source in `<pre class="mermaid">`, drawn on the page by one script: a local vendored copy of Mermaid next to the page (a private page loads nothing remote). Under the diagram, one legend line names the colour. The settings below keep it compact; on a phone the diagram keeps a legible width inside a box that scrolls sideways, the only sideways scroll a page has.
+**HTML.** The same Mermaid source in `<pre class="mermaid">`, drawn on the page by two script tags at the end of `<body>`: the vendored Mermaid file, then its `initialize` call. **Find or create the vendored copy** before the first page: reuse a `mermaid-<version>.min.js` already kept beside other pages in the same directory; otherwise fetch the pinned release tarball once from the npm registry (`mermaid-<version>.tgz`), compare its checksum with the registry's `shasum`, copy `dist/mermaid.min.js` beside the page as `mermaid-<version>.min.js`, and write the version and checksum next to it. A private page loads nothing remote, so the copy is the only way the diagram appears. Under the diagram, one legend line names the colour; on a phone it also says the diagram scrolls, and the diagram keeps a legible width inside a box that scrolls sideways.
 
 ```html
 <div class="flow"><pre class="mermaid">flowchart TD
   …</pre></div>
-<p class="legend">Orange: the path this case took.</p>
+<p class="legend">Orange: the path this case took.<span class="narrow"> Scroll the diagram sideways.</span></p>
+…
 <script src="mermaid-12.2.0.min.js"></script>
 <script>
 var dark = matchMedia('(prefers-color-scheme: dark)').matches;
@@ -50,7 +53,12 @@ mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: dark ? '
 .flow { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 8px; }
 .flow svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
 .legend { font-size: .82rem; color: var(--muted); margin: 4px 0 0; }
-@media (max-width: 600px) { .flow { overflow-x: auto; } .flow svg { min-width: 600px; } }
+.legend .narrow { display: none; }
+@media (max-width: 600px) {
+  .flow { overflow-x: auto; }
+  .flow svg { min-width: 520px; }
+  .legend .narrow { display: inline; }
+}
 ```
 
 ## Pseudocode

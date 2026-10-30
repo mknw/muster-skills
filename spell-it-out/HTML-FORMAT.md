@@ -1,11 +1,12 @@
 # Page format
 
-One HTML file: CSS inline, one script (a local vendored copy of Mermaid beside the page, which draws the flow), `<details>` for the collapsed part. A page for private material loads nothing remote. The forms are drawn by [`graph-it`](../graph-it/FORMS.md); this file says which form goes where.
+One HTML file: CSS inline, the vendored Mermaid file and its `initialize` call as two script tags at the end of `<body>` (they draw the flow; `graph-it` says how to find or create the copy), `<details>` for the collapsed part. A page for private material loads nothing remote. The forms are drawn by [`graph-it`](../graph-it/FORMS.md); this file says which form goes where.
 
 ## Contract
 
-- **First screen, plain words.** The answer and the decision fit the first screen at 1280 × 800 and the flow starts on it. The answer, the flow and the options read for someone who has not read the code: what happens, in plain words, with identifiers and internal codenames kept to the rule and the sources. The answer is at most four sentences; what does not fit goes in the notes file, linked from the details.
-- **Phone width.** A 760 px column with 16 px gutters; at 390 px nothing scrolls sideways (the table and pseudocode recipes in FORMS.md are built for it).
+- **First screen.** At 1280 × 800 the first screen holds the answer, the decision and the flow down to its deciding node. When it does not, merge the steps before the decision or shorten the answer; the answer is at most four sentences, and what does not fit goes in the notes file, linked from the details.
+- **Plain words** in the answer, the flow and the options, as `graph-it` defines them.
+- **Phone width.** A 760 px column with 16 px gutters; at 390 px the page never scrolls sideways, and the flow box is its one inner scroll (the table and pseudocode recipes in FORMS.md are built for it).
 - **Both schemes.** Tokens on `:root`, redefined under `prefers-color-scheme: dark`; `body` sets its background.
 - **Cited.** Every name and number is cited, in the rule's comments or in a Sources list inside the details; the answer, the flow and the options carry no chips, so the picture stays clean. Chip forms: `<a class="cite" href="https://<host>/<owner>/<repo>/blob/<sha>/<path>#L12-L20">path:12-20</a>` for code the reader can open, `<code class="cite">~/private/run.txt</code>` (text, never a link) for private material.
 - **Accessible.** Every outcome is a word as well as a colour; text contrast checked in both schemes.
