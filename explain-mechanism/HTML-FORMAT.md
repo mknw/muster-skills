@@ -4,7 +4,7 @@ One self-contained HTML file: CSS inline, no script, `<details>` for the only in
 
 ## Contract
 
-- **One look.** Three bounds, measured in a headless browser at 1280 × 800 with the details closed: the answer and the whole flow are inside the first 800 px (the flow's bottom edge as the browser reports it); the rule ends under 1200 px and the page under 1500 px; the **open text**, every word outside `<style>`, `<pre>`, `<table>` and `<details>` once tags are stripped, is under 200 words. The parts' caps below are what make the bounds reachable: a page built at every cap measures 739, 1101 and 1453 px and 153 words. What does not fit goes in the notes file, linked from the details.
+- **One look.** The bounds, measured in a headless browser at 1280 × 800 with the details closed: the answer and the whole flow are inside the first 800 px (the flow's bottom edge as the browser reports it); the rule ends under 1200 px and the page under 1500 px; the **open text**, every word outside `<style>`, `<pre>`, `<table>` and `<details>` once tags are stripped, is under 200 words. The parts' caps below are what make the bounds reachable: a page built at every cap measures 739, 1101 and 1453 px and 153 words. What does not fit goes in the notes file, linked from the details.
 - **Phone width.** A 760 px column with 16 px gutters; at 390 px nothing scrolls sideways (the table and pseudocode recipes in FORMS.md are built for it).
 - **Both schemes.** Tokens on `:root`, redefined under `prefers-color-scheme: dark`; `body` sets its background.
 - **Cited.** Every name and number carries a cite chip: `<a class="cite" href="https://<host>/<owner>/<repo>/blob/<sha>/<path>#L12-L20">path:12-20</a>` for code the reader can open, `<code class="cite">~/private/run.txt</code>` (text, never a link) for private material. The answer line cites by part (`§rule`).
@@ -17,7 +17,7 @@ One self-contained HTML file: CSS inline, no script, `<details>` for the only in
 | **Answer** | what happened, and what must I choose? | one sentence, then the decision in one line, then the meta line (repo @ SHA · date · `recorded run` / `reproduced` / `read only` · `PRIVATE` badge when sensitive) | 3 lines |
 | **Flow** | where did the case branch? | control flow, the case's path marked, the deciding node tagged | 6 nodes, 2 exits each; a longer mechanism shows its stages and links a per-stage page from the details |
 | **Rule** | what exactly decided it, on what data? | pseudocode with the case's numbers inline; under it, the types or fields the predicate reads | 8 lines + 7 lines |
-| **Options** | what could change it? | table: option · changes · cost · reversible; the recommended row marked, one sentence why | 4 rows |
+| **Options** | what could change it? | table: option · changes · cost · reversible; the recommended row marked, one sentence why | 4 rows, each cell one line at desktop width (about five words); a longer "changes" goes in the notes |
 | **Details** (closed) | how sure, and what else? | `<details>` holding: a gauge or table of the variants when there was an ablation; the reach as a table (surface · reached? · who · evidence); the evidence line (what ran, when, cost); the link to the notes file | — |
 
 Drop the variants when nothing was ablated. Everything else stays in every page.

@@ -98,7 +98,8 @@ interface Request {
   token: Token   // …
 }
 window.count(
-  client, span) -> number  ◆ reads
+  client: ClientId, span: Seconds
+) -> number  ◆ reads
 ```
 
 **HTML.** The same text in `<pre>`, the lines the rule reads in `<mark>`, the cite a chip in a `.cmt` comment on the first line; the pseudocode CSS covers it.
