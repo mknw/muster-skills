@@ -15,9 +15,9 @@ BASE_ENV = {k: v for k, v in os.environ.items()
             if k not in ('CLAUDE_CONFIG_DIR', 'CODEX_HOME', 'PI_CODING_AGENT_DIR', 'MUSTER_SKILL_DIRS')}
 
 
-def run(home, script=SCRIPT, check=True, **env):
+def run(home, script=SCRIPT, check=True, cwd=None, **env):
     return subprocess.run([BASH, str(script)], env={**BASE_ENV, 'HOME': str(home), 'MUSTER_ALLOW_WORKTREE': '1', **env},
-                          check=check, text=True, capture_output=True, timeout=30)
+                          check=check, text=True, capture_output=True, timeout=30, cwd=cwd)
 
 
 class InstallTests(unittest.TestCase):
@@ -51,12 +51,18 @@ class InstallTests(unittest.TestCase):
         (self.claude / 'outside').symlink_to(self.scratch / 'gone')        # dead, outside the repo
         (self.claude / 'deeper').symlink_to(f'{REPO}/scripts/gone')        # below a repo subdirectory
         (self.claude / 'escape').symlink_to(f'{REPO}/x/../../gone')        # leaves the repo
+        (self.claude / 'parent').symlink_to(f'{REPO}/..')                  # the repo's parent
+        (self.claude / 'self').symlink_to(f'{REPO}/.')                     # the repo itself
+        a_file = self.scratch / 'a file'
+        a_file.write_text('not a skill')
+        (self.claude / SKILLS[3]).symlink_to(a_file)                       # skill-named link to a file
         out = run(self.home).stdout
         self.assertEqual(os.readlink(self.claude / SKILLS[0]), str(elsewhere))
         self.assertFalse((self.claude / SKILLS[1]).is_symlink())
-        for name in ('sibling', 'outside', 'deeper', 'escape'):
+        self.assertEqual(os.readlink(self.claude / SKILLS[3]), str(a_file))
+        for name in ('sibling', 'outside', 'deeper', 'escape', 'parent', 'self'):
             self.assertTrue((self.claude / name).is_symlink(), name)
-        self.assertIn(f'{len(SKILLS) - 3} linked, 0 repointed, 1 already linked, 0 pruned, 2 left alone', out)
+        self.assertIn(f'{len(SKILLS) - 4} linked, 0 repointed, 1 already linked, 0 pruned, 3 left alone', out)
 
     def test_repoints_dead_links_and_prunes_removed_skills(self):
         (self.claude / SKILLS[0]).symlink_to(self.scratch / 'deleted-worktree' / SKILLS[0])
@@ -80,6 +86,28 @@ class InstallTests(unittest.TestCase):
         self.assertFalse((bare / '.claude').exists())
         self.assertEqual(sorted(p.name for p in extra.iterdir()), SKILLS)
 
+    def test_honours_agent_home_overrides_and_survives_a_dead_target(self):
+        claude_home, codex_home = self.scratch / 'claude conf', self.scratch / 'codex conf'
+        claude_home.mkdir()
+        codex_home.mkdir()
+        bare = self.scratch / 'bare home'
+        bare.mkdir()
+        (bare / '.agents').mkdir()
+        (bare / '.agents/skills').symlink_to(self.scratch / 'gone')        # a dead target dir
+        res = run(bare, CLAUDE_CONFIG_DIR=str(claude_home))
+        self.assertEqual(sorted(p.name for p in (claude_home / 'skills').iterdir()), SKILLS)
+        self.assertIn('a dead link', res.stderr)
+        self.assertFalse((bare / '.claude').exists())
+        for name, value in (('PI_CODING_AGENT_DIR', claude_home), ('CODEX_HOME', codex_home)):
+            alone = self.scratch / f'only {name}'
+            alone.mkdir()
+            run(alone, **{name: str(value)})                                 # the override alone marks the agent
+            self.assertEqual(len(list((alone / '.agents/skills').iterdir())), len(SKILLS), name)
+
+    def test_runs_by_relative_path_with_cdpath_exported(self):
+        res = run(self.home, script='scripts/install.sh', cwd=REPO, CDPATH=str(REPO))   # cd finds scripts/.. via CDPATH and prints
+        self.assertEqual(len(list(self.claude.iterdir())), len(SKILLS), res.stderr)
+
     def test_refuses_a_worktree_and_an_empty_checkout(self):
         fake = self.scratch / 'checkout'
         (fake / 'scripts').mkdir(parents=True)
@@ -89,12 +117,15 @@ class InstallTests(unittest.TestCase):
         self.assertIn('no skills found', empty.stderr)
         (fake / 'demo').mkdir()
         (fake / 'demo/SKILL.md').write_text('---\nname: demo\ndescription: d\n---\n')
+        inside = run(self.home, script=fake / 'scripts/install.sh', MUSTER_SKILL_DIRS=str(fake / 'demo'))
+        self.assertIn('inside this repository', inside.stderr)            # a throwaway checkout, so a
+        self.assertEqual(sorted(p.name for p in (fake / 'demo').iterdir()), ['SKILL.md'])   # mutation cannot touch the repo
         (fake / '.git').write_text('gitdir: /elsewhere\n')
         env = {**BASE_ENV, 'HOME': str(self.home)}
         wt = subprocess.run([BASH, str(fake / 'scripts/install.sh')], env=env, text=True, capture_output=True, timeout=30)
         self.assertEqual(wt.returncode, 1)
         self.assertIn('linked worktree', wt.stderr)
-        self.assertEqual(list(self.claude.iterdir()), [])
+        self.assertEqual(sorted(p.name for p in self.claude.iterdir()), ['demo'])   # from the in-repo run above
 
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@
 # reported. Links into this repository whose skill was renamed or removed are
 # pruned.
 set -euo pipefail
+unset CDPATH   # an exported CDPATH makes `cd` print, corrupting $repo
 
 repo=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
 
@@ -25,6 +26,7 @@ if [ ${#skills[@]} -eq 0 ]; then echo "no skills found under $repo" >&2; exit 1;
 link_into() {
   local dir=$1 name link want have real
   local linked=0 repointed=0 kept=0 pruned=0 alone=0
+  if [ -L "$dir" ] && [ ! -e "$dir" ]; then echo "skip $dir: a dead link" >&2; return; fi
   mkdir -p "$dir"
   for name in "${skills[@]}"; do
     link="$dir/$name" want="$repo/$name"
@@ -44,7 +46,7 @@ link_into() {
     [ -L "$link" ] || continue
     have=$(readlink "$link"); have=${have%/}
     # Ours: exactly one path component below the repository, no "..".
-    case "$have" in "$repo"/*/* | *..*) continue ;; "$repo"/*) ;; *) continue ;; esac
+    case "$have" in "$repo"/*/* | *..* | "$repo"/.) continue ;; "$repo"/*) ;; *) continue ;; esac
     if [ ! -f "$have/SKILL.md" ]; then rm "$link"; echo "pruned $link (was $have)"; pruned=$((pruned + 1)); fi
   done
   echo "$dir: $linked linked, $repointed repointed, $kept already linked, $pruned pruned, $alone left alone"
@@ -71,6 +73,10 @@ target "$HOME/.agents/skills" "$HOME/.agents" "${CODEX_HOME:-$HOME/.codex}" "$HO
 if [ -n "${MUSTER_SKILL_DIRS:-}" ]; then
   IFS=: read -r -a extra <<< "$MUSTER_SKILL_DIRS"
   for d in ${extra[@]+"${extra[@]}"}; do
+    real=$(cd "$d" 2>/dev/null && pwd -P || printf '%s' "$d")
+    case "$real" in
+      "$repo" | "$repo"/*) echo "skip $d: inside this repository" >&2; continue ;;
+    esac
     case "$d" in
       /*) link_into "$d" ;;
       '') ;;

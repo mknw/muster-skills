@@ -13,7 +13,8 @@ git clone <this repo> ~/Code/muster-skills
 
 The script links into `~/.claude/skills` when Claude Code is present, and into
 `~/.agents/skills` (the Agent Skills user directory, read by Codex and pi) when
-any of `~/.agents`, `~/.codex` or `~/.pi` exists; `MUSTER_SKILL_DIRS`
+any of `~/.agents`, `~/.codex` or `~/.pi` exists (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`
+and `PI_CODING_AGENT_DIR` are honoured); `MUSTER_SKILL_DIRS`
 (colon-separated absolute paths) adds more. Re-run it after a pull: it links
 new skills, repoints dead links, prunes links whose skill was renamed or
 removed, and leaves alone any entry that is not a link and any working link
