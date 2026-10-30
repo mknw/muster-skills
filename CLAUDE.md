@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A portable, stack-agnostic collection of Claude Code skills. Each top-level directory is one skill: a `SKILL.md` with YAML frontmatter (`name`, `description`, optionally `disable-model-invocation: true`), plus optional supporting files (reference docs, script templates) that the skill body links to. The deliverables are Markdown. The Skill source workflow checks whitespace, skill frontmatter and local reference closure; it does not prove invocation behavior.
 
-Skills are installed by symlinking each directory into `~/.claude/skills/`; this repo is the single source of truth, so edits here take effect globally on the machine.
+Skills are installed by `scripts/install.sh`, which symlinks each skill directory into every agent skill directory on the machine (`~/.claude/skills/`, `~/.agents/skills/`); this repo is the single source of truth, so edits here take effect globally on the machine. Re-run it after adding, renaming or removing a skill.
 
 ## Hard rules for every skill (from README.md)
 
