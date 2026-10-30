@@ -31,19 +31,22 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 
 Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done; then, when the item cites more than one reference, `<p class="links">` with one `<a>` per further PR, issue, comment or page, so a `#NNN` written in the text always has a link to click. The script turns the title link and each anchor in the links row into chips in the link column (a link repeated in both appears once), removes the row, and leaves the title as text. A chip reads `#845` for a PR or issue, `#788 ↳` for a comment, the extension for a local file, `doc` / `repo` for other tracker links. The script also hides the `<b>actor</b>` prefix because the who column says it, and leaves the who cell blank in Needs you, where it is true by definition; adds the who, id, age and changed cells and the explain button (faint at rest, full on hover, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
 
-A **next action** is one sentence of at most 15 words, verb first; its detail lives in the linked page.
-
 **Badges**, in the changed cell, short and relative, allowed to wrap: `overdue 3 d`, `due 10-30`, `stale`, `check` (the item has an outcome check; the command is the tooltip). Nothing else.
 
 ## The theme
 
-Items that belong together, often because they are one decision for the owner, carry `data-group`; the theme is a record of its own, in `<section id="groups">` above Needs you, with a title and one next step:
+Items that belong together, often because they are one decision for the owner, carry `data-group`; the theme is a record of its own, in its own section above Needs you, with a title and one next step:
 
 ```html
+<section id="groups">
+<h2>Themes</h2>
+<ol class="groups">
 <li class="group" data-gid="G1" data-actor="owner" data-changed="2026-10-30T17:42:56Z">
   <h3>Theme as the owner would name it</h3>
   <p class="next"><b>owner</b> the one next step for the whole theme</p>
 </li>
+</ol>
+</section>
 ```
 
 Members stay in the state they are in; the theme adds a view across states, it never moves an item. A theme whose work is done gets `data-state="closed"` and its id stays taken.
@@ -52,7 +55,7 @@ Members stay in the state they are in; the theme adds a view across states, it n
 
 One `index.html`, no build step. A `<meta http-equiv="refresh" content="60">` keeps it current; the scroll position (session storage) and each section's collapsed state and the open help panel (local storage) survive the refresh. Parts, top to bottom:
 
-1. **Header**: title, who the board serves, the refresh interval, the last-checked stamp the checker writes, and "N changed since you looked at HH:MM" with a **mark seen** button.
+1. **Header**: title, who the board serves, the refresh interval, the last-checked stamp the checker writes, and "N new, moved or yours changed since HH:MM" with a **mark seen** button.
 2. **Band**: the Themes panel across the top while any theme is open, then three panels (next section), each with a one-line heading that names the question it answers.
 3. **Four sections**, `<section id="needs-you">` through `done`, each an `<h2>` (the script appends the count; clicking it collapses the section) over a column-header row and an `<ol class="items">`. Same columns in every section: who, id, item, next action, link, age, changed. An empty section collapses to its header and one line.
    Done shows the last 24 hours; older Done items sit behind one "N more" row.
@@ -71,18 +74,18 @@ Per panel, the form below, drawn as `graph-it` ([FORMS.md](../graph-it/FORMS.md)
 | who waits on whom? | a count matrix, one row per actor present by open state; clicking a cell filters the rows; the owner's cells outside Needs you marked | a handful of integers; a chart adds ink, not precision |
 | how long open? | one bar per open item on a shared day axis, a now line, a tick at `due` | length on a common baseline is the next best channel; dots would hide duration. Weak while every item is a day old; it earns its place as items age |
 | what unblocks what? | chips on the rows always; a node-link graph of only the connected items while there are at most twelve edges; an adjacency matrix beyond that | node-link reads for sparse chains and becomes a hairball past a dozen edges; a matrix stays legible at any density but hides paths |
-| what belongs together? | the Themes panel (one row per open theme: counts per state, done/total, next step; a click shows only its items); on the rows, a stripe and a chip per member, and members kept adjacent inside each state under one label row, which in Needs you reads "one decision" | adjacency and a shared colour group without moving items out of the state the owner acts on; one decision row replaces several |
-| what changed since I looked? | a dot on each row changed since the last **mark seen**, and the count in the header | the 60 s refresh makes an automatic "last visit" meaningless, so the mark is the owner's own |
+| what belongs together? | the Themes panel (one row per open theme: counts per state, done of total, next step; a click shows only its items); a stripe on each member; inside each open state, members kept adjacent under one label row, which in Needs you reads "one decision" when the theme's next step is the owner's; a theme chip only on a member that has no label row | adjacency and a shared colour group without moving items out of the state the owner acts on; one decision row replaces several. Closed themes stop striping |
+| what changed since I looked? | a dot on each item that is new, changed state, or is the owner's and was edited since the last **mark seen**, and the count in the header | the 60 s refresh makes an automatic "last visit" meaningless, so the mark is the owner's own; it records what the page showed when it loaded, so an edit landing while the owner reads still counts. Coordinator housekeeping on other rows stays undotted |
 | what do I answer? | reply and option chips under the next action, the recommended option starred | a click replaces retyping a reply the board already knows |
 | counts by category | numbers in the section headers and a one-line flow (opened, closed, touched in 24 h; stale and overdue each shown only when non-zero) | three numbers read faster than three areas |
 
-An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed and relabelled (`before`, `needed by`, `blocks`, `awaited by`), so the graph keeps FORMS.md's arrow direction.
+An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed and relabelled (`before`, `needed by`, `blocks`, `awaited by`), so the graph keeps FORMS.md's arrow direction; `see` is drawn as a line with no arrowhead.
 
 ## The checker
 
 `check.py`, standard library only, no network. It parses `index.html` with the HTML parser, collecting every element with `data-id` (and every theme with `data-gid`), the `<section id>` enclosing it, its title text, its next-action text and its links; a void tag such as `<br>` closes itself. Flags, one line each with the id (and the line number where the parser has one):
 
-- `DUPLICATE id`: the same `data-id` twice, counting the archive pages
+- `DUPLICATE id`: the same `data-id` twice, counting the archive pages (whose ids also count as existing for `BAD REL`)
 - `SECTION MISMATCH`: `data-section` differs from the enclosing section
 - `BAD data-changed` / `BAD data-due`: unparsable
 - `OVERDUE`: `data-due` passed
@@ -94,6 +97,7 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `BAD OPTIONS`: `data-options` that does not parse as `LABEL text|…`, or a `data-recommend` that is not one of its labels
 - `GROUP UNKNOWN` / `DUPLICATE gid`: an item naming a theme that does not exist; a theme id used twice
 - `GROUP NO NEXT` / `GROUP DONE`: an open theme with no next step; an open theme with no open item (close it)
+- `GROUP MISPLACED`: a theme record outside `<section id="groups">`, where the page cannot see it
 - `STALE`: `data-changed` older than three days on an open item
 
 Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERDUE when it fails past `due`, else pending, and whether it ran without a shell or through `sh -c`; a command with no shell metacharacter runs without one, under a timeout either way); then the lane-deadline ledger the coordinator keeps, whose overdue lines also count as flags; then the counts per state. Exit 1 on any flag. `--stamp` rewrites the last-checked line through the same anchor tool used for items, falling back to a direct write. The mutation run that proves it: a scratch copy with one planted instance of each defect, all flagged, exit 1.
