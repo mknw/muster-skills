@@ -33,7 +33,7 @@ request arrives
   (other routes share the same counter)
 ```
 
-**HTML.** The same Mermaid source in `<pre class="mermaid">`, drawn on the page by two script tags at the end of `<body>`: the vendored Mermaid file, then its `initialize` call. **Find or create the vendored copy** before the first page: reuse a `mermaid-<version>.min.js` already kept beside other pages in the same directory; otherwise fetch the pinned release tarball once from the npm registry (`mermaid-<version>.tgz`), compare its checksum with the registry's `shasum`, copy `dist/mermaid.min.js` beside the page as `mermaid-<version>.min.js`, and write the version and checksum next to it. A private page loads nothing remote, so the copy is the only way the diagram appears. Under the diagram, one legend line names the colour; on a phone it also says the diagram scrolls, and the diagram keeps a legible width inside a box that scrolls sideways.
+**HTML.** The same Mermaid source in `<pre class="mermaid">`, drawn on the page by two script tags at the end of `<body>`: the vendored Mermaid file, then its `initialize` call. **Find or create the vendored copy** before the first page: reuse a `mermaid-<version>.min.js` already kept beside other pages in the same directory; otherwise fetch the pinned release tarball once from the npm registry (`mermaid-<version>.tgz`), compare its sha512 with the registry's `dist.integrity`, copy `dist/mermaid.min.js` beside the page as `mermaid-<version>.min.js`, and write the version and checksum next to it. A private page loads nothing remote, so the copy is the only way the diagram appears. Under the diagram, one legend line names the colour; on a phone it also says the diagram scrolls, and the diagram keeps a legible width inside a box that scrolls sideways.
 
 ```html
 <div class="flow"><pre class="mermaid">flowchart TD
@@ -45,18 +45,17 @@ request arrives
 var dark = matchMedia('(prefers-color-scheme: dark)').matches;
 mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: dark ? 'dark' : 'default',
   themeVariables: { fontSize: '15px' },
-  flowchart: { useMaxWidth: true, wrappingWidth: 320, nodeSpacing: 28, rankSpacing: 32, padding: 8 } });
+  flowchart: { useMaxWidth: false, wrappingWidth: 320, nodeSpacing: 28, rankSpacing: 32, padding: 8 } });
 </script>
 ```
 
 ```css
-.flow { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 8px; }
-.flow svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+.flow { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 8px; overflow-x: auto; }
+.flow svg { display: block; margin: 0 auto; height: auto; }
 .legend { font-size: .82rem; color: var(--muted); margin: 4px 0 0; }
 .legend .narrow { display: none; }
 @media (max-width: 600px) {
-  .flow { overflow-x: auto; }
-  .flow svg { min-width: 520px; }
+  .flow svg { max-width: none; }
   .legend .narrow { display: inline; }
 }
 ```

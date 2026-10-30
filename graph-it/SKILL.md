@@ -15,11 +15,13 @@ Draws one **form** so the reader takes it in **at a glance**. The skill that cal
 4. **Ground it.** Every name, path and number comes from source opened in this session, cited as `path:line`; the model's memory of a codebase is untrusted. A form for a design that has no code yet takes its names from the agreed design and is labelled `proposed`.
 5. **Render it for its surface.** Chat and terminal take the text recipe; Mermaid only where the surface renders it. A page takes the HTML recipe, and is screenshot at 390 px in the light scheme and at desktop width in the dark scheme.
 
-Done when: removing any remaining line would lose part of the answer, no identifier or codename appears in a sentence, a table cell or a diagram label, the answer point is marked, each name resolves in the source or the form is labelled `proposed`, and the form was seen the way the reader will see it.
+Done when: removing any remaining line would lose part of the answer, no identifier or codename appears in a sentence, a table cell or a diagram label (cites, links and ids aside), the answer point is marked, each name resolves in the source or the form is labelled `proposed`, and the form was seen the way the reader will see it.
 
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
+
+**2026-10-30 — review of PR #13.** Two rounds (1 BLOCKING, 7 SHOULD, 10 NIT). Plain words now bind only the reader-facing forms (sentences, table cells, diagram labels; cites, links and ids aside), and the code-shaped forms keep their identifiers. Decisions are hexagons, so the flow down to its deciding node fits the first screen. The recipe says how to find or create the vendored Mermaid copy (checked against the registry's sha512 `integrity`), colours every node on the case's path, writes the path's edges first so the `linkStyle` indices hold, and renders at natural size (`useMaxWidth: false`) inside the phone's scrolling box, so labels stay legible.
 
 **2026-10-30 — Mermaid for control flow, plain words.** Prompted by the owner on a real page: "Where is the mermaid diagram for the control flow??????", and the page "still stupid". The HTML recipe had replaced the diagram with a list of boxes, on the reasoning that a scaled SVG shrinks its text on a phone, which traded the one picture the owner asked for against a phone edge case; and labels carried code names. Control flow on a page is now Mermaid from a vendored copy, with the case's path coloured and a phone box that scrolls sideways; a plain-words rule keeps identifiers in pseudocode, types and cites. Proved on the real private case before this change.
 
