@@ -3,13 +3,20 @@
 A portable, stack-agnostic set of [Claude Code skills](https://docs.anthropic.com/en/docs/claude-code) —
 procedures an agent loads at the moment a task matches them. This repository is
 the single source of truth; the skills are installed globally by symlinking
-each directory into `~/.claude/skills/`, which makes them available in every
-project on the machine without copying.
+each skill directory into every agent's skill directory found on the machine,
+which makes them available in every project without copying.
 
 ```bash
 git clone <this repo> ~/Code/muster-skills
-for d in ~/Code/muster-skills/*/; do ln -s "$d" ~/.claude/skills/"$(basename "$d")"; done
+~/Code/muster-skills/scripts/install.sh
 ```
+
+The script links into `~/.claude/skills` when Claude Code is present, and into
+`~/.agents/skills` (the Agent Skills user directory, read by Codex and pi) when
+any of `~/.agents`, `~/.codex` or `~/.pi` exists; `MUSTER_SKILL_DIRS`
+(colon-separated) adds more. Re-run it after a pull: it links new skills,
+repoints moved links, prunes links whose skill was renamed or removed, and
+leaves any entry that is not a link alone.
 
 ## What belongs here — and what doesn't
 
