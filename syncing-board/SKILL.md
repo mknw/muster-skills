@@ -27,17 +27,20 @@ Every event is one edit, stamped on the item:
 | the owner decides | move the item where the decision points; Done when the decision closes it |
 | something is owed and no lane holds it | item in Loose ends, with the next actor and one next action |
 | an item blocks or follows another | `rel` on the item (verbs in BOARD-FORMAT.md) |
+| items belong together, or are one decision for the owner | a theme record with one next step, and `group` on each member (BOARD-FORMAT.md, The theme) |
+| a theme's work is done | close the theme; its id stays taken |
+| the owner's answer is a short reply or a choice | `reply`, or `options` with the recommended one, on the item |
 | an event names a PR, issue, comment or page | link each one: the title links the primary, every other goes in the item's links row (BOARD-FORMAT.md) |
 | `spell-it-out` delivers a page for an item | `mechanism` = the page's path |
 | a Done item is older than the archive window | move it to the archive page (BOARD-FORMAT.md, The folder) |
 
-An id is never reused, Done and archive included. `changed` is stamped on every edit. A next action is one sentence naming what the actor does; an item in Needs you always has one. Edit by anchor: a tool that rejects a stale read rather than applying it, so two agents cannot silently overwrite each other on the one file. If the tool applies the ops of one patch against the pre-edit line numbers, a move is two patches: cut and paste, then re-read and retarget the state.
+An id is never reused, Done and archive included. `changed` is stamped on every edit. A next action is one sentence naming what the actor does, verb first; on the owner's rows at most 15 words, with the detail in the linked page; an item in Needs you always has one. Edit by anchor: a tool that rejects a stale read rather than applying it, so two agents cannot silently overwrite each other on the one file. If the tool applies the ops of one patch against the pre-edit line numbers, a move is two patches: cut and paste, then re-read and retarget the state.
 
 Done when: the item reflects the event, `changed` is stamped, and `check.py --stamp` reports 0 flags and no CHECK line reading DONE.
 
 ## Reading it for the owner
 
-"What do I have to do": the owner's rows in order, by id, each with its next action. The owner's rows are every item whose next actor is the owner, whichever state it sits in. "What is going on": the counts per state and actor, the oldest open item, anything overdue or stale. Answer from the board; memory of the conversation is not the record.
+"What do I have to do": the owner's rows in order, by id, each with its next action; a theme with several of them is one decision, answered with the theme's next step. The owner's rows are every item whose next actor is the owner, whichever state it sits in. "What is going on": the counts per state and actor, the oldest open item, anything overdue or stale. Answer from the board; memory of the conversation is not the record.
 
 Done when: the answer cites every id whose actor is the owner.
 
@@ -60,6 +63,8 @@ Each open item carries an explain button that copies `Use spell-it-out on sync i
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
+
+**2026-10-30 — themes and easing.** Prompted by the owner grouping items into themes that span all four states, and asking what else makes them do work the board could do. Added: the theme record and `group` on items, rendered as a Themes panel, a stripe per member, members kept together inside each state, and one decision row in Needs you; "changed since you looked" with an explicit mark seen; relation chips that show the other item's title; Done limited to the last 24 hours; reply and option chips; `see` as an undirected relation; next actions capped at 15 words. The checker gained BAD REL, LONG NEXT, BAD OPTIONS and the four theme checks (each planted in a scratch copy and flagged), and stopped treating a `<br>` in a title as an unclosed element, a false NO NEXT ACTION the PR #10 review had found. Review round 1 on PR #14 (1 BLOCKING, 9 SHOULD, 13 NIT) then made close keep an item's theme, relations and links; fixed `<br/>`; dotted only new, moved and owner-edited items, marked at page load; drew `see` without an arrowhead; showed the themes container and added GROUP MISPLACED; refused to reuse a closed theme id; cleared a stale theme filter; counted archive ids; and removed board content from this record. Round 2 returned MERGE; its nits added GROUP CLOSED, a section boundary for GROUP MISPLACED, the closed-theme and line-end guards on tagging and closing, older Done members shown under the theme filter, and `see` as an open circle in the matrix.
 
 **2026-10-30 — name.** The owner set the rename: this skill becomes `sync-panel` when the board gains its interactive layer, in the same change; until then it keeps `syncing-board`, since the page only displays.
 
