@@ -23,7 +23,7 @@ Every event is one edit, stamped on the item:
 |---|---|
 | the owner must decide something | item in Needs you; the next action names the decision; link the page that argues it |
 | a lane is dispatched | item in Running with `due` (dispatch time plus twice the expected duration) and `check` (the command that proves the outcome exists); both are required there |
-| a lane reports done | move to Done; the title links the deliverable; drop next action, `due`, `check` |
+| a lane reports done | close it: move to Done, the title links the deliverable, the next action goes |
 | the owner decides | move the item where the decision points; Done when the decision closes it |
 | something is owed and no lane holds it | item in Loose ends, with the next actor and one next action |
 | an item blocks or follows another | `rel` on the item (verbs in BOARD-FORMAT.md) |
@@ -31,10 +31,11 @@ Every event is one edit, stamped on the item:
 | a theme's work is done | close the theme; its id stays taken |
 | the owner's answer is a short reply or a choice | `reply`, or `options` with the recommended one, on the item |
 | an event names a PR, issue, comment or page | link each one: the title links the primary, every other goes in the item's links row (BOARD-FORMAT.md) |
+| an item asks the owner to read a document | link the document itself beside its PR: the file in the worktree that has the PR's branch checked out, fast-forwarded to the PR head first when it is clean, plus a `:LINE[:COL]` link to the section the owner rules on (BOARD-FORMAT.md, Local links); re-point both at the main checkout when the PR merges |
 | `spell-it-out` delivers a page for an item | `mechanism` = the page's path |
 | a Done item is older than the archive window | move it to the archive page (BOARD-FORMAT.md, The folder) |
 
-An id is never reused, Done and archive included. `changed` is stamped on every edit. A next action is one sentence naming what the actor does, verb first; on the owner's rows at most 15 words, with the detail in the linked page; an item in Needs you always has one. Edit by anchor: a tool that rejects a stale read rather than applying it, so two agents cannot silently overwrite each other on the one file. If the tool applies the ops of one patch against the pre-edit line numbers, a move is two patches: cut and paste, then re-read and retarget the state.
+An id is never reused, Done and archive included. `changed` is stamped on every edit. A move or close rewrites the opening tag: it sets id, state, actor, since and changed, and carries every other attribute over, so a theme, relations and any attribute added later survive; a close also drops the open-item chips (`due`, `check`, `reply`, `options`, `recommend`). A next action is one sentence naming what the actor does, verb first; on the owner's rows at most 15 words, with the detail in the linked page; an item in Needs you always has one. Edit by anchor: a tool that rejects a stale read rather than applying it, so two agents cannot silently overwrite each other on the one file. If the tool applies the ops of one patch against the pre-edit line numbers, a move is two patches: cut and paste, then re-read and retarget the state.
 
 Done when: the item reflects the event, `changed` is stamped, and `check.py --stamp` reports 0 flags and no CHECK line reading DONE.
 
@@ -50,9 +51,9 @@ Done when: the answer cites every id whose actor is the owner.
 
 ## Rendering at a glance
 
-Position before colour: Needs you is the first section; the owner's rows are tinted wherever they sit, with the next action in full weight; Done is muted. A dense table, one line per item, the same aligned columns in every state; what each cell shows is in BOARD-FORMAT.md. Above the table, panels that each answer one question the table cannot; BOARD-FORMAT.md says which form answers each panel's question, and `graph-it` says how that form is drawn.
+Position before colour: Needs you is the first section; the owner's rows are tinted wherever they sit, with the next action in full weight; Done is muted. Needs you renders as tiles, each a decision read whole; the other states as one-line rows that expand in place; each section has its own view toggle (BOARD-FORMAT.md, The page). Above the sections, panels that each answer one question the sections cannot; BOARD-FORMAT.md says which form answers each panel's question, and `graph-it` says how that form is drawn.
 
-Verify with a local headless browser on the `file://` URL: the two screenshots `graph-it` names (390 px light, desktop dark) plus desktop light, with one item planted per badge and glyph so every rendering path is seen. Then hand the screenshots to a critic that has not seen the design; apply its layout findings, and take its content findings to the owner.
+Verify with a local headless browser on the `file://` URL: the two screenshots `graph-it` names (390 px light, desktop dark) plus desktop light, with one item planted per badge and glyph, a section in each view, a row expanded and the graph overlay open, so every rendering path is seen. Then hand the screenshots to a critic that has not seen the design; apply its layout findings, and take its content findings to the owner.
 
 Done when: the three screenshots have been looked at; 0 remote requests, 0 console errors, scroll width equal to the viewport; every layout finding applied.
 
@@ -63,6 +64,8 @@ Each open item carries an explain button that copies `Use spell-it-out on sync i
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
+
+**2026-10-31 — tiles and rows, open-items graph, editor links.** Prompted by a live board that had moved ahead of the skill on the owner's layout decisions. Needs you became tiles and the other states one-line rows, each section with a per-viewer view toggle, rows expanding in place and staying expanded across the refresh, tiles at their natural height; the dependency panel counts and draws only links between open items, and gained a full-screen node-link overlay; local text-file links open in the owner's editor at render time while the file keeps `file://`; an item asking the owner to read a document links the document and the section to rule on, not only its PR; move and close carry every attribute they do not render, close dropping the open-item chips. The checker gained `GROUP MISSING`.
 
 **2026-10-30 — themes and easing.** Prompted by the owner grouping items into themes that span all four states, and asking what else makes them do work the board could do. Added: the theme record and `group` on items, rendered as a Themes panel, a stripe per member, members kept together inside each state, and one decision row in Needs you; "changed since you looked" with an explicit mark seen; relation chips that show the other item's title; Done limited to the last 24 hours; reply and option chips; `see` as an undirected relation; next actions capped at 15 words. The checker gained BAD REL, LONG NEXT, BAD OPTIONS and the four theme checks (each planted in a scratch copy and flagged), and stopped treating a `<br>` in a title as an unclosed element, a false NO NEXT ACTION the PR #10 review had found. Review round 1 on PR #14 (1 BLOCKING, 9 SHOULD, 13 NIT) then made close keep an item's theme, relations and links; fixed `<br/>`; dotted only new, moved and owner-edited items, marked at page load; drew `see` without an arrowhead; showed the themes container and added GROUP MISPLACED; refused to reuse a closed theme id; cleared a stale theme filter; counted archive ids; and removed board content from this record. Round 2 returned MERGE; its nits added GROUP CLOSED, a section boundary for GROUP MISPLACED, the closed-theme and line-end guards on tagging and closing, older Done members shown under the theme filter, and `see` as an open circle in the matrix.
 
