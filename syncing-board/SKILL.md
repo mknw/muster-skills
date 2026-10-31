@@ -31,7 +31,7 @@ Every event is one edit, stamped on the item:
 | a theme's work is done | close the theme; its id stays taken |
 | the owner's answer is a short reply or a choice | `reply`, or `options` with the recommended one, on the item |
 | an event names a PR, issue, comment or page | link each one: the title links the primary, every other goes in the item's links row (BOARD-FORMAT.md) |
-| an item asks the owner to read a document | link the document itself beside its PR: the file in the worktree that has the PR's branch checked out, plus a `:LINE` link to the section the owner rules on (BOARD-FORMAT.md, Local links); re-point both at the main checkout when the PR merges |
+| an item asks the owner to read a document | link the document itself beside its PR: the file in the worktree that has the PR's branch checked out, fast-forwarded to the PR head first when it is clean, plus a `:LINE[:COL]` link to the section the owner rules on (BOARD-FORMAT.md, Local links); re-point both at the main checkout when the PR merges |
 | `spell-it-out` delivers a page for an item | `mechanism` = the page's path |
 | a Done item is older than the archive window | move it to the archive page (BOARD-FORMAT.md, The folder) |
 
