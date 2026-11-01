@@ -1,6 +1,6 @@
 # Board format
 
-The reference half of [`syncing-board`](SKILL.md): the item, the theme, the page, the panels, the checker, the folder. Everything here is created once and then edited by anchor.
+The reference half of [`sync-panel`](SKILL.md): the item and its decision context, the theme, the page, the panels, the checker, the helper, the folder. Everything here is created once and then edited by anchor.
 
 ## The item
 
@@ -26,12 +26,27 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | `data-rel` | optional, space-separated `verb:ID`. `decides`, `unblocks`, `closes` point from this item; `after`, `needs`, `blocked-by`, `waits` point to it; `see` is undirected |
 | `data-mechanism` | optional path of the item's `spell-it-out` page (the page links it as a `file://` URL) |
 | `data-group` | optional theme id (`G1`, never reused): the item belongs to that theme record. One theme per item |
-| `data-reply` | optional `text \| text` (`|` separates replies): the short replies the owner would type ("go release"), rendered as chips that copy `<id>: <text>` |
-| `data-options` | optional `A text\|B text`, with `data-recommend="A"`: the item's choices as chips, the recommended one starred; a click copies `<id>: A — text` |
+| `data-reply` | optional `text \| text` (`|` separates replies): the short replies the owner would type ("go release"), rendered as chips; a click sends the reply (The helper) |
+| `data-options` | optional `A text\|B text`, with `data-recommend="A"`: the item's choices as chips, the recommended one starred; a click sends `A — text` (The helper) |
+| `data-actions` | optional `Label=kind \| Label=kind`, written by the item's coding agent (a kind such as `explain` or `snooze:<date>`): extra buttons, each sending `action:<kind>` (The helper). The board renders only the buttons an item declares |
+| `data-ai-owner` | required in Needs you: the agent(s) waiting on the owner's answer, space-separated; shown as "for <name>" on the item; the helper sends each click to them |
 
 Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done; then, when the item cites more than one reference, `<p class="links">` with one `<a>` per further PR, issue, comment or page, so a `#NNN` written in the text always has a link to click. The script turns the title link and each anchor in the links row into chips in the link column (a link repeated in both appears once), removes the row, and leaves the title as text. A chip reads `#845` for a PR or issue, `#788 ↳` for a comment, the file's name for a local file or a file in the tracker (without a markdown, HTML, text or log extension), and the hostname for any other link; a file chip shows only its icon until the item is expanded, the name in its tooltip. The script also hides the `<b>actor</b>` prefix because the who column says it; adds the who, id, age and changed cells and the explain button (under **more**, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
 
 **Local links** are absolute `file://` URLs, optionally ending in `:LINE[:COL]`, and stay that way in the file. At render time the script rewrites a link to a local text file (markdown, text, code, config, logs, or no extension) to the owner's editor URL scheme, such as `zed://file/`, keeping the `:LINE[:COL]` suffix and putting the original URL in the tooltip. Folders, images, PDFs and every other type keep `file://` for the default app; `.html` opens in the browser.
+
+**Decision context.** A Needs-you item carries what the owner needs to decide without hunting through links: three body lines after the next action, in this order, each on one line so the edit script can rewrite it.
+
+```html
+  <p class="brief">One to three plain sentences: what this is, what is being chosen, what happens next.</p>
+  <dl class="terms"><dt>X2</dt><dd><a href="file:///abs/path/report.md:120">one-line plain meaning</a></dd></dl>
+  <p class="links"><a href="https://host/owner/repo/pull/851" title="what this link covers">851</a></p>
+```
+
+- **Brief**: shown when the item is expanded, above the chips.
+- **Terms**: every shorthand token in the item's options, next action or brief, each linked to the exact place it is defined (a file with `:LINE`, or a URL with an `#anchor`); shown expanded, under the brief, as "TERM: meaning".
+- **Link notes**: the `title` on each links-row anchor says what that link covers; an expanded item shows each note beside its chip. A `title` on the `<h3>` link shows the same way and is optional.
+- **AI owner**: `data-ai-owner` (attribute table).
 
 **Badges**, in the changed cell, short and relative, allowed to wrap: `overdue 3 d`, `due 10-30`, `stale`, `check` (the item has an outcome check; the command is the tooltip). Nothing else.
 
@@ -57,7 +72,7 @@ Members stay in the state they are in; the theme adds a view across states and l
 
 One `index.html`, no build step. A `<meta http-equiv="refresh" content="60">` keeps it current; state survives the refresh: per viewer in local storage, each section's view and collapsed state and the open help panel; in session storage, the scroll position, the expanded items and the graph overlay's zoom. Every storage access sits in try/catch, and without storage the defaults render. Parts, top to bottom:
 
-1. **Header**: title, who the board serves, the refresh interval, the last-checked stamp the checker writes, and "N new, moved or yours changed since HH:MM" with a **mark seen** button.
+1. **Header**: title, who the board serves, the refresh interval, the last-checked stamp the checker writes, "N new, moved or yours changed since HH:MM" with a **mark seen** button, and "helper on" or "helper offline".
 2. **Band**: the Themes panel across the top while any theme is open, then three panels (next section), each with a one-line heading that names the question it answers.
 3. **Four sections**, `<section id="needs-you">` through `done`, each an `<h2>` (the script appends the count and a `rows | tiles` toggle; clicking the heading collapses the section) over a column-header row and an `<ol class="items">`; without the script they render as one plain table.
    - **Tiles**, the default in Needs you: id and title, due or age in the corner, the next action, the reply and option chips, one meta line (link chips, relations, edited age, the changed dot) and a **more** button for the rest (mechanism glyph or explain button, outcome check, full link labels).
@@ -66,7 +81,7 @@ One `index.html`, no build step. A `<meta http-equiv="refresh" content="60">` ke
    - The who column is dropped in Needs you, where the owner is the actor by definition, and in Done, where nobody is; in Running and Loose ends, when no item left visible by the theme filter has an actor.
    - An empty section collapses to its header and one line. Done shows the last 24 hours; older Done items sit behind one "N more" row.
 4. **How this page works**: a collapsed `<details>` with the item schema, the state flow as a small diagram, and the panels table below.
-5. The vendored diagram library and the page's own script, which reads the DOM once and renders from it.
+5. The vendored diagram library and the page's own script, a file in `assets/` (the helper's CSP allows no inline script), which reads the DOM once and renders from it.
 
 Stylesheet in `assets/`: tokens on `:root`, dark by `prefers-color-scheme`, the owner's tint as its own token, column widths in one grid template shared by the header row and the rows, a phone breakpoint that turns each row into a meta line (who, id, link, age, changed) over the title and next action, and hides the band's charts. No web fonts, no remote request of any kind.
 
@@ -82,14 +97,14 @@ Per panel, the form below, drawn as `graph-it` ([FORMS.md](../graph-it/FORMS.md)
 | what unblocks what? | chips on the rows always, for every relation; in the panel only links between open items count and are drawn (an end in Done or off the board drops the edge): a node-link graph while there are at most twelve, an adjacency matrix beyond; its **expand** button opens a full-screen overlay that always draws the node-link graph, with zoom, pan, fit, and Esc to close (focus returns to the button) | node-link reads for sparse chains and becomes a hairball past a dozen edges; a matrix stays legible at any density but hides paths, which the overlay gives back |
 | what belongs together? | the Themes panel (one row per open theme: counts per state, done of total, next step; a click shows only its items); a stripe on each member; inside each open state, members kept adjacent under one label row, which in Needs you reads "one decision" when the theme's next step is the owner's; a theme chip only on a member that has no label row | adjacency and a shared colour group without moving items out of the state the owner acts on; one decision row replaces several. Closed themes stop striping |
 | what changed since I looked? | a dot on each item that is new, changed state, or is the owner's and was edited since the last **mark seen**, and the count in the header | the 60 s refresh makes an automatic "last visit" meaningless, so the mark is the owner's own; it records what the page showed when it loaded, so an edit landing while the owner reads still counts. Coordinator housekeeping on other rows stays undotted |
-| what do I answer? | reply and option chips under the next action, the recommended option starred | a click replaces retyping a reply the board already knows |
+| what do I answer? | reply, option and declared-button chips under the next action, the recommended option starred; a note field on the expanded item; after a click, its state (The helper) | a click replaces retyping a reply the board already knows, and the state says whether it arrived |
 | counts by category | numbers in the section headers and a one-line flow (opened, closed, touched in 24 h; stale and overdue each shown only when non-zero) | three numbers read faster than three areas |
 
 An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed and relabelled (`before`, `needed by`, `blocks`, `awaited by`), so the graph keeps FORMS.md's arrow direction; `see` is drawn as a line with no arrowhead, and as an open circle in the matrix.
 
 ## The checker
 
-`check.py`, standard library only, no network. It parses `index.html` with the HTML parser, collecting every element with `data-id` (and every theme with `data-gid`), the `<section id>` enclosing it, its title text, its next-action text and its links; a void tag such as `<br>` closes itself. Flags, one line each with the id (and the line number where the parser has one):
+`check.py`, standard library only, no network. It parses `index.html` with the HTML parser, collecting every element with `data-id` (and every theme with `data-gid`), the `<section id>` enclosing it, its title text, its next-action text, its links, and its brief, terms and link notes; a void tag such as `<br>` closes itself. Flags, one line each with the id (and the line number where the parser has one):
 
 - `DUPLICATE id`: the same `data-id` twice, counting the archive pages (whose ids also count as existing for `BAD REL`)
 - `SECTION MISMATCH`: `data-section` differs from the enclosing section
@@ -106,9 +121,42 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `GROUP MISPLACED`: a theme record outside `<section id="groups">`, where the page cannot see it
 - `GROUP CLOSED`: an open item tagged into a closed theme
 - `GROUP MISSING`: an open item with no `data-group` whose `data-rel` targets a member of an open theme, or whose title names one as a whole word (the next action is not searched: it routinely lists other ids); tag it or reword it
+- `NO BRIEF` / `NO AI OWNER`: a Needs-you item without a brief, or without `data-ai-owner`
+- `LINK WITHOUT NOTE`: a links-row anchor on a Needs-you item with no `title`
+- `UNDEFINED TERM`: a shorthand token in a Needs-you item's options, next action or brief that its terms do not define. Shorthand is an upper-case group of one to four letters followed by digits (optional hyphen, optional bracketed suffix: `X2`, `QA-4`, `K5(b)`) or by a bracketed suffix alone (`AB(c)`); two joined by a dash are one range token, defined as a range or at both ends. Item ids, theme ids and agent names are excluded, and `#NNN`, dates and version strings cannot match. Model and hash names match too; a one-line definition costs nothing
 - `STALE`: `data-changed` older than three days on an open item
 
 Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERDUE when it fails past `due`, else pending, and whether it ran without a shell or through `sh -c`; a command with no shell metacharacter runs without one, under a timeout either way); then the lane-deadline ledger the coordinator keeps, whose overdue lines also count as flags; then the counts per state. Exit 1 on any flag. `--stamp` rewrites the last-checked line through the same anchor tool used for items, falling back to a direct write. The mutation run that proves it: a scratch copy with one planted instance of each defect, all flagged, exit 1.
+
+## The helper
+
+A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry` and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox and the one-time bootstrap file, which it writes at start, rewrites on each use and deletes on shutdown.
+
+- **Routing file**: each AI-owner name to its mailbox address, plus the coordinator's name and the helper's own sender label. The helper sends under that neutral label and starts with a clean environment, so it never acts as the agent that launched it.
+- **Inbox**: one JSON event per line, append-only: `click`, `sent` (with the mailbox message id), `send-failed` (with the error), `retry`, `seen`.
+- **States**, in the expanded item and as a short badge in row view:
+  - sent: the answer and its time;
+  - seen: by whom and when, from the mailbox's read receipt, which the helper polls while a sent message is unread; it means handed to the agent, and says nothing about acting;
+  - not delivered: to whom, with a **retry** button;
+  - answered an older version: the click's version differs from the item's `data-changed` at the moment of the click;
+  - resolved: the item left Needs you, or was edited after the answer.
+- **Note**: a text field on the expanded item, at most 500 characters, kept across the refresh, sent with whichever button is pressed.
+- **Linked files**: a page served over http cannot open `file://`, so the helper serves the non-text local files the board links, from one `reports/` folder; the edit script copies a linked non-text file there and links the copy, a snapshot, refusing a symlink, a non-regular file and anything on a hidden path. Text files open in the editor either way.
+- **Offline**: on the `file://` page, or when the helper does not answer, the header says "helper offline" and a click copies `<id>: <answer>` and the note to the clipboard, for the owner to paste to the coordinator.
+
+**Security baseline**, each requirement proved by a mutation (SKILL.md, Clicks reach the AI owner):
+
+- **Loopback only**: bound to 127.0.0.1, and every request's `Host` equals `127.0.0.1:PORT` exactly, against DNS rebinding.
+- **Session cookie**: every route but a health check and the bootstrap needs it; it is `HttpOnly; SameSite=Strict` and set only by a one-time bootstrap URL, which the helper keeps in a mode-600 file and rotates on each use, and the lifecycle script prints.
+- **Per-start token and Origin**: a random token generated at each start, injected into the page the helper serves and kept off disk, required on every POST and on `/state`; every POST also carries an `Origin` equal to the helper's own.
+- **Input**: an open item's id, an answer that item declares (reply, option or action), a note within its cap, a body within a size cap, JSON only.
+- **File serving**: a file is served only when the board links it, its real path (every symlink resolved) lies inside the reports folder, and it is a regular file; a served file gets a sandbox CSP so it cannot act as the board. The hidden-path refusal sits in the edit script's copy step (Linked files).
+- **Strict CSP on the board**: `script-src 'self'` with no inline script, `frame-ancestors 'none'`, `X-Frame-Options: DENY`.
+- **Argv-only process calls**: every mailbox call is an argument array; request content reaches no shell.
+- **Idempotent clicks**: each decision carries a client id that a double click or a retry reuses, and the helper records and sends a known id once; each mailbox send carries a deterministic request id, so an ambiguous retry is replayed rather than duplicated.
+- **Visible delivery failure**: every send ends as `sent` or `send-failed`, in the inbox and on the page; a malformed mailbox reply is logged and keeps the helper running.
+- **Pidfile identity**: `stop` kills only a process whose command line is the runtime running this helper, so a recycled PID survives.
+- **Known residual**: cookies are not port-scoped, so the browser also sends the session cookie to any other server on 127.0.0.1 the owner opens; `HttpOnly` keeps page scripts from it, but that server could log it. A helper restart invalidates it.
 
 ## The folder
 
@@ -121,7 +169,14 @@ Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERD
   assets/<diagram-lib>   600   vendored, version and checksum recorded in README.md
   backups/               700   dated copies taken before any restructure
   archive/               700   one page per month of archived Done items, same item markup
-  <edit helper>          600   optional: a script wrapping the anchor tool for ADD / MOVE / CLOSE, themes, links, replies and options
+  <edit script>          600   optional: wraps the anchor tool for ADD / MOVE / CLOSE, themes, links, replies, options and decision context
+  assets/<page script>   600   the page's script, kept out of index.html for the helper's CSP
+  <helper>               600   the click helper (The helper)
+  <bootstrap file>       600   the helper's current one-time URL; deleted on shutdown
+  <lifecycle script>     600   start / stop / status; its pidfile and log beside it, 600
+  <routing file>         600   AI-owner name to mailbox address, the coordinator, the sender label
+  inbox.jsonl            600   the helper's append-only event log
+  reports/               700   the only folder the helper serves linked files from
 ```
 
 Back up `index.html` and the stylesheet before a restructure. The Done list is bounded by the **archive window** (default 14 days): a Done item older than that moves to `archive/<yyyy-mm>.html`, where its id stays taken.

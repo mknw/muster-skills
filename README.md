@@ -48,7 +48,7 @@ Two rules keep the set portable:
 | `architecture-report` | A cited, descriptive report on one named layer or topic |
 | `graph-it` / `show-me` | How to draw one visual form (control flow, pseudocode, types, call stack, diagram, diff, gauge) as text or HTML, in place of prose; the recipes other skills' pages are built from |
 | `spell-it-out` | A visual HTML page tracing one concrete case through one mechanism — its rule and real numbers, why it fails, its reach — ending in a decision |
-| `syncing-board` | The one private page an owner and their coordinator sync through: what each party waits on, next actor, age, outcome checks, dependencies — dense table, report-only checker, anchor-based edits |
+| `sync-panel` | The one private page an owner and their coordinator sync through: what each party waits on, next actor, age, outcome checks, dependencies — tiles and rows, decision context, clicks relayed to the waiting agent by a loopback helper, report-only checker, anchor-based edits |
 | `intent-driven-development` | Keeping implementation tied to stated intent |
 | `diagnosing-bugs` | A diagnosis loop for hard bugs and regressions |
 | `loop-design-check` | Sanity-checking agent/feedback loop designs |
@@ -92,7 +92,7 @@ Material adapted from the MIT-licensed repositories above is redistributed
 under this repository's own MIT license. Full upstream copyright and
 permission notices: [NOTICE.md](NOTICE.md).
 
-`syncing-board` is homegrown; three ideas shaped it without lending text:
+`sync-panel` is homegrown; three ideas shaped it without lending text:
 HumanLayer's [show-me](https://www.humanlayer.com/blog/show-me-skill) (the most compact
 form per question), Matt Pocock's [teach](https://www.aihero.dev/skills-teach) (state in
 files rather than chat, small pages sharing one assets folder) and
