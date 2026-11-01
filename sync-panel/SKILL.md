@@ -1,19 +1,19 @@
 ---
-name: syncing-board
-description: Board an owner and their coordinator agent sync through, one private local page of what each party is waiting on. Use when the coordinator records an event on an existing board, when the owner asks what they must do or what is going on, or when the owner asks for a board to be built or restructured.
+name: sync-panel
+description: Board an owner and their coordinator agent sync through, one private local page of what each party is waiting on, where the owner's clicks reach the waiting agent. Use when the coordinator records an event on an existing board, when a click from the board reaches you, when the owner asks what they must do or what is going on, or when the owner asks for a board to be built or restructured.
 ---
 
-# Syncing board
+# Sync panel
 
-The **board** is the one surface where the **owner** (the human) and the **coordinator** (the agent the owner talks to) see what each is waiting on. The coordinator writes it at every **event**; the owner reads it **at a glance**. It replaces status messages: a result left in a terminal never reaches the other party, and state that lives in a file survives a fresh session.
+The **board** is the one surface where the **owner** (the human) and the **coordinator** (the agent the owner talks to) see what each is waiting on. The coordinator writes it at every **event**; the owner reads it **at a glance** and answers on it, each click reaching the agent that waits on the answer. It replaces status messages: a result left in a terminal never reaches the other party, and state that lives in a file survives a fresh session.
 
 One board, four **states**: **Needs you** (the owner must act), **Running** (a lane works, with a due time and an outcome check), **Loose ends** (a next actor is named, no lane yet), **Done** (the deliverable). One **item** per thing waited on. The issue tracker already shows issues and PRs; the board shows only what the tracker cannot: private items, who moves next, how long each has waited, what unblocks what.
 
 ## Find or create the board
 
-The board lives outside every repository, in the directory the project's instructions or the coordinator's memory name for private material; if none is named, ask once. Owner-only access (`umask 077`). It loads nothing remote: a diagram library ships as a vendored copy beside the page. Create what is absent from [BOARD-FORMAT.md](BOARD-FORMAT.md).
+The board lives outside every repository, in the directory the project's instructions or the coordinator's memory name for private material; if none is named, ask once. Owner-only access (`umask 077`). It loads nothing remote: a diagram library ships as a vendored copy beside the page. Create what is absent from [BOARD-FORMAT.md](BOARD-FORMAT.md), the helper included.
 
-Done when: the folder is mode 700 and every file 600, and `check.py` exits 0.
+Done when: the folder is mode 700 and every file 600, `check.py` exits 0, and the helper passes the click Done-when below.
 
 ## Events to edits
 
@@ -21,7 +21,7 @@ Every event is one edit, stamped on the item:
 
 | event | edit |
 |---|---|
-| the owner must decide something | item in Needs you; the next action names the decision; link the page that argues it |
+| the owner must decide something | item in Needs you; the next action names the decision; link the page that argues it; add the decision context: a brief, the terms, a note on each link, and the AI owner(s) waiting on the answer (BOARD-FORMAT.md, Decision context) |
 | a lane is dispatched | item in Running with `due` (dispatch time plus twice the expected duration) and `check` (the command that proves the outcome exists); both are required there |
 | a lane reports done | close it: move to Done, the title links the deliverable, the next action goes |
 | the owner decides | move the item where the decision points; Done when the decision closes it |
@@ -30,6 +30,7 @@ Every event is one edit, stamped on the item:
 | items belong together, or are one decision for the owner | a theme record with one next step, and `group` on each member (BOARD-FORMAT.md, The theme) |
 | a theme's work is done | close the theme; its id stays taken |
 | the owner's answer is a short reply or a choice | `reply`, or `options` with the recommended one, on the item |
+| the coding agent behind an item needs another answer kind | declare the button on the item (`actions`); the board renders only declared buttons |
 | an event names a PR, issue, comment or page | link each one: the title links the primary, every other goes in the item's links row (BOARD-FORMAT.md) |
 | an item asks the owner to read a document | link the document itself beside its PR: the file in the worktree that has the PR's branch checked out, fast-forwarded to the PR head first when it is clean, plus a `:LINE[:COL]` link to the section the owner rules on (BOARD-FORMAT.md, Local links); re-point both at the main checkout when the PR merges |
 | `spell-it-out` delivers a page for an item | `mechanism` = the page's path |
@@ -45,6 +46,18 @@ Done when: the item reflects the event, `changed` is stamped, and `check.py --st
 
 Done when: the answer cites every id whose actor is the owner.
 
+## Clicks reach the AI owner
+
+The owner answers by clicking a reply, option or declared button, with an optional note. The **helper**, a small local server bound to the loopback address (BOARD-FORMAT.md, The helper), serves the board and carries the click:
+
+1. The click carries the item id, the answer, the time, the item's version (`changed`) and the note.
+2. The helper appends it to the **inbox**, an append-only event log, then sends it in full to each of the item's AI owners through the agents' mailbox system (e.g. Orca), and a notice-only copy to the coordinator, skipped when the coordinator is itself an owner.
+3. Each send ends as delivered or failed in the inbox; the page shows sent, seen, not delivered (with retry), answered an older version, and resolved.
+
+The helper writes only the inbox, never the board file. An AI owner that receives a click acts on it, then moves the item itself; leaving Needs you is what marks the click resolved. The coordinator's notice needs no action. Without the helper (the `file://` page, or the helper down) the page says "helper offline" and a click copies the same answer and note to the clipboard, for the owner to paste to the coordinator.
+
+Done when (building or changing the helper): a click on a test item lands in the inbox, reaches each AI owner's mailbox (read there, not assumed) and gives the coordinator its notice; the board file's checksum is the same before and after; the page shows sent, seen and resolved across a reload; and a mutation for each baseline requirement is refused, at least: no token 403, a foreign Origin 403, an unknown id 400, a stale version shown as "answered an older version".
+
 ## The checker
 
 `check.py` reports and never moves an item: it flags the record's defects (the list in BOARD-FORMAT.md), runs every outcome check, and exits 1 on any flag. Prove a new or changed checker with a **mutation run**: plant each defect in a scratch copy and watch each one flagged.
@@ -53,17 +66,19 @@ Done when: the answer cites every id whose actor is the owner.
 
 Position before colour: Needs you is the first section; the owner's rows are tinted wherever they sit, with the next action in full weight; Done is muted. Needs you renders as tiles, each a decision read whole; the other states as one-line rows that expand in place; each section has its own view toggle (BOARD-FORMAT.md, The page). Above the sections, panels that each answer one question the sections cannot; BOARD-FORMAT.md says which form answers each panel's question, and `graph-it` says how that form is drawn.
 
-Verify with a local headless browser on the `file://` URL: the two screenshots `graph-it` names (390 px light, desktop dark) plus desktop light, with one item planted per badge and glyph, a section in each view, a row expanded and the graph overlay open, so every rendering path is seen. Then hand the screenshots to a critic that has not seen the design; apply its layout findings, and take its content findings to the owner.
+Verify with a local headless browser on the `file://` URL, and on the helper's page when it runs: the two screenshots `graph-it` names (390 px light, desktop dark) plus desktop light, with one item planted per badge and glyph, a section in each view, a row expanded and the graph overlay open, so every rendering path is seen. Then hand the screenshots to a critic that has not seen the design; apply its layout findings, and take its content findings to the owner.
 
 Done when: the three screenshots have been looked at; 0 remote requests, 0 console errors, scroll width equal to the viewport; every layout finding applied.
 
 ## Explain hook
 
-Each open item carries an explain button that copies `Use spell-it-out on sync item <id>: <title>`. Pasted to the coordinator, it runs `spell-it-out` on that item; that skill's own gate decides, so an item with no mechanism behind it gets a chat answer and no `mechanism`. A delivered page's path goes back on the item as `mechanism`, which is what turns the button into the glyph. A page served from `file://` cannot reach a terminal by itself; the clipboard is the whole mechanism until a localhost helper is deliberately built.
+Each open item carries an explain button that copies `Use spell-it-out on sync item <id>: <title>`. Pasted to the coordinator, it runs `spell-it-out` on that item; that skill's own gate decides, so an item with no mechanism behind it gets a chat answer and no `mechanism`. A delivered page's path goes back on the item as `mechanism`, which is what turns the button into the glyph. The button stays a clipboard copy while the helper runs: the helper carries answers to an item's AI owners, and this request goes to the coordinator.
 
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
+
+**2026-11-01 — renamed `sync-panel`; decision context and clicks.** Prompted by the live board gaining its interactive layer, which the 2026-10-30 rule ties to the rename. Decision context: every Needs-you item carries a plain brief, its shorthand defined with a link to each definition, a note on each link and the AI owner(s) waiting on the answer, with four checker flags (`NO BRIEF`, `UNDEFINED TERM`, `LINK WITHOUT NOTE`, `NO AI OWNER`). Clicks: a loopback helper serves the board and relays each click to the item's AI owners through the agents' mailbox system, with a notice to the coordinator, an append-only inbox, page states from sent to resolved, buttons declared per item, a clipboard fallback, and a security baseline stated as requirements. The helper never writes the board file. The description gained the branch for an agent a click reaches.
 
 **2026-10-31 — tiles and rows, open-items graph, editor links.** Prompted by a live board that had moved ahead of the skill on the owner's layout decisions. Needs you became tiles and the other states one-line rows, each section with a per-viewer view toggle, rows expanding in place and staying expanded across the refresh, tiles at their natural height; the dependency panel counts and draws only links between open items, and gained a full-screen node-link overlay; local text-file links open in the owner's editor at render time while the file keeps `file://`; an item asking the owner to read a document links the document and the section to rule on, not only its PR; move and close carry every attribute they do not render, close dropping the open-item chips. The checker gained `GROUP MISSING`.
 
