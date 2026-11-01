@@ -26,9 +26,9 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | `data-rel` | optional, space-separated `verb:ID`. `decides`, `unblocks`, `closes` point from this item; `after`, `needs`, `blocked-by`, `waits` point to it; `see` is undirected |
 | `data-mechanism` | optional path of the item's `spell-it-out` page (the page links it as a `file://` URL) |
 | `data-group` | optional theme id (`G1`, never reused): the item belongs to that theme record. One theme per item |
-| `data-reply` | optional `text \| text` (`|` separates replies): the short replies the owner would type ("go release"), rendered as chips; a click sends the reply (The helper), or copies `<id>: <text>` while the helper is offline |
-| `data-options` | optional `A text\|B text`, with `data-recommend="A"`: the item's choices as chips, the recommended one starred; a click sends `A — text`, or copies `<id>: A — text` while the helper is offline |
-| `data-actions` | optional `Label=kind \| Label=kind`, written by the item's coding agent (a kind such as `explain` or `snooze:<date>`): extra buttons, each sending `action:<kind>`. The board renders only the buttons an item declares |
+| `data-reply` | optional `text \| text` (`|` separates replies): the short replies the owner would type ("go release"), rendered as chips; a click sends the reply (The helper) |
+| `data-options` | optional `A text\|B text`, with `data-recommend="A"`: the item's choices as chips, the recommended one starred; a click sends `A — text` (The helper) |
+| `data-actions` | optional `Label=kind \| Label=kind`, written by the item's coding agent (a kind such as `explain` or `snooze:<date>`): extra buttons, each sending `action:<kind>` (The helper). The board renders only the buttons an item declares |
 | `data-ai-owner` | required in Needs you: the agent(s) waiting on the owner's answer, space-separated; shown as "for <name>" on the item; the helper sends each click to them |
 
 Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done; then, when the item cites more than one reference, `<p class="links">` with one `<a>` per further PR, issue, comment or page, so a `#NNN` written in the text always has a link to click. The script turns the title link and each anchor in the links row into chips in the link column (a link repeated in both appears once), removes the row, and leaves the title as text. A chip reads `#845` for a PR or issue, `#788 ↳` for a comment, the file's name for a local file or a file in the tracker (without a markdown, HTML, text or log extension), and the hostname for any other link; a file chip shows only its icon until the item is expanded, the name in its tooltip. The script also hides the `<b>actor</b>` prefix because the who column says it; adds the who, id, age and changed cells and the explain button (under **more**, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
@@ -130,7 +130,7 @@ Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERD
 
 ## The helper
 
-A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry` and `GET /state` (fetched at each page load). Its only write is the inbox.
+A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry` and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox and the one-time bootstrap file, which it writes at start, rewrites on each use and deletes on shutdown.
 
 - **Routing file**: each AI-owner name to its mailbox address, plus the coordinator's name and the helper's own sender label. The helper sends under that neutral label and starts with a clean environment, so it never acts as the agent that launched it.
 - **Inbox**: one JSON event per line, append-only: `click`, `sent` (with the mailbox message id), `send-failed` (with the error), `retry`, `seen`.
@@ -141,15 +141,16 @@ A local server with no dependency beyond its runtime, started and stopped by han
   - answered an older version: the click's version differs from the item's `data-changed` at the moment of the click;
   - resolved: the item left Needs you, or was edited after the answer.
 - **Note**: a text field on the expanded item, at most 500 characters, kept across the refresh, sent with whichever button is pressed.
-- **Linked files**: a page served over http cannot open `file://`, so the helper serves the non-text local files the board links, from one `reports/` folder; the edit script copies a linked non-text file there and links the copy, a snapshot. Text files open in the editor either way.
+- **Linked files**: a page served over http cannot open `file://`, so the helper serves the non-text local files the board links, from one `reports/` folder; the edit script copies a linked non-text file there and links the copy, a snapshot, refusing a symlink, a non-regular file and anything on a hidden path. Text files open in the editor either way.
+- **Offline**: on the `file://` page, or when the helper does not answer, the header says "helper offline" and a click copies `<id>: <answer>` and the note to the clipboard, for the owner to paste to the coordinator.
 
 **Security baseline**, each requirement proved by a mutation (SKILL.md, Clicks reach the AI owner):
 
 - **Loopback only**: bound to 127.0.0.1, and every request's `Host` equals `127.0.0.1:PORT` exactly, against DNS rebinding.
-- **Session cookie**: every route but a health check and the bootstrap needs it; it is `HttpOnly; SameSite=Strict` and set only by a one-time bootstrap URL that the lifecycle script prints and keeps in a mode-600 file, rotated on each use.
+- **Session cookie**: every route but a health check and the bootstrap needs it; it is `HttpOnly; SameSite=Strict` and set only by a one-time bootstrap URL, which the helper keeps in a mode-600 file and rotates on each use, and the lifecycle script prints.
 - **Per-start token and Origin**: a random token generated at each start, injected into the page the helper serves and kept off disk, required on every POST and on `/state`; every POST also carries an `Origin` equal to the helper's own.
 - **Input**: an open item's id, an answer that item declares (reply, option or action), a note within its cap, a body within a size cap, JSON only.
-- **File serving**: a file is served only when the board links it and its real path, every symlink resolved, lies inside the reports folder; hidden paths and non-regular files are refused, and a served file gets a sandbox CSP so it cannot act as the board.
+- **File serving**: a file is served only when the board links it, its real path (every symlink resolved) lies inside the reports folder, and it is a regular file; a served file gets a sandbox CSP so it cannot act as the board. The hidden-path refusal sits in the edit script's copy step (Linked files).
 - **Strict CSP on the board**: `script-src 'self'` with no inline script, `frame-ancestors 'none'`, `X-Frame-Options: DENY`.
 - **Argv-only process calls**: every mailbox call is an argument array; request content reaches no shell.
 - **Idempotent clicks**: each decision carries a client id that a double click or a retry reuses, and the helper records and sends a known id once; each mailbox send carries a deterministic request id, so an ambiguous retry is replayed rather than duplicated.
@@ -171,7 +172,8 @@ A local server with no dependency beyond its runtime, started and stopped by han
   <edit script>          600   optional: wraps the anchor tool for ADD / MOVE / CLOSE, themes, links, replies, options and decision context
   assets/<page script>   600   the page's script, kept out of index.html for the helper's CSP
   <helper>               600   the click helper (The helper)
-  <lifecycle script>     600   start / stop / status; its pidfile, log and bootstrap file beside it, 600
+  <bootstrap file>       600   the helper's current one-time URL; deleted on shutdown
+  <lifecycle script>     600   start / stop / status; its pidfile and log beside it, 600
   <routing file>         600   AI-owner name to mailbox address, the coordinator, the sender label
   inbox.jsonl            600   the helper's append-only event log
   reports/               700   the only folder the helper serves linked files from

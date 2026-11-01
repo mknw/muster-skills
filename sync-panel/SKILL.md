@@ -1,6 +1,6 @@
 ---
 name: sync-panel
-description: Board an owner and their coordinator agent sync through, one private local page of what each party is waiting on, where the owner's clicks reach the waiting agent. Use when the coordinator records an event on an existing board, when a click from the board reaches you, when the owner asks what they must do or what is going on, or when the owner asks for a board to be built or restructured.
+description: Board an owner and their coordinator agent sync through, one private local page of what each party is waiting on, where the owner's clicks reach the waiting agent. Use when the coordinator records an event on an existing board, when a message says the owner answered an item on the sync board, when the owner asks what they must do or what is going on, or when the owner asks for a board to be built or restructured.
 ---
 
 # Sync panel
@@ -30,7 +30,7 @@ Every event is one edit, stamped on the item:
 | items belong together, or are one decision for the owner | a theme record with one next step, and `group` on each member (BOARD-FORMAT.md, The theme) |
 | a theme's work is done | close the theme; its id stays taken |
 | the owner's answer is a short reply or a choice | `reply`, or `options` with the recommended one, on the item |
-| the coding agent behind an item needs another answer kind | declare the button on the item (`actions`); the board renders only declared buttons |
+| the coding agent behind an item needs another answer kind | declare the button on the item (`actions`, BOARD-FORMAT.md, The item) |
 | an event names a PR, issue, comment or page | link each one: the title links the primary, every other goes in the item's links row (BOARD-FORMAT.md) |
 | an item asks the owner to read a document | link the document itself beside its PR: the file in the worktree that has the PR's branch checked out, fast-forwarded to the PR head first when it is clean, plus a `:LINE[:COL]` link to the section the owner rules on (BOARD-FORMAT.md, Local links); re-point both at the main checkout when the PR merges |
 | `spell-it-out` delivers a page for an item | `mechanism` = the page's path |
@@ -54,7 +54,7 @@ The owner answers by clicking a reply, option or declared button, with an option
 2. The helper appends it to the **inbox**, an append-only event log, then sends it in full to each of the item's AI owners through the agents' mailbox system (e.g. Orca), and a notice-only copy to the coordinator, skipped when the coordinator is itself an owner.
 3. Each send ends as delivered or failed in the inbox; the page shows sent, seen, not delivered (with retry), answered an older version, and resolved.
 
-The helper writes only the inbox, never the board file. An AI owner that receives a click acts on it, then moves the item itself; leaving Needs you is what marks the click resolved. The coordinator's notice needs no action. Without the helper (the `file://` page, or the helper down) the page says "helper offline" and a click copies the same answer and note to the clipboard, for the owner to paste to the coordinator.
+The helper never writes the board file. An AI owner that receives a click acts on it, then moves the item itself; leaving Needs you is what marks the click resolved. The coordinator's notice needs no action. Without the helper, a click falls back to the clipboard (BOARD-FORMAT.md, The helper).
 
 Done when (building or changing the helper): a click on a test item lands in the inbox, reaches each AI owner's mailbox (read there, not assumed) and gives the coordinator its notice; the board file's checksum is the same before and after; the page shows sent, seen and resolved across a reload; and a mutation for each baseline requirement is refused, at least: no token 403, a foreign Origin 403, an unknown id 400, a stale version shown as "answered an older version".
 
