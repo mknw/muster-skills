@@ -71,7 +71,7 @@ Two short tables — inbound (who calls into the topic, at which interface) and 
 
 ## Evidence
 
-- Every claim carries `path/from/repo/root.ts:123` (a range `:120-134` for a mechanism spanning lines). Cite the definition, not a call site, unless the call site is the claim.
+- Every claim carries `path/from/repo/root.ts:123` (a range `:120-134` for a mechanism spanning lines). Cite the definition, not a call site, unless the call site is the claim. Rendered as an HTML page, each cite takes the `graph-it` skill's Cite form.
 - Verified means read: the line was read in this run of the analysis, not remembered or inferred from a name.
 - Facts the source shows but the reader might doubt — dead registration, config nothing reads, two adapters where one is unused — get stated neutrally with the citation doing the arguing.
 

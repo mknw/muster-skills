@@ -1,6 +1,6 @@
 # Forms
 
-The reference half of [`graph-it`](SKILL.md): one recipe per form, as text and as HTML where the form has a page shape. Every example uses invented names and values. In the HTML recipes, `path:line` is a citation chip in the calling page's own chip style.
+The reference half of [`graph-it`](SKILL.md): one recipe per form, as text and as HTML where the form has a page shape. Every example uses invented names and values. In the HTML recipes, `path:line` is a [cite](#cite).
 
 ## Control flow
 
@@ -344,3 +344,23 @@ Shows: counts (a number in text, or a count matrix of integers with the row and 
 ## Dependency graph
 
 Shows: what depends on what, as node-link or as an adjacency matrix (the caller chooses by density). Every arrow points from the thing that comes first, whichever side declared the relation; an edge label names the relation in the reader's words.
+
+## Cite
+
+Shows: where a claim was read, as a link that opens the file at that line.
+
+**Text.** `path:12` or `path:12-20`, repo-relative, with the commit named once nearby.
+
+**HTML.** The label stays repo-relative; the link depends on where the page is read.
+
+- **On the machine that holds the checkout** (the default): the reader's editor, by its URL scheme, at the absolute path of the checkout the claim was read from and the first cited line, the path percent-encoded: `zed://file/<abs>:<line>`, `vscode://file/<abs>:<line>:1`, or that editor's own scheme. Zed documents its command line (`zed <path>:<line>`) and not the `zed://file` grammar, and on Windows that link brings Zed to the front without opening the file ([zed-industries/zed#66081](https://github.com/zed-industries/zed/issues/66081)), so a Windows reader needs the command line or the blob link. The project or the user names the editor; ask once when neither does. The `title` names the commit the line numbers refer to, since the checkout can move on.
+- **Off the machine** (a page that is sent, posted or published): the public blob link at the pinned commit.
+- **Private material**: text.
+
+Every cite link opens with `target="_blank" rel="noopener"`, so a page in a frame opens a blob in a new tab instead of inside the frame. A sandboxed frame passes an editor link only when its sandbox grants `allow-popups` or a top-navigation token; checked in Chromium, where the link then reaches the operating system's handler, and without one is blocked.
+
+```html
+<a class="cite" href="zed://file/home/me/src/shop/src/gate.ts:12" title="at a1b2c3d" target="_blank" rel="noopener">src/gate.ts:12-20</a>
+<a class="cite" href="https://github.com/acme/shop/blob/a1b2c3d/src/gate.ts#L12-L20" target="_blank" rel="noopener">src/gate.ts:12-20</a>
+<code class="cite">~/private/run.txt</code>
+```
