@@ -353,9 +353,9 @@ Shows: where a claim was read, as a link that opens the file at that line.
 
 **HTML.** The label stays repo-relative; the link depends on where the page is read.
 
-- **On the machine that holds the checkout** (the default): the reader's editor, by its URL scheme, at the absolute path of the checkout the claim was read from and the first cited line, the path percent-encoded: `zed://file/<abs>:<line>`, `vscode://file/<abs>:<line>`, or that editor's own scheme. The project or the user names the editor; ask once when neither does. The `title` names the commit the line numbers refer to, since the checkout can move on.
+- **On the machine that holds the checkout** (the default): the reader's editor, by its URL scheme, at the absolute path of the checkout the claim was read from and the first cited line, the path percent-encoded: `zed://file/<abs>:<line>`, `vscode://file/<abs>:<line>:1`, or that editor's own scheme. Zed documents its command line (`zed <path>:<line>`) and not the `zed://file` grammar, and on Windows that link brings Zed to the front without opening the file ([zed-industries/zed#66081](https://github.com/zed-industries/zed/issues/66081)), so a Windows reader needs the command line or the blob link. The project or the user names the editor; ask once when neither does. The `title` names the commit the line numbers refer to, since the checkout can move on.
 - **Off the machine** (a page that is sent, posted or published): the public blob link at the pinned commit.
-- **Private material**: text, never a link.
+- **Private material**: text.
 
 Every cite link opens with `target="_blank" rel="noopener"`, so a page in a frame opens a blob in a new tab instead of inside the frame. A sandboxed frame passes an editor link only when its sandbox grants `allow-popups` or a top-navigation token; checked in Chromium, where the link then reaches the operating system's handler, and without one is blocked.
 
