@@ -30,7 +30,7 @@ Every event is one edit, stamped on the item:
 | items belong together, or are one decision for the owner | a theme record with one next step, and `group` on each member (BOARD-FORMAT.md, The theme) |
 | a theme's work is done | close the theme; its id stays taken |
 | the owner's answer is a short reply or a choice | `reply`, or `options` with the recommended one, on the item |
-| a kick-off, grilling-round, de-prio or restore click arrives on a Loose-ends item | do what the click asks and nothing more (BOARD-FORMAT.md, Loose-ends buttons): kick-off, move it to Running with `due` and `check`; grilling round, run `grilling` yourself, publish the proposal as a report bundle whose `open-questions` section holds only the owner's decisions, then move it to Needs you with `ai-owner`, `bundle` and `brief`; de-prio or restore, the edit script's `deprio` or `undeprio` |
+| a kick-off, grilling-round, de-prio or restore click arrives on a Loose-ends item | do what the click asks and nothing more (BOARD-FORMAT.md, Loose-ends buttons, What the receiving agent does) |
 | a lane delivers a report the owner reads and comments on | publish it as the item's report bundle with the edit script's `bundle` command, and set `ai-owner` so feedback has somewhere to go (BOARD-FORMAT.md, Report bundles) |
 | the coding agent behind an item needs another answer kind | declare the button on the item (`actions`, BOARD-FORMAT.md, The item) |
 | an event names a PR, issue, comment or page | link each one: the title links the primary, every other goes in the item's links row (BOARD-FORMAT.md) |

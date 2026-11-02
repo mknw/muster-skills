@@ -1,6 +1,6 @@
 # Board format
 
-The reference half of [`sync-panel`](SKILL.md): the item and its decision context, the theme, the page, the panels, the checker, the helper, report bundles, the folder. Everything here is created once and then edited by anchor.
+The reference half of [`sync-panel`](SKILL.md): the item and its decision context, the theme, the page, the panels, the checker, the helper, the Loose-ends buttons, report bundles, the folder. Everything here is created once and then edited by anchor.
 
 ## The item
 
