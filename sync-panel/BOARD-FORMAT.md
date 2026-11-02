@@ -1,6 +1,6 @@
 # Board format
 
-The reference half of [`sync-panel`](SKILL.md): the item and its decision context, the theme, the page, the panels, the checker, the helper, the folder. Everything here is created once and then edited by anchor.
+The reference half of [`sync-panel`](SKILL.md): the item and its decision context, the theme, the page, the panels, the checker, the helper, report bundles, the folder. Everything here is created once and then edited by anchor.
 
 ## The item
 
@@ -127,6 +127,7 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `NO BRIEF` / `NO AI OWNER`: a Needs-you item without a brief, or without `data-ai-owner`
 - `LINK WITHOUT NOTE`: a links-row anchor on a Needs-you item with no `title`
 - `UNDEFINED TERM`: a shorthand token in a Needs-you item's options, next action or brief that its terms do not define. Shorthand is an upper-case group of one to four letters followed by digits (optional hyphen, optional bracketed suffix: `X2`, `QA-4`, `K5(b)`) or by a bracketed suffix alone (`AB(c)`); two joined by a dash are one range token, defined as a range or at both ends. Item ids, theme ids and agent names are excluded, and `#NNN`, dates and version strings cannot match. Model and hash names match too; a one-line definition costs nothing
+- `BUNDLE …`: the six report-bundle flags (Report bundles)
 - `STALE`: `data-changed` older than three days on an open item
 
 Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERDUE when it fails past `due`, else pending, and whether it ran without a shell or through `sh -c`; a command with no shell metacharacter runs without one, under a timeout either way); then the lane-deadline ledger the coordinator keeps, whose overdue lines also count as flags; then the counts per state. Exit 1 on any flag. `--stamp` rewrites the last-checked line through the same anchor tool used for items, falling back to a direct write. The mutation run that proves it: a scratch copy with one planted instance of each defect, all flagged, exit 1.
@@ -138,7 +139,7 @@ A local server with no dependency beyond its runtime, started and stopped by han
 - **Self-reload**: the process the lifecycle script starts is a supervisor that runs the helper as a worker child and watches the helper's code file. When the file changes and passes a syntax check, it swaps the worker; a broken edit is logged and the running worker stays. The session secret, the page token and the pending one-time URL persist in a mode-600 session file, written atomically, so the owner's cookie and open page survive a reload; `start` writes fresh secrets and `stop` deletes them. The supervisor's own code is not reloaded. The page retries a send that gets no HTTP answer, a few times, with the same click id, which covers the moment a reload takes.
 
 - **Routing file**: each AI-owner name to its mailbox address and, for the wake, an optional terminal handle (an address that is itself a terminal handle serves), plus the coordinator's name and the helper's own sender label. The helper sends under that neutral label and starts with a clean environment, so it never acts as the agent that launched it.
-- **Inbox**: one JSON event per line, append-only: `click`, `sent` (with the mailbox message id), `send-failed` (with the error), `retry`, `seen`, `woken`, `wake-failed` (with the reason).
+- **Inbox**: one JSON event per line, append-only: `click` (an answer, or feedback on a report section), `sent` (with the mailbox message id), `send-failed` (with the error), `retry`, `seen`, `woken`, `wake-failed` (with the reason).
 - **Wake**: after each delivered owner copy, never the coordinator's notice, the helper types one fixed line into that agent's terminal through the mailbox system, telling it to check its mailbox. One attempt per copy; a failed or skipped wake (no terminal handle, or one that fails validation) is recorded as `wake-failed` and leaves the click sent.
 - **States**, in the expanded item and as a short badge in row view:
   - sending: until a copy is confirmed, never shown as sent;
@@ -161,11 +162,78 @@ A local server with no dependency beyond its runtime, started and stopped by han
 - **File serving**: a file is served only when the board links it, its real path (every symlink resolved) lies inside the reports folder, and it is a regular file; a served file gets a sandbox CSP so it cannot act as the board. The hidden-path refusal sits in the edit script's copy step (Linked files).
 - **Strict CSP on the board**: `script-src 'self'` with no inline script, `frame-ancestors 'none'`, `X-Frame-Options: DENY`.
 - **Argv-only process calls**: every mailbox and terminal call is an argument array; request content reaches no shell. The wake's terminal handle must match the mailbox system's plain handle shape, and the item id it types must be plain letters, digits and dashes.
-- **Idempotent clicks**: each decision carries a client id that a double click or a retry reuses, and the helper records and sends a known id once; each mailbox send carries a deterministic request id, so an ambiguous retry is replayed rather than duplicated.
-- **Delivery resume**: a delivery cut off by a reload (a click recorded, no `sent` or `send-failed` for a recipient) is re-delivered by the new worker at boot and when the page replays that click id; the same request id makes the mailbox replay a copy that did go out instead of sending it twice. Resume only finishes recorded clicks and constructs none.
+- **Idempotent clicks**: each decision carries a client id that a double click or a retry reuses, and the helper records and sends a known id once. An id already used for an answer is refused for feedback, and the reverse (400). Each mailbox send carries a deterministic request id, so an ambiguous retry is replayed rather than duplicated.
+- **Delivery resume**: a delivery cut off by a reload (a click recorded, no `sent` or `send-failed` for a recipient) is re-delivered by the new worker at boot and when the page replays that click id, to the recipients recorded with the click when it was made, never to names the routing file gained since; the same request id makes the mailbox replay a copy that did go out instead of sending it twice. Resume only finishes recorded clicks and constructs none.
 - **Visible delivery failure**: every send ends as `sent` or `send-failed`, in the inbox and on the page; a malformed mailbox reply is logged and keeps the helper running, and the receipt poll runs at most once every few seconds however often `/state` is fetched.
 - **Lifecycle identity**: `stop` kills only a process whose command line is the runtime running this helper, so a recycled PID survives. The worker exits when its supervisor is gone, deleting the secret files only while they still hold its own. `start`, `stop` and `status` never trust the pidfile alone: each also checks whether the port answers, and none reports success while another process holds it.
 - **Known residual**: cookies are not port-scoped, so the browser also sends the session cookie to any other server on 127.0.0.1 the owner opens; `HttpOnly` keeps page scripts from it, but that server could log it. The cookie stays valid across reloads for as long as the supervisor runs; only stop then start rotates it.
+
+## Report bundles
+
+A **report bundle** is a folder of pages the owner reads from one board item, with feedback per section that reaches the item's AI owners like a click. This section is the whole contract: a lane builds and publishes a bundle from it alone.
+
+**The design.** Report pages stay sandboxed, in an opaque origin, so no script a lane writes can read the board's token or post as the owner. A **wrapper** page the helper writes frames the report and does all the sending, and the owner types the note in the wrapper. A page can point at a section, and can never send text or a decision.
+
+**The folder.**
+
+```
+my-report/
+  bundle.json      the manifest (required)
+  summary.html     pages; every section the owner may comment on is an element with a stable id
+  details.html
+  style.css        vendored assets; a diagram library is copied in, never loaded from the network
+```
+
+Allowed files, with exactly these lowercase extensions: `.html .css .js .svg .png .jpg .webp .woff2 .json`. Regular files only, with no symlinks and no hidden files or folders; subfolders are fine. Caps: 20 MB in total and 500 files.
+
+**`bundle.json`.**
+
+```json
+{ "title": "Design review", "entry": "summary.html",
+  "pages": [
+    { "file": "summary.html", "title": "Summary", "sections": [ { "id": "verdict", "title": "Verdict" } ] },
+    { "file": "details.html", "title": "Details", "sections": [ { "id": "risks", "title": "Risks" } ] } ] }
+```
+
+- `pages`: required and non-empty. Each page has a relative `file` ending in `.html`, with no `..`, and its `sections`.
+- A section `id` matches `^[A-Za-z][\w-]{0,63}$` and exists in that page as `id="…"`.
+- `entry`: optional, the first page by default; it is the page the item links. `title`: optional; it labels the link.
+
+**Pages.**
+
+- Plain HTML. Pages link to each other by relative links and anchors (`details.html#risks`), which work inside the frame.
+- No network load of any kind: no remote `src` / `srcset`, `<link href>`, CSS `url()` / `@import`, script `fetch` / `import` / `WebSocket`, and no forms. A plain `<a href>` to an outside page is a link, not a load, and opens a new tab. The served CSP blocks every load anyway.
+- Scripts run sandboxed, with no access to the board, its cookie or token, the parent page or the network. `localStorage` and `sessionStorage` throw there, so wrap any use in try/catch.
+- An optional "comment on this section" button may send exactly this message, and nothing else:
+
+  ```js
+  parent.postMessage({ type: 'sync-feedback', section: 'risks' }, '*');
+  ```
+
+  The wrapper then selects that section and focuses its note field. It lists every section anyway, so a page needs no script to get feedback.
+
+**Publish.** `<edit script> bundle ID DIR` copies the folder to `reports/<sha8>-<name>/` (folders 700, files 600) and links the item to the entry page, labelled with the bundle title. It refuses anything outside the rules above and names the file. One bundle per item: publishing again with changed content replaces the item's bundle in place, removing the old folder unless another item links it; the same content changes nothing; an item that already links more than one bundle is refused and left unchanged.
+
+**What the owner sees.** On the helper page the item's link opens the wrapper, `/r/<bundle>/<page>?item=ID`: the page list, a section picker, a note field (2000 characters) and **Send feedback**, around the report in a sandboxed frame. The item then shows "feedback on <page>#<section> · sent", then "seen by …". Feedback is a comment, not an answer: the item stays where it is and never enters the answered strip. A Done item's report stays readable, and its wrapper shows no feedback form. On the `file://` page the link opens the entry page directly, with no feedback.
+
+**What the AI owner receives.** A message headed "<id>: feedback on <page>#<section>", the note in the body, and a payload of kind `sync-feedback` (item id, bundle, page, section, note, version, click id, time), followed by the wake; the coordinator gets a notice-only copy. Delivery, retry, resume and visible failure are the click path's (The helper).
+
+**Checker flags** (`BUNDLE …`):
+
+- `MISSING`: an item links a bundle folder that is not there.
+- `NO MANIFEST`: a bundle without `bundle.json`.
+- `BAD MANIFEST`: a manifest that breaks the rules above.
+- `MISSING PAGE` / `MISSING SECTION`: listed in the manifest, absent from the folder or from the page's HTML.
+- `REMOTE URL`: a remote load, as defined under Pages, in any `.html`, `.css`, `.js` or `.svg` file. Advisory: the CSP is the control.
+- `MULTIPLE`: an item linking more than one bundle.
+
+**Security requirements**, each proved by a mutation (SKILL.md, Clicks reach the AI owner):
+
+- **Report serving**: at `/b/<key>/<bundle>/<path>`, with `sandbox allow-scripts allow-popups` and no `allow-same-origin`, `connect-src 'none'`, `form-action 'none'`, and `frame-ancestors` set to the helper's own origin, so only the wrapper can frame it. Only for a bundle some item links, only from inside that bundle's folder (real path, every symlink resolved), and only allowed types and regular files; every escape, raw or encoded, is a 404.
+- **Per-bundle key**: `<key>` is an HMAC of the session secret and the bundle name. It stands in for the session cookie, which a sandboxed page's own subresource requests do not carry, since to the browser they are cross-site. It rotates when the helper stops and starts, and appears in no board URL and no log.
+- **Wrapper**: needs the session cookie, like the board, and cannot itself be framed (`frame-ancestors 'none'`).
+- **The one message**: the wrapper acts on a message only when its source is its own report frame, its data is a plain object with exactly two keys, `type: 'sync-feedback'` and a string `section`, and the section is an own property of the manifest's section map; it ignores everything else. Every manifest string it renders is escaped.
+- **`POST /feedback`**: Host, Origin, token and cookie as for a click, and an idempotent click id; an open item that links that bundle; a page and section from that bundle's manifest; a non-empty note within its cap.
 
 ## The folder
 
@@ -186,7 +254,7 @@ A local server with no dependency beyond its runtime, started and stopped by han
   <lifecycle script>     600   start / stop / status; its pidfile and log beside it, 600
   <routing file>         600   AI-owner name to mailbox address and optional terminal handle, the coordinator, the sender label
   inbox.jsonl            600   the helper's append-only event log
-  reports/               700   the only folder the helper serves linked files from
+  reports/               700   the only folder the helper serves linked files and report bundles from
 ```
 
 Back up `index.html` and the stylesheet before a restructure. The Done list is bounded by the **archive window** (default 14 days): a Done item older than that moves to `archive/<yyyy-mm>.html`, where its id stays taken.
