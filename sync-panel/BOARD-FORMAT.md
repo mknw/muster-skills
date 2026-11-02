@@ -139,7 +139,7 @@ Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERD
 
 ## The helper
 
-A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry` and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox, the one-time bootstrap file (rewritten on each use) and the session file.
+A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry`, `POST /feedback` (Report bundles) and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox, the one-time bootstrap file (rewritten on each use) and the session file.
 
 - **Self-reload**: the process the lifecycle script starts is a supervisor that runs the helper as a worker child and watches the helper's code file. When the file changes and passes a syntax check, it swaps the worker; a broken edit is logged and the running worker stays. The session secret, the page token and the pending one-time URL persist in a mode-600 session file, written atomically, so the owner's cookie and open page survive a reload; `start` writes fresh secrets and `stop` deletes them. The supervisor's own code is not reloaded. The page retries a send that gets no HTTP answer, a few times, with the same click id, which covers the moment a reload takes.
 
@@ -202,9 +202,9 @@ A Loose-ends item can be started, sent for a grilling round, or set aside from t
 
 ## Report bundles
 
-A **report bundle** is a folder of pages the owner reads from one board item, with feedback per section that reaches the item's AI owners like a click. This section is the whole contract: a lane builds and publishes a bundle from it alone.
+A **report bundle** is a folder of pages the owner reads from one board item, with comments per section or on selected text that reach the item's AI owners like a click, many in one submit. This section is the whole contract: a lane builds and publishes a bundle from it alone.
 
-**The design.** Report pages stay sandboxed, in an opaque origin, so no script a lane writes can read the board's token or post as the owner. A **wrapper** page the helper writes frames the report and does all the sending, and the owner types the note in the wrapper. A page can only point at a section.
+**The design.** Report pages stay sandboxed, in an opaque origin, so no script a lane writes can read the board's token or post as the owner. A **wrapper** page the helper writes frames the report and does all the sending, and the owner types every note in the wrapper. **A page can point at a section, or at a quote of its own text that the helper verifies; it can never send a note or a decision.**
 
 **The folder.**
 
@@ -242,13 +242,60 @@ Allowed files, with exactly these lowercase extensions: `.html .css .js .svg .pn
   parent.postMessage({ type: 'sync-feedback', section: 'risks' }, '*');
   ```
 
-  The wrapper then selects that section and focuses its note field. It lists every section anyway, so a page needs no script to get feedback.
+  The wrapper then adds a draft comment for that section and focuses its note field. It lists every section anyway, so a page needs no script to get feedback. This message is all a lane's own script may send; quotes come only from the helper's selection script (Comments and selected text).
+- The helper adds one script tag to every page it serves (Comments and selected text). Do not rely on it, and ship nothing under `__sync/`, which is never served from the bundle. Keep every section's text in the HTML itself: a quote is checked against the page file, so text a script writes at run time cannot be quoted.
 
 **Publish.** `<edit script> bundle ID DIR` copies the folder to `reports/<sha8>-<name>/` (folders 700, files 600) and links the item to the entry page, labelled with the bundle title. It refuses a folder or manifest that breaks the rules above, naming the file, and an item that already links more than one bundle (one bundle per item). A refusal changes nothing: every check runs before anything is copied. It does not check pages against their HTML: an `entry` that names no listed page falls back to the first page, and a section id missing from its page is caught only by the checker (`MISSING SECTION`). Publishing again with changed content replaces the item's bundle in place, removing the old folder unless another item links it; the same content changes nothing.
 
-**What the owner sees.** On the helper page the item's link opens the wrapper, `/r/<bundle>/<page>?item=ID`: the page list, a section picker, a note field (2000 characters) and **Send feedback**, around the report in a sandboxed frame. The item then shows "feedback on <page>#<section> · sending…", then "· sent HH:MM", then "seen by …". Feedback is a comment, not an answer: the item stays where it is and never enters the answered strip. A Done item's report stays readable, and its wrapper shows no feedback form. On the `file://` page the link opens the entry page directly, with no feedback.
+**What the owner sees.** On the helper page the item's link opens the wrapper, `/r/<bundle>/<page>?item=ID`: the page list, the report in a sandboxed frame, and a **Comments panel** beside it (about 340 px; below the report on a narrow screen, with no sideways scroll at phone width):
 
-**What the AI owner receives.** A message headed "<id>: feedback on <page>#<section>", the note in the body, and a payload of kind `sync-feedback` (item id, bundle, page, section, note, version, click id, time), followed by the wake; the coordinator gets a notice-only copy. Delivery, retry, resume and visible failure are the click path's (The helper).
+- a header with the draft count, **Collapse all / Expand all** and **Hide panel** (the report takes the full width; a "Comments (N)" tab brings the panel back);
+- every manifest section of every page, each with **+ comment**;
+- draft cards: the target (page and section, which scrolls the report there or opens that page), the quoted text for a text comment, a note field (2000 characters) and remove; collapsed, a card is one line;
+- **Submit all (N)**, then a greyed, collapsible **Sent** group: each batch with its time, comment count, "seen by …", and **retry** when a copy was not delivered.
+
+A card comes from **+ comment**, from the page's own section button, or from selecting text in the report and pressing **Comment on selection: "…"**, which sits at the top of the panel, or on a narrow screen in a bar fixed to the bottom of the viewport while the selection is pending, so the owner reaches it without scrolling past the report. Drafts span pages and reloads, kept per viewer in the wrapper's own storage (item plus bundle), as are the collapse state and panel visibility; nothing else depends on them. **Submit all** sends every draft in one request with one click id: one message to each AI owner, one wake, one coordinator notice. An empty draft is refused by number and target, never dropped; a refusal keeps every draft and says why; on success the drafts move to Sent. A retry of the same drafts reuses the click id. The item then shows "feedback (N comments) · sending…", then "· sent HH:MM", then "seen by …". Feedback is a comment, not an answer: the item stays where it is and never enters the answered strip. A Done item's report stays readable, and its wrapper shows no panel. On the `file://` page the link opens the entry page directly, with no feedback.
+
+**Comments and selected text.** A report page is an opaque origin, so the wrapper cannot read its selection. The helper therefore serves its own small script at `/b/<key>/<bundle>/__sync/select.js` (a helper file, never one from the bundle, under the report's CSP) and injects one `<script src>` tag for it before the last `</body>` of every bundle HTML page it serves. It carries nothing secret, and runs beside the page's own scripts, which can forge what it sends. Three messages:
+
+- **`{type: 'sync-select', section, quote}`**, frame to wrapper: when a selection settles inside a section, the section it starts in, with the selected text whitespace-collapsed and cut to 300 characters; both fields empty when the selection clears. The wrapper shows **Comment on selection** for it, and the owner's click makes the card.
+- **`{type: 'sync-mark', sections: [ids], marks: [{section, quote, n}]}`**, wrapper to frame: the manifest's section ids, so the script knows which ids are sections, and the drafts' quotes, which it highlights with the CSS Custom Highlight API and no change to the page's DOM beyond one `<style>` element.
+- **`{type: 'sync-goto', section, quote}`**, wrapper to frame: scroll to that section, and to the quote when given.
+
+Wrapper-to-frame messages use target origin `'*'`, since the frame's origin is opaque, and carry only section ids and quotes the page already shows, never the token or a note.
+
+**Quote verification.** The helper refuses a comment whose quote does not occur in that page's file, read as the browser's HTML parser reads it:
+
+- it removes comments and the `head`, `script`, `style`, `noscript`, `template`, `iframe`, `noembed` and `noframes` elements;
+- it cuts tags in one linear pass with the tokenizer's grammar: `<` starts a tag only before a letter, `/`, `!` or `?`; a tag ends at the first `>` outside an attribute value quoted right after `=`, so `<y "z>` ends at its `>`; `<!`, `<?` and `</` before a non-letter end at the first `>`; a tag with no end swallows the rest of the file. A regex with nested or unbounded runs is not acceptable here: on a `>`-less tail it goes quadratic, and one comment blocks the helper for as long as the scan takes;
+- it decodes entities with the full HTML5 named-character table, legacy names without `;` by their longest prefix, and numeric references with the parser's windows-1252 and U+FFFD rules;
+- it removes all whitespace and folds case on both the page text and the quote, since a browser selection adds line breaks between blocks and may apply `text-transform`.
+
+A match anywhere on the page is enough. So text hidden by CSS can be quoted, being in the file, and text a script writes at run time is refused, visibly, with the comment's number.
+
+**The request.** One `POST /feedback` per submit:
+
+```json
+{ "cid": "<click id>", "id": "<item id>", "bundle": "<sha8>-<name>", "version": "<data-changed>",
+  "comments": [ { "page": "summary.html", "section": "verdict", "note": "…" },
+                { "page": "details.html", "section": "risks", "quote": "the selected words", "note": "…" } ] }
+```
+
+- 1 to 30 comments, each with exactly the keys `page`, `section`, `note` and an optional `quote`; the page and section from the bundle's manifest.
+- A note of 1 to 2000 characters, control characters other than line breaks removed; a quote of at most 300 characters, whitespace collapsed.
+- A body of at most 256 KB on this route, enough for the largest batch these caps allow (30 × 2300 characters at 3 bytes each, plus keys), so an over-limit comment is always named; every other POST keeps its own smaller cap.
+- Over a limit: 400 naming the comment's number (413 for the body). An older single-comment body (`page`, `section`, `note` at top level) may be accepted as a batch of one.
+
+**What the AI owner receives.** One message per submit, headed `<id>: feedback, N comments on <bundle title>`. The body is a numbered list: each comment's `<page>#<section>`, then `on "<quote>"` when it has one, then the note on indented lines, followed by the item version, the time, the click id, and the line that feedback is a comment, not a decision. The payload:
+
+```json
+{ "kind": "sync-feedback", "id": "<item id>", "bundle": "<bundle>", "version": "<data-changed>", "cid": "<click id>", "at": "<time>",
+  "comments": [ { "page": "…", "section": "…", "quote": "…", "note": "…" } ] }
+```
+
+with `quote` only on a text comment. Then the wake; the coordinator gets a notice-only copy. Delivery, retry, resume and visible failure are the click path's (The helper).
+
+**What the receiving agent does.** Feedback is a comment, not an answer, so it moves nothing by itself. Read every comment in the batch, each against its section and quote, and reply on the item: by its brief or next action, or by republishing the bundle with the change (Publish), which keeps the item's link in place.
 
 **Checker flags** (`BUNDLE …`):
 
@@ -264,8 +311,11 @@ Allowed files, with exactly these lowercase extensions: `.html .css .js .svg .pn
 - **Report serving**: at `/b/<key>/<bundle>/<path>`, with `sandbox allow-scripts allow-popups` and no `allow-same-origin`, `connect-src 'none'`, `form-action 'none'`, and `frame-ancestors` set to the helper's own origin, so only the wrapper can frame it. Only for a bundle some item links, only from inside that bundle's folder (real path, every symlink resolved), and only allowed types and regular files; every escape, raw or encoded, is a 404.
 - **Per-bundle key**: `<key>` is an HMAC of the session secret and the bundle name. It stands in for the session cookie, which a sandboxed page's own subresource requests do not carry, since to the browser they are cross-site. It rotates when the helper stops and starts, and appears in no board URL and no log.
 - **Wrapper**: needs the session cookie, like the board, and cannot itself be framed (`frame-ancestors 'none'`).
-- **The one message**: the wrapper acts on a message only when its source is its own report frame, its data is a plain object with exactly two keys, `type: 'sync-feedback'` and a string `section`, and the section is an own property of the manifest's section map; it ignores everything else. Every manifest string it renders is escaped.
-- **`POST /feedback`**: Host, Origin, token and cookie as for a click, and an idempotent click id; an open item that links that bundle; a page and section from that bundle's manifest; a non-empty note within its cap.
+- **The two messages**: the wrapper acts on a message only when its source is its own report frame and its data is a plain object with exactly the keys of one shape: `type: 'sync-feedback'` and a string `section`, or `type: 'sync-select'` and strings `section` and `quote`. The section must be an own property of the manifest's section map, and a quote at most 300 characters; it ignores everything else. It renders every manifest string and every quote as text, and a quote travels in its own field, never in the note.
+- **Injected script**: served only under its own `__sync/` path, never from the bundle (any other `__sync/` path is a 404); one tag per HTML page, none in other file types; no token, cookie or note in the script or the page.
+- **Quote verification**: a quote that is not in the page's file is refused (400), whatever the client accepted; the client check is for the owner's sake, and this is the control. It refuses invisible text from malformed markup (`<y "z>`), an attribute value or an `iframe`'s content; it accepts text with named entities (`caf&eacute;`). It runs in time linear in the page: a 500 KB page with a `>`-less tail answers in well under a second, and the helper keeps answering throughout.
+- **`POST /feedback`**: Host, Origin, token and cookie as for a click, and an idempotent click id; an open item that links that bundle; a page and section from that bundle's manifest for every comment; the comment count, the key shape, the note and quote caps and the 256 KB body cap, each refused on its own.
+- **One batch, one send**: a replayed click id answers `duplicate` and sends nothing more; a delivery cut off mid-batch resumes as one message.
 
 ## The folder
 
