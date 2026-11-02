@@ -30,6 +30,7 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | `data-options` | optional `A text\|B text`, with `data-recommend="A"`: the item's choices as chips, the recommended one starred; a click sends `A — text` (The helper) |
 | `data-actions` | optional `Label=kind \| Label=kind`, written by the item's coding agent (a kind such as `explain` or `snooze:<date>`): extra buttons, each sending `action:<kind>` (The helper). The board renders only the buttons an item declares, plus the default Done on an item that declares no chips (The helper) |
 | `data-ai-owner` | required in Needs you: the agent(s) waiting on the owner's answer, space-separated; shown as "for <name>" on the item; the helper sends each click to them |
+| `data-deprio` | optional, Loose ends only: `YYYY-MM-DD`, written by the item's agent with the edit script's `deprio` and removed by `undeprio`; the item renders in the De-prioritized strip (Loose-ends buttons). A move out of Loose ends or a close drops it |
 
 Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done; then, when the item cites more than one reference, `<p class="links">` with one `<a>` per further PR, issue, comment or page, so a `#NNN` written in the text always has a link to click. The script turns the title link and each anchor in the links row into chips in the link column (a link repeated in both appears once), removes the row, and leaves the title as text. A chip reads `#845` for a PR or issue, `#788 ↳` for a comment, the file's name for a local file or a file in the tracker (without a markdown, HTML, text or log extension), and the hostname for any other link; a file chip shows only its icon until the item is expanded, the name in its tooltip. The script also hides the `<b>actor</b>` prefix because the who column says it; adds the who, id, age and changed cells and the explain button (under **more**, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
 
@@ -79,6 +80,7 @@ One `index.html`, no build step. A `<meta http-equiv="refresh" content="60">` ke
    - **Rows**, the default elsewhere: one line each (id, title, who, due or age, the dot), which a click expands in place to the next action, chips, links and relations.
    - Tiles pack masonry-style: each spans as many 1 px grid rows as its measured height (no row gap, the spacing inside each span), and a resize observer repacks a section whenever a tile changes size. The grid's forward-only auto-placement lets a short tile start in the gap under a shorter neighbour but never above a tile that sorts before it, so reading and keyboard order stay the sort and theme order; CSS columns would pack tighter and break that order. Rows view drops the spans, and without the script tiles take their natural height (`align-items: start`) and never overlap.
    - In Needs you, an item whose answer was delivered (sent or seen; neither failed, answered an older version, nor edited after the answer) steps into a collapsed strip at the bottom, "Answered, waiting on the agent (N)", one dimmed line each with its answer and state, until its AI owner moves it. The section count covers only the items still to answer.
+   - In Loose ends, every item gets the kick-off and de-prio buttons, and a de-prioritized item steps into a collapsed strip at the end (Loose-ends buttons).
    - The who column is dropped in Needs you, where the owner is the actor by definition, and in Done, where nobody is; in Running and Loose ends, when no item left visible by the theme filter has an actor.
    - An empty section collapses to its header and one line. Done shows the last 24 hours; older Done items sit behind one "N more" row.
 4. **How this page works**: a collapsed `<details>` with the item schema, the state flow as a small diagram, and the panels table below.
@@ -128,6 +130,7 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `LINK WITHOUT NOTE`: a links-row anchor on a Needs-you item with no `title`
 - `UNDEFINED TERM`: a shorthand token in a Needs-you item's options, next action or brief that its terms do not define. Shorthand is an upper-case group of one to four letters followed by digits (optional hyphen, optional bracketed suffix: `X2`, `QA-4`, `K5(b)`) or by a bracketed suffix alone (`AB(c)`); two joined by a dash are one range token, defined as a range or at both ends. Item ids, theme ids and agent names are excluded, and `#NNN`, dates and version strings cannot match. Model and hash names match too; a one-line definition costs nothing
 - `BUNDLE …`: the seven report-bundle flags (Report bundles)
+- `DEPRIO OUTSIDE LOOSE ENDS` / `BAD DEPRIO`: `data-deprio` on an item outside Loose ends, or a value that is not an ISO date
 - `STALE`: `data-changed` older than three days on an open item
 
 Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERDUE when it fails past `due`, else pending, and whether it ran without a shell or through `sh -c`; a command with no shell metacharacter runs without one, under a timeout either way); then the lane-deadline ledger the coordinator keeps, whose overdue lines also count as flags; then the counts per state. Exit 1 on any flag. `--stamp` rewrites the last-checked line through the same anchor tool used for items, falling back to a direct write. The mutation run that proves it: a scratch copy with one planted instance of each defect, all flagged, exit 1.
@@ -158,7 +161,7 @@ A local server with no dependency beyond its runtime, started and stopped by han
 - **Loopback only**: bound to 127.0.0.1, and every request's `Host` equals `127.0.0.1:PORT` exactly, against DNS rebinding.
 - **Session cookie**: every route but a health check and the bootstrap needs it; it is `HttpOnly; SameSite=Strict` and set only by a one-time bootstrap URL, which the helper keeps in a mode-600 file and rotates on each use, and the lifecycle script prints.
 - **Per-start token and Origin**: a random token, rotated at each start, held only in the mode-600 session file beside the session secret and the pending one-time URL (never in the board file, a URL or a log) and injected into the page the helper serves; required on every POST and on `/state`. Every POST also carries an `Origin` equal to the helper's own.
-- **Input**: an open item's id, an answer that item declares (reply, option or action, or `Done` when it declares none), a note within its cap, a body within a size cap, JSON only.
+- **Input**: an open item's id, an answer that item declares (reply, option or action, or `Done` when it declares none, or one of the four Loose-ends answers when it sits in Loose ends), a note within its cap, a body within a size cap, JSON only.
 - **File serving**: a file is served only when the board links it, its real path (every symlink resolved) lies inside the reports folder, and it is a regular file; a served file gets a sandbox CSP so it cannot act as the board. The hidden-path refusal sits in the edit script's copy step (Linked files).
 - **Strict CSP on the board**: `script-src 'self'` with no inline script, `frame-ancestors 'none'`, `X-Frame-Options: DENY`.
 - **Argv-only process calls**: every mailbox and terminal call is an argument array; request content reaches no shell. The wake's terminal handle must match the mailbox system's plain handle shape, and the item id it types must be plain letters, digits and dashes.
@@ -167,6 +170,32 @@ A local server with no dependency beyond its runtime, started and stopped by han
 - **Visible delivery failure**: every send ends as `sent` or `send-failed`, in the inbox and on the page; a malformed mailbox reply is logged and keeps the helper running, and the receipt poll runs at most once every few seconds however often `/state` is fetched.
 - **Lifecycle identity**: `stop` kills only a process whose command line is the runtime running this helper, so a recycled PID survives. The worker exits when its supervisor is gone, deleting the secret files only while they still hold its own. `start`, `stop` and `status` never trust the pidfile alone: each also checks whether the port answers, and none reports success while another process holds it.
 - **Known residual**: cookies are not port-scoped, so the browser also sends the session cookie to any other server on 127.0.0.1 the owner opens; `HttpOnly` keeps page scripts from it, but that server could log it. The cookie stays valid across reloads for as long as the supervisor runs; only stop then start rotates it.
+
+## Loose-ends buttons
+
+A Loose-ends item can be started, sent for a grilling round, or set aside from the board. Three buttons sit on every expanded Loose-ends item, with the note field (the note travels with the click), plus **restore** on a de-prioritized one:
+
+| button | answer sent | goes to | wake |
+|---|---|---|---|
+| kick-off | `kickoff` | the item's `data-actor` when the routing file lists it, else the coordinator | yes |
+| kick-off grilling round | `kickoff:grill` | same | yes |
+| de-prio | `deprio` | same | no |
+| restore | `undeprio` | same | no |
+
+- **Where they are accepted**: the helper accepts these four answers only for an item whose `data-section` is `loose-ends`, and refuses them on any other item (400), as it accepts `Done` only for a chip-less Needs-you item. An item needs no `data-ai-owner` for them; the route is the actor.
+- **The coordinator** gets the usual notice-only copy, skipped when it is the recipient. Only the two kick-offs wake the agent.
+- **The split button**: "kick-off" is the primary button, with a narrow attached caret; hovering or focusing the pair shows "kick-off grilling round" directly below it, and a tap on the caret toggles it, so keyboard and touch reach it too. "de-prio" is a separate, quieter button.
+- **De-prioritized strip**: a de-prioritized item renders in a collapsed strip at the end of Loose ends, "De-prioritized (N)", greyed but readable, each with a **restore** button. It is left out of the section count.
+- **Precedence**: the page shows an item de-prioritized when it carries `data-deprio`, OR when the helper holds an owner `deprio` click newer than the item's last edit (`data-changed`) with no later `undeprio`. The latest owner click wins while it is newer than the item's last edit; once an agent edits the item after the click, the attribute decides. The `file://` page reads the attribute alone.
+- **Kick-off on the item**: after a kick-off the item keeps its place and shows "kick-off sent HH:MM · seen by <agent>" (or "grilling round sent"), and "not delivered" with retry, as for answers. The badge goes once the item leaves Loose ends.
+- **Older helper**: the helper announces `loose-ends-actions` among its features. On a helper without it, the buttons are disabled with a visible note, and nothing is copied to the clipboard.
+
+**What the receiving agent does**, within its next turn:
+- `kickoff`: start the item's next action now, and move the item to Running with `data-due` and `data-check`.
+- `kickoff:grill`: run the `grilling` skill against the item's design yourself, answering every question the code, records or docs answer. Publish a proposal as the item's report bundle (Report bundles) with a section `open-questions` that holds only what the owner must decide, each a plain question with its options and a recommendation. Then move the item to Needs you and set `ai-owner` (yourself), `bundle` and `brief` on it. The owner answers by section feedback on the proposal or by the item's chips.
+- `deprio` / `undeprio`: run the edit script's `deprio ID` / `undeprio ID`, and nothing else. That makes the page and the `file://` page agree durably.
+
+**Edit script**: `deprio ID` sets `data-deprio` to today's date and `undeprio ID` removes it; both refuse an item outside Loose ends. The checker's `DEPRIO OUTSIDE LOOSE ENDS` and `BAD DEPRIO` flag what a hand edit could leave behind.
 
 ## Report bundles
 
@@ -246,7 +275,7 @@ Allowed files, with exactly these lowercase extensions: `.html .css .js .svg .pn
   assets/<diagram-lib>   600   vendored, version and checksum recorded in README.md
   backups/               700   dated copies taken before any restructure
   archive/               700   one page per month of archived Done items, same item markup
-  <edit script>          600   optional: wraps the anchor tool for ADD / MOVE / CLOSE, themes, links, replies, options and decision context; `add` refuses an id already on the board, `links` merges into the links row, and `links --replace` prints each href it drops
+  <edit script>          600   optional: wraps the anchor tool for ADD / MOVE / CLOSE, themes, links, replies, options, decision context and `deprio` / `undeprio`; `add` refuses an id already on the board, `links` merges into the links row, and `links --replace` prints each href it drops
   assets/<page script>   600   the page's script, kept out of index.html for the helper's CSP
   <helper>               600   the click helper (The helper)
   <bootstrap file>       600   the helper's current one-time URL; deleted on stop
