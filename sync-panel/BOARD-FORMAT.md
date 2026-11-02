@@ -234,7 +234,7 @@ Allowed files, with exactly these lowercase extensions: `.html .css .js .svg .pn
 **Pages.**
 
 - Plain HTML. Pages link to each other by relative links and anchors (`details.html#risks`), which work inside the frame.
-- No network load of any kind: no remote `src` / `srcset`, `<link href>`, CSS `url()` / `@import`, script `fetch` / `import` / `WebSocket`, and no forms. A plain `<a href>` to an outside page is a link, not a load, and opens a new tab. The served CSP blocks every load anyway.
+- No network load of any kind: no remote `src` / `srcset`, `<link href>`, CSS `url()` / `@import`, script `fetch` / `import` / `WebSocket`, and no forms. A plain `<a href>` to an outside page is a link, not a load, and opens a new tab; a code cite takes `graph-it`'s Cite form and opens in the owner's editor, because the frame keeps `allow-popups`. The served CSP blocks every load anyway.
 - Scripts run sandboxed, with no access to the board, its cookie or token, the parent page or the network. `localStorage` and `sessionStorage` throw there, so wrap any use in try/catch.
 - An optional "comment on this section" button may send exactly this message, and nothing else:
 

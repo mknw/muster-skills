@@ -9,7 +9,7 @@ One HTML file: CSS inline, the vendored Mermaid file and its `initialize` call a
 - **Introduced.** Every actor, check or threshold the answer, the flow or the options names gets one plain sentence at first use; the reader needs no background beyond the page. The sentence sits in the part where the component first appears and counts against that part's bound.
 - **Phone width.** A 760 px column with 16 px gutters; at 390 px the page never scrolls sideways, and the flow boxes are its only inner scrolls (the table and pseudocode recipes in FORMS.md are built for it).
 - **Both schemes.** Tokens on `:root`, redefined under `prefers-color-scheme: dark`; `body` sets its background.
-- **Cited.** Every name and number is cited, in the rule's comments or in a Sources list inside the details; the answer, the flow and the options carry no chips, so the picture stays clean. Chip forms: `<a class="cite" href="https://<host>/<owner>/<repo>/blob/<sha>/<path>#L12-L20">path:12-20</a>` for code the reader can open, `<code class="cite">~/private/run.txt</code>` (text, never a link) for private material.
+- **Cited.** Every name and number is cited, in the rule's comments or in a Sources list inside the details; the answer, the flow and the options carry no chips, so the picture stays clean. Each cite takes `graph-it`'s Cite form: a link that opens the line in the reader's editor, the blob link for a page that leaves the machine, text for private material.
 - **Accessible.** Every outcome is a word as well as a colour; text contrast checked in both schemes.
 
 ## Parts, top to bottom
@@ -88,4 +88,4 @@ summary { cursor: pointer; color: var(--muted); }
 
 ## Build
 
-Generate the page from the notes file instead of typing it: citations as short tokens (`{C:path:12-20}`) expanded by one helper that holds the pinned commit; every gauge dot and variant row read from the recorded run output, never retyped. Template, helper, notes and output stay together; for sensitive material that is the same private directory.
+Generate the page from the notes file instead of typing it: citations as short tokens (`{C:path:12-20}`) expanded into the Cite form by one helper that holds the pinned commit and the checkout's path; every gauge dot and variant row read from the recorded run output, never retyped. Template, helper, notes and output stay together; for sensitive material that is the same private directory.
