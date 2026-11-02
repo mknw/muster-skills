@@ -6,7 +6,7 @@ The reference half of [`graph-it`](SKILL.md): one recipe per form, as text and a
 
 Shows: the decisions a case passes through and the exit it took.
 
-**Text.** Mermaid where the surface renders it; otherwise the exits as an indented list. At most eight nodes, each label at most two short lines in plain words. A decision is a question in a hexagon (`{{…}}`), which stays far shorter than Mermaid's diamond for the same label; each exit is labelled with its branch value; each end names its outcome. Every node and edge on the case's path is coloured (`classDef`, `linkStyle`), its exits say `▸ this case`, and the deciding node says `◆ decides`. `linkStyle` counts edges in the order they are written, so write the case's path first and colour indices `0` to `n−1`. A second finding off the main path is a dotted edge (`-.->`).
+**Text.** Mermaid where the surface renders it; otherwise the exits as an indented list. At most eight nodes, each label at most two short lines in plain words; setting names, defaults and thresholds go in a table under the diagram. A flow that needs more nodes is a [zoom set](#zoom-set). A decision is a question in a hexagon (`{{…}}`), which stays far shorter than Mermaid's diamond for the same label; each exit is labelled with its branch value; each end names its outcome. Every node and edge on the case's path is coloured (`classDef`, `linkStyle`), its exits say `▸ this case`, and the deciding node says `◆ decides`. `linkStyle` counts edges in the order they are written, so write the case's path first and colour indices `0` to `n−1`. A second finding off the main path is a dotted edge (`-.->`).
 
 ```mermaid
 flowchart TD
@@ -58,6 +58,106 @@ mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: dark ? '
   .flow svg { max-width: none; }
   .legend .narrow { display: inline; }
 }
+```
+
+### Zoom set
+
+A flow that needs more than eight nodes (a complete mechanism, "the whole path") is drawn as a zoom set: an overview of its stages, one diagram per stage, and the whole diagram kept collapsed below them.
+
+- **Cut** at the hand-offs, the nodes every path still running passes through. Where paths run side by side, cut where they reconverge, and keep a branch that never reconverges wholly inside the stage that holds its branch point. The stages then form a chain, and the only edges between two diagrams run through stubs. An end that two stages reach is drawn in both.
+- **Overview.** Three to seven stages named in plain words, as a row of linked boxes, each in its stage colour, a hand-off phrase on each arrow. The case's path: the hand-offs it crossed are bold orange, the stages it never reached are dashed, and the stage holding the deciding node says `◆ decides`. The row is the navigation, so it works with no script, by keyboard and in a sandboxed frame.
+- **Stage.** One control-flow diagram, eight nodes counting its stubs. It starts at a stub `from <n> · <previous stage>` and ends at stubs `to <n> · <next stage>`, each stub in that neighbour's colour, and the case's path coloured as in a single diagram. It sits in a frame of its own colour, with a numbered heading, its settings table under it, and a line of links: overview, previous stage, next stage. Rendered, it fits the 760 px column at desktop width and is at most 1000 px tall; past either, split the stage or shorten its labels. On a phone its box scrolls sideways, as a single diagram's does.
+- **The whole diagram** goes in a closed `<details>`, in a box that scrolls, with a zoom bar: fit width, 100%, −, +. Without script the box still scrolls.
+- **Stage colours.** Mermaid's `classDef` takes literal colours only (a `var()` is a parse error), so each stage has one pair that reads in both schemes, as the case's orange does, and the `classDef` lines repeat the page's pairs.
+- **Stub links.** A stub may also carry `click <id> href "#stage-<n>"`. Mermaid's documentation disables clicks under `securityLevel: 'strict'` (12.2.0 still follows an `href`), so the boxes and links stay the navigation and a stub link is a bonus.
+
+**Text.** The overview on one line, `1 Arrives → accepted → 2 Checked ◆ decides → clean → 3 Stored`, then each stage as its own diagram under its number.
+
+**HTML.** In this example the case stops at the deciding node in stage 2, so stages 3 and 4 are dashed.
+
+```html
+<ol class="stages" id="overview" aria-label="Stages, in order">
+  <li class="on"><a class="stage-box s1" href="#stage-1">1 · Arrives</a></li>
+  <li class="on"><span class="handoff">accepted →</span><a class="stage-box s2" href="#stage-2">2 · Checked <b>◆ decides</b></a></li>
+  <li><span class="handoff">clean →</span><a class="stage-box s3" href="#stage-3">3 · Stored</a></li>
+  <li><span class="handoff">saved →</span><a class="stage-box s4" href="#stage-4">4 · Shared</a></li>
+</ol>
+<p class="legend">Orange: the path this case took; dashed: stages it never reached. Each box opens its stage below.</p>
+
+<section class="stage s2" id="stage-2">
+<h3><span class="num">2</span> Checked</h3>
+<div class="flow"><pre class="mermaid">flowchart TD
+  P(["from 1 · Arrives"]) ==> T{{"a file type<br>we accept?"}}
+  T == "yes ▸ this case" ==> V{{"virus scan clean?<br>◆ decides"}}
+  V == "no ▸ this case" ==> Q["QUARANTINED:<br>the owner is told"]
+  T -- no --> R["rejected: wrong type"]
+  V -- yes --> N(["to 3 · Stored"])
+  click P href "#stage-1"
+  click N href "#stage-3"
+  classDef hit fill:#fdf1dc,stroke:#c27c0e,stroke-width:3px,color:#1d232b
+  classDef s1 fill:#e8ecfb,stroke:#3554d1,stroke-width:2px,color:#1d232b
+  classDef s3 fill:#efe7fd,stroke:#7c3aed,stroke-width:2px,color:#1d232b
+  class T,V,Q hit
+  class P s1
+  class N s3
+  linkStyle 0,1,2 stroke:#c27c0e,stroke-width:3px</pre></div>
+<!-- the settings table -->
+<p class="stage-nav"><a href="#overview">overview ↑</a> · <a href="#stage-1">← Arrives</a> · <a href="#stage-3">Stored →</a></p>
+</section>
+<!-- stages 1, 3 and 4 alike -->
+
+<details class="zoom">
+<summary>The whole path in one diagram</summary>
+<div class="zoom-bar" role="toolbar" aria-label="Zoom"><button type="button" data-zoom="fit">Fit width</button>
+  <button type="button" data-zoom="1">100%</button><button type="button" data-zoom="out" aria-label="Zoom out">−</button>
+  <button type="button" data-zoom="in" aria-label="Zoom in">+</button><output>100%</output></div>
+<div class="zoom-box" tabindex="0" role="region" aria-label="The whole path, scrollable"><pre class="mermaid">flowchart TD
+  …</pre></div>
+</details>
+```
+
+The zoom script is its own `<script>` after the `initialize` call, so it runs even when the diagrams fail to draw:
+
+```html
+<script>
+document.querySelectorAll('.zoom').forEach(function (z) {
+  var box = z.querySelector('.zoom-box'), out = z.querySelector('output'), k = 1;
+  z.querySelector('.zoom-bar').addEventListener('click', function (e) {
+    var a = e.target.getAttribute('data-zoom'), s = box.querySelector('svg');
+    if (!a || !s) return;
+    var v = s.viewBox.baseVal;
+    k = a === 'fit' ? (box.clientWidth - 16) / v.width : a === 'in' ? k * 1.25 : a === 'out' ? k / 1.25 : 1;
+    k = Math.min(4, Math.max(0.1, k));
+    s.style.width = v.width * k + 'px'; s.style.height = v.height * k + 'px';
+    out.textContent = Math.round(k * 100) + '%';
+  });
+});
+</script>
+```
+
+```css
+.s1 { --stage: #3554d1; --stage-bg: #e8ecfb; }
+.s2 { --stage: #0f7b6c; --stage-bg: #def3ee; }
+.s3 { --stage: #7c3aed; --stage-bg: #efe7fd; }
+.s4 { --stage: #b4236a; --stage-bg: #fbe6f0; }
+.s5 { --stage: #4d7c0f; --stage-bg: #ebf4dd; }
+.s6 { --stage: #475569; --stage-bg: #eceef1; }
+.s7 { --stage: #0e7490; --stage-bg: #dff1f6; }
+.stages { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 0; list-style: none; padding: 0; margin: 8px 0; }
+.stages li { display: flex; align-items: center; }
+.stages .handoff { font-size: .75rem; color: var(--muted); margin: 0 6px; }
+.stages li.on .handoff { color: var(--warn); font-weight: 600; }
+.stage-box { color: #1d232b; background: var(--stage-bg); border: 2px solid var(--stage); border-radius: 8px; padding: 4px 10px; text-decoration: none; }
+.stages li:not(.on) .stage-box { border-style: dashed; }
+.stage { border-left: 4px solid var(--stage); padding-left: 10px; margin: 18px 0; }
+.stage h3 { color: #1d232b; background: var(--stage-bg); border-radius: 6px; padding: 2px 8px; margin: 0 0 6px; }
+.stage .num { display: inline-block; min-width: 1.5em; text-align: center; color: #fff; background: var(--stage); border-radius: 999px; }
+.stage-nav { font-size: .85rem; margin: 4px 0 0; }
+.stage-nav a { color: var(--accent); }
+.zoom-bar { display: flex; gap: 6px; align-items: center; margin: 6px 0; }
+.zoom-bar button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 2px 10px; }
+.zoom-box { max-height: 80vh; overflow: auto; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 8px; }
+.zoom-box svg { display: block; max-width: none; }
 ```
 
 ## Pseudocode
