@@ -42,21 +42,23 @@ Done when: the item reflects the event, `changed` is stamped, and `check.py --st
 
 ## Reading it for the owner
 
-"What do I have to do": the owner's rows in order, by id, each with its next action; a theme with several of them is one decision, answered with the theme's next step. The owner's rows are every item whose next actor is the owner, whichever state it sits in. "What is going on": the counts per state and actor, the oldest open item, anything overdue or stale. Answer from the board; memory of the conversation is not the record.
+"What do I have to do": the owner's rows in order, by id, each with its next action; a theme with several of them is one decision, answered with the theme's next step. The owner's rows are every item whose next actor is the owner, whichever state it sits in, except an item in the answered strip, which waits on its AI owner. "What is going on": the counts per state and actor, the oldest open item, anything overdue or stale. Answer from the board; memory of the conversation is not the record.
 
 Done when: the answer cites every id whose actor is the owner.
 
 ## Clicks reach the AI owner
 
-The owner answers by clicking a reply, option or declared button, with an optional note. The **helper**, a small local server bound to the loopback address (BOARD-FORMAT.md, The helper), serves the board and carries the click:
+The owner answers by clicking a reply, option or declared button, or the default **Done** (BOARD-FORMAT.md, The helper), with an optional note. The **helper**, a small local server bound to the loopback address (BOARD-FORMAT.md, The helper), serves the board and carries the click:
 
 1. The click carries the item id, the answer, the time, the item's version (`changed`) and the note.
-2. The helper appends it to the **inbox**, an append-only event log, then sends it in full to each of the item's AI owners through the agents' mailbox system (e.g. Orca), and a notice-only copy to the coordinator, skipped when the coordinator is itself an owner.
-3. Each send ends as delivered or failed in the inbox; the page shows sent, seen, not delivered (with retry), answered an older version, and resolved.
+2. The helper appends it to the **inbox**, an append-only event log, then sends it in full to each of the item's AI owners through the agents' mailbox system (e.g. Orca), and a notice-only copy to the coordinator, skipped when the coordinator is itself an owner. A mailbox message does not wake an idle agent, so after each delivered owner copy the helper **wakes** that agent's terminal.
+3. Each send ends as delivered or failed in the inbox; the page shows sending, sent, seen, not delivered (with retry), answered an older version, and resolved, and a delivered answer steps into the answered strip.
 
-The helper never writes the board file. An AI owner that receives a click acts on it, then moves the item itself; leaving Needs you is what marks the click resolved. The coordinator's notice needs no action. Without the helper, a click falls back to the clipboard (BOARD-FORMAT.md, The helper).
+The helper never writes the board file. An AI owner that receives a click acts on it, then moves the item itself; leaving Needs you is what marks the click resolved. The coordinator's notice needs no action. Only offline does a click fall back to the clipboard, and it says so (BOARD-FORMAT.md, The helper).
 
-Done when (building or changing the helper): a click on a test item lands in the inbox, reaches each AI owner's mailbox (read there, not assumed) and gives the coordinator its notice; the board file's checksum is the same before and after; the page shows sent, seen and resolved across a reload; and a mutation for each baseline requirement is refused, at least: no token 403, a foreign Origin 403, an unknown id 400, a stale version shown as "answered an older version".
+Saving the helper's code file is a **live deploy** to the owner's running helper (BOARD-FORMAT.md, The helper, Self-reload), gated by nothing beyond a syntax check. Edit and test a copy (another port, a stub mailbox), then move the finished file into place in one step. A worker change reaches the owner with no restart and no new URL; a change to the supervisor itself needs stop, start and a fresh one-time URL for the owner.
+
+Done when (building or changing the helper): a click on a test item lands in the inbox, reaches each AI owner's mailbox (read there, not assumed) and gives the coordinator its notice; the board file's checksum is the same before and after; the page shows sent, seen and resolved across a reload; and a mutation for each baseline requirement is refused, at least: no token 403, a foreign Origin 403, an unknown id 400, `Done` on an item that declares chips 400, a stale version shown as "answered an older version", a reload in the middle of a delivery ending in exactly one copy, a hostile terminal handle recorded as `wake-failed` with nothing run, and a killed supervisor taking its worker down with `start`, `stop` and `status` all reporting the truth.
 
 ## The checker
 
@@ -77,6 +79,8 @@ Each open item carries an explain button that copies `Use spell-it-out on sync i
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
+
+**2026-11-02 — masonry, default Done, self-reload, answered strip, wake, delivery resume.** Prompted by the live board moving ahead of the skill again, through its own build and two security review rounds. Tiles pack masonry-style in sort order; a decision item with no buttons gets a default Done; the helper reloads itself under a supervisor with the session persisted, which makes saving its code a live deploy; a refused send is never silently copied, and the `file://` page says clicks are not sent from it; delivered answers step into a collapsed strip; the helper wakes the AI owner's terminal and flags an answer unread for 30 minutes; a delivery cut off by a reload resumes at boot without duplicating; a killed supervisor takes its worker down and the lifecycle script never trusts the pidfile alone; the edit script refuses an existing id on `add` and merges `links`. The checker gained `BAD ACTIONS` and `ACTIONS RULE DRIFT`.
 
 **2026-11-01 — renamed `sync-panel`; decision context and clicks.** Prompted by the live board gaining its interactive layer, which the 2026-10-30 rule ties to the rename. Decision context: every Needs-you item carries a plain brief, its shorthand defined with a link to each definition, a note on each link and the AI owner(s) waiting on the answer, with four checker flags (`NO BRIEF`, `UNDEFINED TERM`, `LINK WITHOUT NOTE`, `NO AI OWNER`). Clicks: a loopback helper serves the board and relays each click to the item's AI owners through the agents' mailbox system, with a notice to the coordinator, an append-only inbox, page states from sent to resolved, buttons declared per item, a clipboard fallback, and a security baseline stated as requirements. The helper never writes the board file. The description gained the branch for an agent a click reaches.
 
