@@ -48,7 +48,7 @@ Done when: the answer cites every id whose actor is the owner.
 
 ## Clicks reach the AI owner
 
-The owner answers by clicking a reply, option or declared button, or the default **Done** on an item that declares none, with an optional note. The **helper**, a small local server bound to the loopback address (BOARD-FORMAT.md, The helper), serves the board and carries the click:
+The owner answers by clicking a reply, option or declared button, or the default **Done** (BOARD-FORMAT.md, The helper), with an optional note. The **helper**, a small local server bound to the loopback address (BOARD-FORMAT.md, The helper), serves the board and carries the click:
 
 1. The click carries the item id, the answer, the time, the item's version (`changed`) and the note.
 2. The helper appends it to the **inbox**, an append-only event log, then sends it in full to each of the item's AI owners through the agents' mailbox system (e.g. Orca), and a notice-only copy to the coordinator, skipped when the coordinator is itself an owner. A mailbox message does not wake an idle agent, so after each delivered owner copy the helper **wakes** that agent's terminal.
@@ -56,7 +56,7 @@ The owner answers by clicking a reply, option or declared button, or the default
 
 The helper never writes the board file. An AI owner that receives a click acts on it, then moves the item itself; leaving Needs you is what marks the click resolved. The coordinator's notice needs no action. Only offline does a click fall back to the clipboard, and it says so (BOARD-FORMAT.md, The helper).
 
-Saving the helper's code file is a **live deploy**: the supervisor reloads the worker the moment the file changes and passes a syntax check, and the syntax check is all it checks. Edit and test a copy (another port, a stub mailbox), then move the finished file into place in one step. A worker change reaches the owner with no restart and no new URL; a change to the supervisor itself needs stop, start and a fresh one-time URL for the owner.
+Saving the helper's code file is a **live deploy** to the owner's running helper (BOARD-FORMAT.md, The helper, Self-reload), gated by nothing beyond a syntax check. Edit and test a copy (another port, a stub mailbox), then move the finished file into place in one step. A worker change reaches the owner with no restart and no new URL; a change to the supervisor itself needs stop, start and a fresh one-time URL for the owner.
 
 Done when (building or changing the helper): a click on a test item lands in the inbox, reaches each AI owner's mailbox (read there, not assumed) and gives the coordinator its notice; the board file's checksum is the same before and after; the page shows sent, seen and resolved across a reload; and a mutation for each baseline requirement is refused, at least: no token 403, a foreign Origin 403, an unknown id 400, `Done` on an item that declares chips 400, a stale version shown as "answered an older version", a reload in the middle of a delivery ending in exactly one copy, a hostile terminal handle recorded as `wake-failed` with nothing run, and a killed supervisor taking its worker down with `start`, `stop` and `status` all reporting the truth.
 

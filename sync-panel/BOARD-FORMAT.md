@@ -28,7 +28,7 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | `data-group` | optional theme id (`G1`, never reused): the item belongs to that theme record. One theme per item |
 | `data-reply` | optional `text \| text` (`|` separates replies): the short replies the owner would type ("go release"), rendered as chips; a click sends the reply (The helper) |
 | `data-options` | optional `A text\|B text`, with `data-recommend="A"`: the item's choices as chips, the recommended one starred; a click sends `A — text` (The helper) |
-| `data-actions` | optional `Label=kind \| Label=kind`, written by the item's coding agent (a kind such as `explain` or `snooze:<date>`): extra buttons, each sending `action:<kind>` (The helper). The board renders only the buttons an item declares; an item in Needs you that declares none gets the default Done (The helper) |
+| `data-actions` | optional `Label=kind \| Label=kind`, written by the item's coding agent (a kind such as `explain` or `snooze:<date>`): extra buttons, each sending `action:<kind>` (The helper). The board renders only the buttons an item declares, plus the default Done on an item that declares no chips (The helper) |
 | `data-ai-owner` | required in Needs you: the agent(s) waiting on the owner's answer, space-separated; shown as "for <name>" on the item; the helper sends each click to them |
 
 Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done; then, when the item cites more than one reference, `<p class="links">` with one `<a>` per further PR, issue, comment or page, so a `#NNN` written in the text always has a link to click. The script turns the title link and each anchor in the links row into chips in the link column (a link repeated in both appears once), removes the row, and leaves the title as text. A chip reads `#845` for a PR or issue, `#788 ↳` for a comment, the file's name for a local file or a file in the tracker (without a markdown, HTML, text or log extension), and the hostname for any other link; a file chip shows only its icon until the item is expanded, the name in its tooltip. The script also hides the `<b>actor</b>` prefix because the who column says it; adds the who, id, age and changed cells and the explain button (under **more**, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
@@ -78,7 +78,7 @@ One `index.html`, no build step. A `<meta http-equiv="refresh" content="60">` ke
    - **Tiles**, the default in Needs you: id and title, due or age in the corner, the next action, the reply and option chips, one meta line (link chips, relations, edited age, the changed dot) and a **more** button for the rest (mechanism glyph or explain button, outcome check, full link labels).
    - **Rows**, the default elsewhere: one line each (id, title, who, due or age, the dot), which a click expands in place to the next action, chips, links and relations.
    - Tiles pack masonry-style: each spans as many 1 px grid rows as its measured height (no row gap, the spacing inside each span), and a resize observer repacks a section whenever a tile changes size. The grid's forward-only auto-placement lets a short tile start in the gap under a shorter neighbour but never above a tile that sorts before it, so reading and keyboard order stay the sort and theme order; CSS columns would pack tighter and break that order. Rows view drops the spans, and without the script tiles take their natural height (`align-items: start`) and never overlap.
-   - In Needs you, an item whose answer was delivered (sent or seen; neither failed nor answered an older version) steps into a collapsed strip at the bottom, "Answered, waiting on the agent (N)", one dimmed line each with its answer and state, until its AI owner moves it. The section count covers only the items still to answer.
+   - In Needs you, an item whose answer was delivered (sent or seen; neither failed, answered an older version, nor edited after the answer) steps into a collapsed strip at the bottom, "Answered, waiting on the agent (N)", one dimmed line each with its answer and state, until its AI owner moves it. The section count covers only the items still to answer.
    - The who column is dropped in Needs you, where the owner is the actor by definition, and in Done, where nobody is; in Running and Loose ends, when no item left visible by the theme filter has an actor.
    - An empty section collapses to its header and one line. Done shows the last 24 hours; older Done items sit behind one "N more" row.
 4. **How this page works**: a collapsed `<details>` with the item schema, the state flow as a small diagram, and the panels table below.
@@ -118,7 +118,7 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `LONG NEXT`: an open owner row whose next action is longer than 15 words
 - `BAD OPTIONS`: `data-options` that does not parse as `LABEL text|…`, or a `data-recommend` that is not one of its labels
 - `BAD ACTIONS`: a `data-actions` entry that would show no working button. Valid is `Label=kind` with a non-empty label and a kind of one lower-case letter then up to 40 word characters, `:`, `.` or `-`
-- `ACTIONS RULE DRIFT`: the page script or the helper no longer carries that rule verbatim. The checker holds it once and the two mirror it, so the board renders and the helper accepts exactly what the checker passes
+- `ACTIONS RULE DRIFT`: the page script or the helper no longer carries that rule verbatim. The checker holds it once and the two mirror it, so nothing the checker passes is refused by the board or the helper
 - `GROUP UNKNOWN` / `DUPLICATE gid`: an item naming a theme that does not exist; a theme id used twice
 - `GROUP NO NEXT` / `GROUP DONE`: an open theme with no next step; an open theme with no open item (close it)
 - `GROUP MISPLACED`: a theme record outside `<section id="groups">`, where the page cannot see it
@@ -137,7 +137,7 @@ A local server with no dependency beyond its runtime, started and stopped by han
 
 - **Self-reload**: the process the lifecycle script starts is a supervisor that runs the helper as a worker child and watches the helper's code file. When the file changes and passes a syntax check, it swaps the worker; a broken edit is logged and the running worker stays. The session secret, the page token and the pending one-time URL persist in a mode-600 session file, written atomically, so the owner's cookie and open page survive a reload; `start` writes fresh secrets and `stop` deletes them. The supervisor's own code is not reloaded. The page retries a send that gets no HTTP answer, a few times, with the same click id, which covers the moment a reload takes.
 
-- **Routing file**: each AI-owner name to its mailbox address and terminal handle, plus the coordinator's name and the helper's own sender label. The helper sends under that neutral label and starts with a clean environment, so it never acts as the agent that launched it.
+- **Routing file**: each AI-owner name to its mailbox address and, for the wake, an optional terminal handle (an address that is itself a terminal handle serves), plus the coordinator's name and the helper's own sender label. The helper sends under that neutral label and starts with a clean environment, so it never acts as the agent that launched it.
 - **Inbox**: one JSON event per line, append-only: `click`, `sent` (with the mailbox message id), `send-failed` (with the error), `retry`, `seen`, `woken`, `wake-failed` (with the reason).
 - **Wake**: after each delivered owner copy, never the coordinator's notice, the helper types one fixed line into that agent's terminal through the mailbox system, telling it to check its mailbox. One attempt per copy; a failed or skipped wake (no terminal handle, or one that fails validation) is recorded as `wake-failed` and leaves the click sent.
 - **States**, in the expanded item and as a short badge in row view:
@@ -156,7 +156,7 @@ A local server with no dependency beyond its runtime, started and stopped by han
 
 - **Loopback only**: bound to 127.0.0.1, and every request's `Host` equals `127.0.0.1:PORT` exactly, against DNS rebinding.
 - **Session cookie**: every route but a health check and the bootstrap needs it; it is `HttpOnly; SameSite=Strict` and set only by a one-time bootstrap URL, which the helper keeps in a mode-600 file and rotates on each use, and the lifecycle script prints.
-- **Per-start token and Origin**: a random token generated at each start, injected into the page the helper serves and kept off disk, required on every POST and on `/state`; every POST also carries an `Origin` equal to the helper's own.
+- **Per-start token and Origin**: a random token, rotated at each start, held only in the mode-600 session file beside the session secret and the pending one-time URL (never in the board file, a URL or a log) and injected into the page the helper serves; required on every POST and on `/state`. Every POST also carries an `Origin` equal to the helper's own.
 - **Input**: an open item's id, an answer that item declares (reply, option or action, or `Done` when it declares none), a note within its cap, a body within a size cap, JSON only.
 - **File serving**: a file is served only when the board links it, its real path (every symlink resolved) lies inside the reports folder, and it is a regular file; a served file gets a sandbox CSP so it cannot act as the board. The hidden-path refusal sits in the edit script's copy step (Linked files).
 - **Strict CSP on the board**: `script-src 'self'` with no inline script, `frame-ancestors 'none'`, `X-Frame-Options: DENY`.
@@ -184,7 +184,7 @@ A local server with no dependency beyond its runtime, started and stopped by han
   <bootstrap file>       600   the helper's current one-time URL; deleted on stop
   <session file>         600   session secret, page token and pending one-time URL, kept across reloads; deleted on stop
   <lifecycle script>     600   start / stop / status; its pidfile and log beside it, 600
-  <routing file>         600   AI-owner name to mailbox address and terminal handle, the coordinator, the sender label
+  <routing file>         600   AI-owner name to mailbox address and optional terminal handle, the coordinator, the sender label
   inbox.jsonl            600   the helper's append-only event log
   reports/               700   the only folder the helper serves linked files from
 ```
