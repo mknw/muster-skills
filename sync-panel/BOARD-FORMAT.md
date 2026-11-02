@@ -127,7 +127,7 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `NO BRIEF` / `NO AI OWNER`: a Needs-you item without a brief, or without `data-ai-owner`
 - `LINK WITHOUT NOTE`: a links-row anchor on a Needs-you item with no `title`
 - `UNDEFINED TERM`: a shorthand token in a Needs-you item's options, next action or brief that its terms do not define. Shorthand is an upper-case group of one to four letters followed by digits (optional hyphen, optional bracketed suffix: `X2`, `QA-4`, `K5(b)`) or by a bracketed suffix alone (`AB(c)`); two joined by a dash are one range token, defined as a range or at both ends. Item ids, theme ids and agent names are excluded, and `#NNN`, dates and version strings cannot match. Model and hash names match too; a one-line definition costs nothing
-- `BUNDLE …`: the six report-bundle flags (Report bundles)
+- `BUNDLE …`: the seven report-bundle flags (Report bundles)
 - `STALE`: `data-changed` older than three days on an open item
 
 Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERDUE when it fails past `due`, else pending, and whether it ran without a shell or through `sh -c`; a command with no shell metacharacter runs without one, under a timeout either way); then the lane-deadline ledger the coordinator keeps, whose overdue lines also count as flags; then the counts per state. Exit 1 on any flag. `--stamp` rewrites the last-checked line through the same anchor tool used for items, falling back to a direct write. The mutation run that proves it: a scratch copy with one planted instance of each defect, all flagged, exit 1.
@@ -172,7 +172,7 @@ A local server with no dependency beyond its runtime, started and stopped by han
 
 A **report bundle** is a folder of pages the owner reads from one board item, with feedback per section that reaches the item's AI owners like a click. This section is the whole contract: a lane builds and publishes a bundle from it alone.
 
-**The design.** Report pages stay sandboxed, in an opaque origin, so no script a lane writes can read the board's token or post as the owner. A **wrapper** page the helper writes frames the report and does all the sending, and the owner types the note in the wrapper. A page can point at a section, and can never send text or a decision.
+**The design.** Report pages stay sandboxed, in an opaque origin, so no script a lane writes can read the board's token or post as the owner. A **wrapper** page the helper writes frames the report and does all the sending, and the owner types the note in the wrapper. A page can only point at a section.
 
 **The folder.**
 
@@ -197,7 +197,7 @@ Allowed files, with exactly these lowercase extensions: `.html .css .js .svg .pn
 
 - `pages`: required and non-empty. Each page has a relative `file` ending in `.html`, with no `..`, and its `sections`.
 - A section `id` matches `^[A-Za-z][\w-]{0,63}$` and exists in that page as `id="…"`.
-- `entry`: optional, the first page by default; it is the page the item links. `title`: optional; it labels the link.
+- `entry`: optional, the first page by default; it is the page the item links. `title`: optional; it labels the link, which otherwise reads the bundle's folder name.
 
 **Pages.**
 
@@ -212,9 +212,9 @@ Allowed files, with exactly these lowercase extensions: `.html .css .js .svg .pn
 
   The wrapper then selects that section and focuses its note field. It lists every section anyway, so a page needs no script to get feedback.
 
-**Publish.** `<edit script> bundle ID DIR` copies the folder to `reports/<sha8>-<name>/` (folders 700, files 600) and links the item to the entry page, labelled with the bundle title. It refuses anything outside the rules above and names the file. One bundle per item: publishing again with changed content replaces the item's bundle in place, removing the old folder unless another item links it; the same content changes nothing; an item that already links more than one bundle is refused and left unchanged.
+**Publish.** `<edit script> bundle ID DIR` copies the folder to `reports/<sha8>-<name>/` (folders 700, files 600) and links the item to the entry page, labelled with the bundle title. It refuses a folder or manifest that breaks the rules above, naming the file, and an item that already links more than one bundle (one bundle per item). A refusal changes nothing: every check runs before anything is copied. It does not check pages against their HTML: an `entry` that names no listed page falls back to the first page, and a section id missing from its page is caught only by the checker (`MISSING SECTION`). Publishing again with changed content replaces the item's bundle in place, removing the old folder unless another item links it; the same content changes nothing.
 
-**What the owner sees.** On the helper page the item's link opens the wrapper, `/r/<bundle>/<page>?item=ID`: the page list, a section picker, a note field (2000 characters) and **Send feedback**, around the report in a sandboxed frame. The item then shows "feedback on <page>#<section> · sent", then "seen by …". Feedback is a comment, not an answer: the item stays where it is and never enters the answered strip. A Done item's report stays readable, and its wrapper shows no feedback form. On the `file://` page the link opens the entry page directly, with no feedback.
+**What the owner sees.** On the helper page the item's link opens the wrapper, `/r/<bundle>/<page>?item=ID`: the page list, a section picker, a note field (2000 characters) and **Send feedback**, around the report in a sandboxed frame. The item then shows "feedback on <page>#<section> · sending…", then "· sent HH:MM", then "seen by …". Feedback is a comment, not an answer: the item stays where it is and never enters the answered strip. A Done item's report stays readable, and its wrapper shows no feedback form. On the `file://` page the link opens the entry page directly, with no feedback.
 
 **What the AI owner receives.** A message headed "<id>: feedback on <page>#<section>", the note in the body, and a payload of kind `sync-feedback` (item id, bundle, page, section, note, version, click id, time), followed by the wake; the coordinator gets a notice-only copy. Delivery, retry, resume and visible failure are the click path's (The helper).
 
@@ -224,7 +224,7 @@ Allowed files, with exactly these lowercase extensions: `.html .css .js .svg .pn
 - `NO MANIFEST`: a bundle without `bundle.json`.
 - `BAD MANIFEST`: a manifest that breaks the rules above.
 - `MISSING PAGE` / `MISSING SECTION`: listed in the manifest, absent from the folder or from the page's HTML.
-- `REMOTE URL`: a remote load, as defined under Pages, in any `.html`, `.css`, `.js` or `.svg` file. Advisory: the CSP is the control.
+- `REMOTE URL`: a remote load, as defined under Pages, in any `.html`, `.css`, `.js` or `.svg` file. Advisory for security, since the CSP is the control; like any flag it still fails the checker run.
 - `MULTIPLE`: an item linking more than one bundle.
 
 **Security requirements**, each proved by a mutation (SKILL.md, Clicks reach the AI owner):
