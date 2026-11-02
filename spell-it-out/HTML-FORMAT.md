@@ -6,6 +6,7 @@ One HTML file: CSS inline, the vendored Mermaid file and its `initialize` call a
 
 - **First screen.** At 1280 × 800 the first screen holds the answer, the decision and the flow down to its deciding node. When it does not, merge the steps before the decision or shorten the answer; the answer is at most four sentences, and what does not fit goes in the notes file, linked from the details.
 - **Plain words** in the answer, the flow and the options, as `graph-it` defines them.
+- **Introduced.** Every actor, check or threshold the answer, the flow or the options names gets one plain sentence at first use; the reader needs no background beyond the page. The sentence sits in the part where the component first appears and counts against that part's bound.
 - **Phone width.** A 760 px column with 16 px gutters; at 390 px the page never scrolls sideways, and the flow box is its one inner scroll (the table and pseudocode recipes in FORMS.md are built for it).
 - **Both schemes.** Tokens on `:root`, redefined under `prefers-color-scheme: dark`; `body` sets its background.
 - **Cited.** Every name and number is cited, in the rule's comments or in a Sources list inside the details; the answer, the flow and the options carry no chips, so the picture stays clean. Chip forms: `<a class="cite" href="https://<host>/<owner>/<repo>/blob/<sha>/<path>#L12-L20">path:12-20</a>` for code the reader can open, `<code class="cite">~/private/run.txt</code>` (text, never a link) for private material.
