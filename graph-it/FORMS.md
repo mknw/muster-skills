@@ -64,9 +64,9 @@ mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: dark ? '
 
 A flow that needs more than eight nodes (a complete mechanism, "the whole path") is drawn as a zoom set: an overview of its stages, one diagram per stage, and the whole diagram kept collapsed below them.
 
-- **Cut** at the hand-offs, the nodes every path from the start passes through. The stages then form a chain, and the only edges between two diagrams run through stubs. An end that two stages reach is drawn in both.
+- **Cut** at the hand-offs, the nodes every path still running passes through. Where paths run side by side, cut where they reconverge, and keep a branch that never reconverges wholly inside the stage that holds its branch point. The stages then form a chain, and the only edges between two diagrams run through stubs. An end that two stages reach is drawn in both.
 - **Overview.** Three to seven stages named in plain words, as a row of linked boxes, each in its stage colour, a hand-off phrase on each arrow. The case's path: the hand-offs it crossed are bold orange, the stages it never reached are dashed, and the stage holding the deciding node says `◆ decides`. The row is the navigation, so it works with no script, by keyboard and in a sandboxed frame.
-- **Stage.** One control-flow diagram, eight nodes counting its stubs. It starts at a stub `from <n> · <previous stage>` and ends at stubs `to <n> · <next stage>`, each stub in that neighbour's colour, and the case's path coloured as in a single diagram. It sits in a frame of its own colour, with a numbered heading, its settings table under it, and a line of links: overview, previous stage, next stage. Rendered, it is no wider than the column and at most 1000 px tall; past either, split the stage or shorten its labels.
+- **Stage.** One control-flow diagram, eight nodes counting its stubs. It starts at a stub `from <n> · <previous stage>` and ends at stubs `to <n> · <next stage>`, each stub in that neighbour's colour, and the case's path coloured as in a single diagram. It sits in a frame of its own colour, with a numbered heading, its settings table under it, and a line of links: overview, previous stage, next stage. Rendered, it fits the 760 px column at desktop width and is at most 1000 px tall; past either, split the stage or shorten its labels. On a phone its box scrolls sideways, as a single diagram's does.
 - **The whole diagram** goes in a closed `<details>`, in a box that scrolls, with a zoom bar: fit width, 100%, −, +. Without script the box still scrolls.
 - **Stage colours.** Mermaid's `classDef` takes literal colours only (a `var()` is a parse error), so each stage has one pair that reads in both schemes, as the case's orange does, and the `classDef` lines repeat the page's pairs.
 - **Stub links.** A stub may also carry `click <id> href "#stage-<n>"`. Mermaid's documentation disables clicks under `securityLevel: 'strict'` (12.2.0 still follows an `href`), so the boxes and links stay the navigation and a stub link is a bonus.
@@ -104,6 +104,7 @@ A flow that needs more than eight nodes (a complete mechanism, "the whole path")
 <!-- the settings table -->
 <p class="stage-nav"><a href="#overview">overview ↑</a> · <a href="#stage-1">← Arrives</a> · <a href="#stage-3">Stored →</a></p>
 </section>
+<!-- stages 1, 3 and 4 alike -->
 
 <details class="zoom">
 <summary>The whole path in one diagram</summary>
