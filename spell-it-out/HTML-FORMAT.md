@@ -1,13 +1,13 @@
 # Page format
 
-One HTML file: CSS inline, the vendored Mermaid file and its `initialize` call as two script tags at the end of `<body>` (they draw the flow; `graph-it` says how to find or create the copy), `<details>` for the collapsed part. A page for private material loads nothing remote. The forms are drawn by [`graph-it`](../graph-it/FORMS.md); this file says which form goes where.
+One HTML file: CSS inline, the vendored Mermaid file and its `initialize` call as two script tags at the end of `<body>` (they draw the flow; `graph-it` says how to find or create the copy; a zoom set adds its zoom script as a third), `<details>` for the collapsed part. A page for private material loads nothing remote. The forms are drawn by [`graph-it`](../graph-it/FORMS.md); this file says which form goes where.
 
 ## Contract
 
-- **First screen.** At 1280 × 800 the first screen holds the answer, the decision and the flow down to its deciding node. When it does not, merge the steps before the decision or shorten the answer; the answer is at most four sentences, and what does not fit goes in the notes file, linked from the details.
+- **First screen.** At 1280 × 800 the first screen holds the answer, the decision and the flow down to its deciding node; for a zoom set, its overview with the deciding stage tagged. When it does not, merge the steps before the decision or shorten the answer; the answer is at most four sentences, and what does not fit goes in the notes file, linked from the details.
 - **Plain words** in the answer, the flow and the options, as `graph-it` defines them.
 - **Introduced.** Every actor, check or threshold the answer, the flow or the options names gets one plain sentence at first use; the reader needs no background beyond the page. The sentence sits in the part where the component first appears and counts against that part's bound.
-- **Phone width.** A 760 px column with 16 px gutters; at 390 px the page never scrolls sideways, and the flow box is its one inner scroll (the table and pseudocode recipes in FORMS.md are built for it).
+- **Phone width.** A 760 px column with 16 px gutters; at 390 px the page never scrolls sideways, and the flow boxes are its only inner scrolls (the table and pseudocode recipes in FORMS.md are built for it).
 - **Both schemes.** Tokens on `:root`, redefined under `prefers-color-scheme: dark`; `body` sets its background.
 - **Cited.** Every name and number is cited, in the rule's comments or in a Sources list inside the details; the answer, the flow and the options carry no chips, so the picture stays clean. Chip forms: `<a class="cite" href="https://<host>/<owner>/<repo>/blob/<sha>/<path>#L12-L20">path:12-20</a>` for code the reader can open, `<code class="cite">~/private/run.txt</code>` (text, never a link) for private material.
 - **Accessible.** Every outcome is a word as well as a colour; text contrast checked in both schemes.
@@ -17,7 +17,7 @@ One HTML file: CSS inline, the vendored Mermaid file and its `initialize` call a
 | part | question it answers | form (FORMS.md) | bound |
 |---|---|---|---|
 | **Answer** | what happened, and what must I choose? | the meta line (repo @ SHA · date · `recorded run` / `reproduced` / `read only` · `PRIVATE` badge when sensitive), then what happened in plain words, then the decision in one line | 4 sentences + 1 line |
-| **Flow** | where did the case branch? | control flow as a Mermaid diagram (`graph-it`): the case's path coloured, the deciding node tagged, a second finding as a dotted edge, one legend line | 8 nodes; a longer mechanism shows its stages and links a per-stage page from the details |
+| **Flow** | where did the case branch? | control flow as a Mermaid diagram (`graph-it`): the case's path coloured, the deciding node tagged, a second finding as a dotted edge, one legend line | 8 nodes; a longer flow is a zoom set (`graph-it`): the overview here, each stage under it, the whole diagram collapsed below them |
 | **Rule** | what exactly decided it, on what data? | pseudocode with the case's numbers inline; under it, the types or fields the predicate reads | 8 lines + 7 lines |
 | **Options** | what could change it? | table: option · what changes · what it fixes · cost and reversibility; the recommended row marked, one sentence why | 4 rows, each cell a plain phrase |
 | **Details** (closed) | how sure, and what else? | `<details>` holding: a gauge or table of the variants when there was an ablation; the reach as a table (surface · reached? · who · evidence); the evidence line (what ran, when, cost); the Sources list; the link to the notes file | — |
