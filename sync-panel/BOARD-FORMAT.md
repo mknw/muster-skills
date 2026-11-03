@@ -55,7 +55,7 @@ Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title li
 
 ## Decision pages
 
-A Needs-you item of medium complexity or higher links a **decision page**: one private local `.html` page, in the board's folder, that puts the item's open questions to the owner. It is the page the owner reads. Its order:
+A Needs-you item of medium complexity or higher links a **decision page**: one private local `.html` page, in the board's folder or a bundle's entry page, that puts the item's open questions to the owner. It is the page the owner reads. Its order:
 
 1. **The questions, plain**, under exactly that heading, `<h2>The questions, plain</h2>`, which the checker reads as the mark of a decision page. A title naming how many decisions and what they gate; a meta line ending in one continuity line (what is already ruled, linked; the page carries only what it leaves open); then the questions, numbered, each one plain sentence ending in "?", at most one sentence picking it up from what it continues, "Recommended:" the answer, "Blocks:" what waits on it. All of them on the first screen at 1280 × 800; questions that do not fit are two pages.
 2. **Each explained.** Per question, in the same numbering: a heading naming the choice, one paragraph of at most five sentences on the trade (what each answer costs, whether it reverses, the precedent it follows).
@@ -230,7 +230,7 @@ A Loose-ends item can be started, sent for a grilling round, or set aside from t
 
 **What the receiving agent does**, within its next turn:
 - `kickoff`: start the item's next action now, and move the item to Running with `data-due` and `data-check`.
-- `kickoff:grill`: run steps 1 to 4 of the grilling round (Grill me) against the item's design, then move the item to Needs you with `ai-owner` set to yourself. The decision page may be the entry page of the item's report bundle (Report bundles) when the owner should comment on it by section; either way it carries the questions heading, so the checker finds it. The owner answers by the item's chips, or by section feedback on a bundle.
+- `kickoff:grill`: run steps 1 to 4 of the grilling round (Grill me) against the item's design, with step 5's override when nothing is left for the owner, then move the item to Needs you with `ai-owner` set to yourself. The decision page may be the entry page of the item's report bundle (Report bundles) when the owner should comment on it by section; either way it carries the questions heading, so the checker finds it. The owner answers by the item's chips, or by section feedback on a bundle.
 - `deprio` / `undeprio`: run the edit script's `deprio ID` / `undeprio ID`, and nothing else. That makes the page and the `file://` page agree durably.
 
 **Edit script**: `deprio ID` sets `data-deprio` to today's date and `undeprio ID` removes it; both refuse an item outside Loose ends. The checker's `DEPRIO OUTSIDE LOOSE ENDS` and `BAD DEPRIO` flag what a hand edit could leave behind.
@@ -241,7 +241,7 @@ The owner can ask for a grilling round on any decision waiting on them. Every ex
 
 | button | answer sent | goes to | wake |
 |---|---|---|---|
-| grill me | `grill` | each AI owner the routing file lists; with none listed, the coordinator | yes |
+| grill me | `grill` | each AI owner the routing file lists; with none left, the coordinator | yes |
 
 - **Where it is accepted**: the helper accepts `grill` only for an item whose `data-section` is `needs-you`, and refuses it on any other item (400, naming the item's section). `grill` is the board's own answer: a declared reply of that name sends the grill request on a Needs-you item and is refused elsewhere.
 - **Recipients**: the item's `data-ai-owner` names, read as the security baseline's Owner list says (The helper); a name the routing file does not list is dropped. The coordinator gets the usual notice-only copy, skipped when it is a recipient.
@@ -250,11 +250,11 @@ The owner can ask for a grilling round on any decision waiting on them. Every ex
 - **Older helper**: the helper announces `needs-you-grill` among its features. On a helper without it, the button is disabled with a visible "helper too old" note, and nothing is copied to the clipboard. Offline it copies `<id>: grill` like every button (The helper, No silent copy).
 
 **The grilling round** is what the receiving agent does on `grill`, within its next turn:
-1. Run the `grilling` skill on the item's decision yourself. Answer every question the code, records or docs answer, and continue from the owner's prior rulings rather than re-asking them.
+1. Run the `grilling` skill on the item's decision yourself. Answer every question the code, records or docs answer, and continue from the owner's prior rulings rather than re-asking them. The skill's wait for the user does not apply: you play both roles, and what neither you nor the records settle becomes the page's questions.
 2. Deliver or refresh the item's decision page (Decision pages): the questions first, plain, each with its recommendation, what it blocks and its continuity; then each explained; then the material. Proportionate to the decision.
 3. Set `data-complexity` to medium or higher and link the page as the item's title.
 4. Rewrite the brief and options to the questions that remain, and reply on the item.
-5. Leave the item in Needs you. When the round leaves nothing for the owner to decide, say so in the brief and recommend Done.
+5. Leave the item in Needs you. When the round leaves nothing for the owner to decide, say so in the brief and recommend Done, then set complexity low and drop the link: this overrides step 3.
 
 ## Report bundles
 
