@@ -4,7 +4,7 @@ One HTML file: CSS inline, the vendored Mermaid file and its `initialize` call a
 
 ## Contract
 
-- **First screen.** At 1280 × 800 the first screen holds, in the explain order, the answer, the decision and the flow down to its deciding node (for a zoom set, its overview with the deciding stage tagged); in the decide order, the questions as the decision page lays them out. When it does not, merge the steps before the decision or shorten the answer; the answer is at most four sentences, and what does not fit goes in the notes file, linked from the details.
+- **First screen.** At 1280 × 800 the first screen holds, in the explain order, the answer, the decision and the flow down to its deciding node (for a zoom set, its overview with the deciding stage tagged); in the decide order, the questions as the decision page lays them out. When an explain page's does not, merge the steps before the decision or shorten the answer; the answer is at most four sentences, and what does not fit goes in the notes file, linked from the details. A decide page that overflows follows the decision page's rule: two pages.
 - **Plain words** in the answer or questions, the flow and the options or explanations, as `graph-it` defines them.
 - **Introduced.** Every actor, check or threshold those parts name gets one plain sentence at first use; the reader needs no background beyond the page. The sentence sits in the part where the component first appears and counts against that part's bound.
 - **Phone width.** A 760 px column with 16 px gutters; at 390 px the page never scrolls sideways, and the flow boxes are its only inner scrolls (the table and pseudocode recipes in FORMS.md are built for it).
@@ -14,7 +14,7 @@ One HTML file: CSS inline, the vendored Mermaid file and its `initialize` call a
 
 ## Parts, top to bottom
 
-Two orders, by what the reader came for. **Explain**, when the reader asked how or why: Answer, Flow, Rule, Options, Details. **Decide**, when an agent puts open questions about the mechanism to the reader: the questions and their explanations as `sync-panel`'s [decision page](../sync-panel/BOARD-FORMAT.md#decision-pages) lays them out, with its Continuity and Ruled-once rules, then Flow, Rule, Details.
+Two orders, by what the reader came for. **Explain**, when the reader asked how or why: Answer, Flow, Rule, Options, Details. **Decide**, when an agent puts open questions about the mechanism to the reader: the questions and their explanations as `sync-panel`'s [decision page](../sync-panel/BOARD-FORMAT.md#decision-pages) lays them out, with its Continuity and Ruled-once rules, then Flow, Rule, Details, and the decision page's closing records line.
 
 | part | question it answers | form (FORMS.md) | bound |
 |---|---|---|---|
