@@ -47,8 +47,8 @@ Two rules keep the set portable:
 | `improve-codebase-architecture` | A guided architecture-improvement pass |
 | `architecture-report` | A cited, descriptive report on one named layer or topic |
 | `graph-it` / `show-me` | How to draw one visual form (control flow, pseudocode, types, call stack, diagram, diff, gauge) as text or HTML, in place of prose; the recipes other skills' pages are built from |
-| `spell-it-out` | A visual HTML page tracing one concrete case through one mechanism — its rule and real numbers, why it fails, its reach — ending in a decision |
-| `sync-panel` | The one private page an owner and their coordinator sync through: what each party waits on, next actor, age, outcome checks, dependencies — tiles and rows, decision context, clicks relayed to the waiting agent by a loopback helper, report-only checker, anchor-based edits |
+| `spell-it-out` | A visual HTML page tracing one concrete case through one mechanism — its rule and real numbers, why it fails, its reach — ending in the decisions left open |
+| `sync-panel` | The one private page an owner and their coordinator sync through: what each party waits on, next actor, age, outcome checks, dependencies — tiles and rows, decision context and decision pages, clicks relayed to the waiting agent by a loopback helper, report-only checker, anchor-based edits |
 | `intent-driven-development` | Keeping implementation tied to stated intent |
 | `diagnosing-bugs` | A diagnosis loop for hard bugs and regressions |
 | `loop-design-check` | Sanity-checking agent/feedback loop designs |
