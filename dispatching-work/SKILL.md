@@ -128,7 +128,10 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
 - **Wait on actionable state.** Use the runtime's native lifecycle waits or
   events and the durable task/result channel for completion, blockers and
   questions. A lifecycle transition is a wake to inspect task evidence, not a
-  task verdict. Re-arm waits after processing and reconcile after disconnect.
+  task verdict. Re-arm waits after processing and reconcile after disconnect. On
+  Orca, any coordinator or PM can also watch its own mailbox with
+  [scripts/watch-inbox.sh](scripts/watch-inbox.sh) — run it as a background
+  task, and when it exits, drain and ack the mailbox, then start it again.
 - **One retry, then surface.** On a failure signal, retry once calmly, then
   put the failure in front of the owner with the evidence.
 - **Process whole deliveries.** Where the task channel has consuming batches
