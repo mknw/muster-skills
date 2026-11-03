@@ -22,8 +22,12 @@ variable; with neither the script refuses to guess a default.
 --next prints the seconds until the nearest future deadline (empty when there
 is none), for sizing watch-inbox.sh's mailbox wait. --new reports only
 deadlines not reported by an earlier run, keeping a seen-file beside the
-ledger, so a waiter wakes once per overdue lane instead of on every poll; the
-coordinator still acts on every overdue lane on the next full run.
+ledger, so a waiter wakes once per overdue lane instead of on every poll. The
+report is one-shot: --new never re-raises a deadline it has already reported,
+so an overdue lane the agent fails to act on is recovered by running this
+script without --new — that run lists every overdue lane. Malformed or
+unreadable ledger lines are skipped with a warning to stderr; only a genuine
+overdue report makes the script exit nonzero.
 """
 
 import argparse
@@ -44,13 +48,24 @@ def parse_timestamp(ts):
 
 def load_rows(ledger):
     rows = []
-    if ledger.exists():
-        for line in ledger.read_text().splitlines():
-            if not line.strip() or line.startswith('#'):
-                continue
-            parts = line.split('\t')
-            if len(parts) >= 3:
-                rows.append((parse_timestamp(parts[0]), parts[1], parts[2]))
+    try:
+        lines = ledger.read_text().splitlines()
+    except OSError as exc:
+        print(f'deadlines.py: cannot read ledger {ledger}: {exc}', file=sys.stderr)
+        return rows
+    for line in lines:
+        if not line.strip() or line.startswith('#'):
+            continue
+        parts = line.split('\t', 2)
+        if len(parts) < 3:
+            continue
+        try:
+            expected = parse_timestamp(parts[0])
+        except (ValueError, OverflowError, OSError) as exc:
+            print(f'deadlines.py: skipping ledger line with bad timestamp '
+                  f'{parts[0]!r}: {exc}', file=sys.stderr)
+            continue
+        rows.append((expected, parts[1], parts[2]))
     return rows
 
 
