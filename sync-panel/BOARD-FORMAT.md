@@ -1,6 +1,6 @@
 # Board format
 
-The reference half of [`sync-panel`](SKILL.md): the item and its decision context, the theme, the page, the panels, the checker, the helper, the Loose-ends buttons, report bundles, the folder. Everything here is created once and then edited by anchor.
+The reference half of [`sync-panel`](SKILL.md): the item and its decision context, decision pages, the theme, the page, the panels, the checker, the helper, the Loose-ends buttons, report bundles, the folder. Everything here is created once and then edited by anchor.
 
 ## The item
 
@@ -30,6 +30,7 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | `data-options` | optional `A text\|B text`, with `data-recommend="A"`: the item's choices as chips, the recommended one starred; a click sends `A — text` (The helper) |
 | `data-actions` | optional `Label=kind \| Label=kind`, written by the item's coding agent (a kind such as `explain` or `snooze:<date>`): extra buttons, each sending `action:<kind>` (The helper). The board renders only the buttons an item declares, plus the default Done on an item that declares no chips (The helper) |
 | `data-ai-owner` | required in Needs you: the agent(s) waiting on the owner's answer, space-separated; shown as "for <name>" on the item; the helper sends each click to them |
+| `data-complexity` | required in Needs you: `low`, `medium` or `high`, how much the decision needs beyond its brief and options (Decision context) |
 | `data-deprio` | optional, Loose ends only: `YYYY-MM-DD`, written by the item's agent with the edit script's `deprio` and removed by `undeprio`; the item renders in the De-prioritized strip (Loose-ends buttons). A move out of Loose ends or a close drops it |
 
 Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done; then, when the item cites more than one reference, `<p class="links">` with one `<a>` per further PR, issue, comment or page, so a `#NNN` written in the text always has a link to click. The script turns the title link and each anchor in the links row into chips in the link column (a link repeated in both appears once), removes the row, and leaves the title as text. A chip reads `#845` for a PR or issue, `#788 ↳` for a comment, the file's name for a local file or a file in the tracker (without a markdown, HTML, text or log extension), and the hostname for any other link; a file chip shows only its icon until the item is expanded, the name in its tooltip. The script also hides the `<b>actor</b>` prefix because the who column says it; adds the who, id, age and changed cells and the explain button (under **more**, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
@@ -44,12 +45,43 @@ Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title li
   <p class="links"><a href="https://host/owner/repo/pull/851" title="what this link covers">851</a></p>
 ```
 
-- **Brief**: shown when the item is expanded, above the chips.
+- **Brief**: shown when the item is expanded, above the chips. It picks up from the decision or work it continues (Decision pages, Continuity).
 - **Terms**: every shorthand token in the item's options, next action or brief, each linked to the exact place it is defined (a file with `:LINE`, or a URL with an `#anchor`); shown expanded, under the brief, as "TERM: meaning".
-- **Link notes**: the `title` on each links-row anchor says what that link covers; an expanded item shows each note beside its chip. A `title` on the `<h3>` link shows the same way and is optional.
+- **Link notes**: the `title` on each links-row anchor says what that link covers; an expanded item shows each note beside its chip. A `title` on the `<h3>` link shows the same way and is optional. A tracker link (issue, PR, comment) is noted as the agents' record, for diagnosing and debugging the agents' work: `title="agents' record: the slice plan"`.
 - **AI owner**: `data-ai-owner` (attribute table).
+- **Complexity**: `low` when the brief and the options carry the whole decision; `medium` when a question needs its trade explained, or there are several; `high` when the answers interact or one is costly to reverse. At medium or higher the title links a decision page (next section).
 
 **Badges**, in the changed cell, short and relative, allowed to wrap: `overdue 3 d`, `due 10-30`, `stale`, `check` (the item has an outcome check; the command is the tooltip). Nothing else.
+
+## Decision pages
+
+A Needs-you item of medium complexity or higher links a **decision page**: one private local `.html` page, in the board's folder, that puts the item's open questions to the owner. It is the page the owner reads. Its order:
+
+1. **The questions, plain.** A title naming how many decisions and what they gate; a meta line ending in one continuity line (what is already ruled, linked; the page carries only what it leaves open); then the questions, numbered, each one plain sentence ending in "?", at most one sentence picking it up from what it continues, "Recommended:" the answer, "Blocks:" what waits on it. All of them on the first screen at 1280 × 800; questions that do not fit are two pages.
+2. **Each explained.** Per question, in the same numbering: a heading naming the choice, one paragraph of at most five sentences on the trade (what each answer costs, whether it reverses, the precedent it follows).
+3. **The material the questions touch**, only as far as they need it. One mechanism: its flow and rule, the page built with `spell-it-out` in its decide order, its path recorded as `mechanism`. A list, an audit or a comparison: the rows the questions turn on as a table drawn as `graph-it` says, the full material linked.
+4. **The agents' records** it came from (issue, PR, comment), each labelled as a record.
+
+- **Continuity.** Each question picks up from the ruling or work it continues, in plain words ("you ruled X; this asks Y"), so the owner places it beside what they already decided.
+- **Ruled once.** Avoid restating previous decisions unless clearly central for the mechanism; when restated, briefly and once: one line naming the ruling, linked to where it was made.
+- **Length** follows the complexity: parts 1 and 2 are bounded per question, part 3 by what the questions touch.
+- **Page mechanics** (plain words, components introduced, phone width, both schemes, nothing remote) as `spell-it-out`'s [Contract](../spell-it-out/HTML-FORMAT.md#contract) says.
+
+The head of an invented page, continuing an earlier ruling:
+
+```html
+<h1>Two decisions before per-route limits ship</h1>
+<p class="meta">2026-11-03 · private · you chose per-route counting on 2026-10-30 (<a href="…">record</a>); this page carries only what it leaves open</p>
+<h2>The questions, plain</h2>
+<ol>
+<li><p><b>When a route has no limit of its own, does it share the client's 100 a minute?</b></p>
+<p>You chose to count per route; this asks what a route missing from the table falls back to.</p>
+<p>Recommended: share the client's 100. Blocks: the table migration.</p></li>
+<li>…</li>
+</ol>
+<h2>Each explained</h2> …
+<h2>The mechanism these questions touch</h2> …
+```
 
 ## The theme
 
@@ -127,6 +159,7 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `GROUP CLOSED`: an open item tagged into a closed theme
 - `GROUP MISSING`: an open item with no `data-group` whose `data-rel` targets a member of an open theme, or whose title names one as a whole word (the next action is not searched: it routinely lists other ids); tag it or reword it
 - `NO BRIEF` / `NO AI OWNER`: a Needs-you item without a brief, or without `data-ai-owner`
+- `NO COMPLEXITY` / `BAD COMPLEXITY` / `NO DECISION PAGE`: a Needs-you item without `data-complexity`; a value other than `low`, `medium` or `high` on any item; a medium or high Needs-you item with neither `data-mechanism` nor a link to a local `.html` page other than the board (Decision pages)
 - `LINK WITHOUT NOTE`: a links-row anchor on a Needs-you item with no `title`
 - `UNDEFINED TERM`: a shorthand token in a Needs-you item's options, next action or brief that its terms do not define. Shorthand is an upper-case group of one to four letters followed by digits (optional hyphen, optional bracketed suffix: `X2`, `QA-4`, `K5(b)`) or by a bracketed suffix alone (`AB(c)`); two joined by a dash are one range token, defined as a range or at both ends. Item ids, theme ids and agent names are excluded, and `#NNN`, dates and version strings cannot match. Model and hash names match too; a one-line definition costs nothing
 - `BUNDLE …`: the seven report-bundle flags (Report bundles)

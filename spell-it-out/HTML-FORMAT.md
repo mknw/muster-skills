@@ -4,25 +4,27 @@ One HTML file: CSS inline, the vendored Mermaid file and its `initialize` call a
 
 ## Contract
 
-- **First screen.** At 1280 × 800 the first screen holds the answer, the decision and the flow down to its deciding node; for a zoom set, its overview with the deciding stage tagged. When it does not, merge the steps before the decision or shorten the answer; the answer is at most four sentences, and what does not fit goes in the notes file, linked from the details.
-- **Plain words** in the answer, the flow and the options, as `graph-it` defines them.
-- **Introduced.** Every actor, check or threshold the answer, the flow or the options names gets one plain sentence at first use; the reader needs no background beyond the page. The sentence sits in the part where the component first appears and counts against that part's bound.
+- **First screen.** At 1280 × 800 the first screen holds, in the explain order, the answer, the decision and the flow down to its deciding node (for a zoom set, its overview with the deciding stage tagged); in the decide order, the questions as the decision page lays them out. When it does not, merge the steps before the decision or shorten the answer; the answer is at most four sentences, and what does not fit goes in the notes file, linked from the details.
+- **Plain words** in the answer or questions, the flow and the options or explanations, as `graph-it` defines them.
+- **Introduced.** Every actor, check or threshold those parts name gets one plain sentence at first use; the reader needs no background beyond the page. The sentence sits in the part where the component first appears and counts against that part's bound.
 - **Phone width.** A 760 px column with 16 px gutters; at 390 px the page never scrolls sideways, and the flow boxes are its only inner scrolls (the table and pseudocode recipes in FORMS.md are built for it).
 - **Both schemes.** Tokens on `:root`, redefined under `prefers-color-scheme: dark`; `body` sets its background.
-- **Cited.** Every name and number is cited, in the rule's comments or in a Sources list inside the details; the answer, the flow and the options carry no chips, so the picture stays clean. Each cite takes `graph-it`'s Cite form: a link that opens the line in the reader's editor, the blob link for a page that leaves the machine, text for private material.
+- **Cited.** Every name and number is cited, in the rule's comments or in a Sources list inside the details; those parts carry no chips, so the picture stays clean. Each cite takes `graph-it`'s Cite form: a link that opens the line in the reader's editor, the blob link for a page that leaves the machine, text for private material.
 - **Accessible.** Every outcome is a word as well as a colour; text contrast checked in both schemes.
 
 ## Parts, top to bottom
 
+Two orders, by what the reader came for. **Explain**, when the reader asked how or why: Answer, Flow, Rule, Options, Details. **Decide**, when an agent puts open questions about the mechanism to the reader: the questions and their explanations as `sync-panel`'s [decision page](../sync-panel/BOARD-FORMAT.md#decision-pages) lays them out, with its Continuity and Ruled-once rules, then Flow, Rule, Details.
+
 | part | question it answers | form (FORMS.md) | bound |
 |---|---|---|---|
-| **Answer** | what happened, and what must I choose? | the meta line (repo @ SHA · date · `recorded run` / `reproduced` / `read only` · `PRIVATE` badge when sensitive), then what happened in plain words, then the decision in one line | 4 sentences + 1 line |
-| **Flow** | where did the case branch? | control flow as a Mermaid diagram (`graph-it`): the case's path coloured, the deciding node tagged, a second finding as a dotted edge, one legend line | 8 nodes; a longer flow is a zoom set (`graph-it`): the overview here, each stage under it, the whole diagram collapsed below them |
+| **Answer** (explain) | what happened, and what must I choose? | the meta line (repo @ SHA · date · `recorded run` / `reproduced` / `read only` · `PRIVATE` badge when sensitive), then what happened in plain words, then the decision in one line | 4 sentences + 1 line |
+| **Flow** | where did the case branch? | control flow as a Mermaid diagram (`graph-it`): the case's path coloured, the deciding node tagged, a second finding as a dotted edge, one legend line; in the decide order, the steps the questions touch, each tagged with its question numbers | 8 nodes; a longer flow is a zoom set (`graph-it`): the overview here, each stage under it, the whole diagram collapsed below them |
 | **Rule** | what exactly decided it, on what data? | pseudocode with the case's numbers inline; under it, the types or fields the predicate reads | 8 lines + 7 lines |
-| **Options** | what could change it? | table: option · what changes · what it fixes · cost and reversibility; the recommended row marked, one sentence why | 4 rows, each cell a plain phrase |
-| **Details** (closed) | how sure, and what else? | `<details>` holding: a gauge or table of the variants when there was an ablation; the reach as a table (surface · reached? · who · evidence); the evidence line (what ran, when, cost); the Sources list; the link to the notes file | — |
+| **Options** (explain) | what could change it? | table: option · what changes · what it fixes · cost and reversibility; the recommended row marked, one sentence why | 4 rows, each cell a plain phrase |
+| **Details** (closed) | how sure, and what else? | `<details>` holding: a gauge or table of the variants when there was an ablation; the reach as a table (surface · reached? · who · evidence); the evidence line (what ran, when, cost); the Sources list; the agents' records the page came from (issue, PR, comment), each labelled as a record; the link to the notes file | — |
 
-Drop the variants when nothing was ablated. Everything else stays in every page.
+Drop the variants when nothing was ablated, and in the decide order the rule when no question turns on its predicate. Every other part of the page's order stays.
 
 The flow and the rule show the same path on purpose: the flow is where the reader finds the branch, the rule is where they compute it. A reader who can do both can predict the next input.
 
