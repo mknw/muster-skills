@@ -1,6 +1,6 @@
 # Board format
 
-The reference half of [`sync-panel`](SKILL.md): the item and its decision context, decision pages, the theme, the page, the panels, the checker, the helper, the Loose-ends buttons, report bundles, the folder. Everything here is created once and then edited by anchor.
+The reference half of [`sync-panel`](SKILL.md): the item and its decision context, decision pages, the theme, the page, the panels, the checker, the helper, the Loose-ends buttons, grill me, report bundles, the folder. Everything here is created once and then edited by anchor.
 
 ## The item
 
@@ -112,6 +112,7 @@ One `index.html`, no build step. A `<meta http-equiv="refresh" content="60">` ke
    - **Rows**, the default elsewhere: one line each (id, title, who, due or age, the dot), which a click expands in place to the next action, chips, links and relations.
    - Tiles pack masonry-style: each spans as many 1 px grid rows as its measured height (no row gap, the spacing inside each span), and a resize observer repacks a section whenever a tile changes size. The grid's forward-only auto-placement lets a short tile start in the gap under a shorter neighbour but never above a tile that sorts before it, so reading and keyboard order stay the sort and theme order; CSS columns would pack tighter and break that order. Rows view drops the spans, and without the script tiles take their natural height (`align-items: start`) and never overlap.
    - In Needs you, an item whose answer was delivered (sent or seen; neither failed, answered an older version, nor edited after the answer) steps into a collapsed strip at the bottom, "Answered, waiting on the agent (N)", one dimmed line each with its answer and state, until its AI owner moves it. The section count covers only the items still to answer.
+   - In Needs you, every expanded item gets a **grill me** button (Grill me).
    - In Loose ends, every item gets the kick-off and de-prio buttons, and a de-prioritized item steps into a collapsed strip at the end (Loose-ends buttons).
    - The who column is dropped in Needs you, where the owner is the actor by definition, and in Done, where nobody is; in Running and Loose ends, when no item left visible by the theme filter has an actor.
    - An empty section collapses to its header and one line. Done shows the last 24 hours; older Done items sit behind one "N more" row.
@@ -196,7 +197,8 @@ A local server with no dependency beyond its runtime, started and stopped by han
 - **Loopback only**: bound to 127.0.0.1, and every request's `Host` equals `127.0.0.1:PORT` exactly, against DNS rebinding.
 - **Session cookie**: every route but a health check and the bootstrap needs it; it is `HttpOnly; SameSite=Strict` and set only by a one-time bootstrap URL, which the helper keeps in a mode-600 file and rotates on each use, and the lifecycle script prints.
 - **Per-start token and Origin**: a random token, rotated at each start, held only in the mode-600 session file beside the session secret and the pending one-time URL (never in the board file, a URL or a log) and injected into the page the helper serves; required on every POST and on `/state`. Every POST also carries an `Origin` equal to the helper's own.
-- **Input**: an open item's id, of plain letters, digits and dashes at most 24 long on every click (an id reaches message bodies, so any other id is refused), an answer that item declares (reply, option or action, or `Done` when it declares none, or one of the four Loose-ends answers when it sits in Loose ends), a note within its cap, a body within a size cap, JSON only.
+- **Input**: an open item's id, of plain letters, digits and dashes at most 24 long on every click (an id reaches message bodies, so any other id is refused), an answer that item declares (reply, option or action, or `Done` when it declares none, or one of the four Loose-ends answers when it sits in Loose ends, or `grill` when it sits in Needs you), a note within its cap, a body within a size cap, JSON only.
+- **Owner list**: the helper reads `data-ai-owner` once per name, keeping each name's first position, and refuses a list of more than eight distinct names (400, naming the count), for answers, report feedback and grill me alike, so a board edit cannot fan one click into a send per listed name.
 - **File serving**: a file is served only when the board links it, its real path (every symlink resolved) lies inside the reports folder, and it is a regular file; a served file gets a sandbox CSP so it cannot act as the board. The hidden-path refusal sits in the edit script's copy step (Linked files).
 - **Strict CSP on the board**: `script-src 'self'` with no inline script, `frame-ancestors 'none'`, `X-Frame-Options: DENY`.
 - **First-wins attributes**: an attribute an item carries twice is read first-wins, as the browser reads it, so an item can never render with one section or actor and route by another; the checker flags the duplicate.
@@ -228,10 +230,31 @@ A Loose-ends item can be started, sent for a grilling round, or set aside from t
 
 **What the receiving agent does**, within its next turn:
 - `kickoff`: start the item's next action now, and move the item to Running with `data-due` and `data-check`.
-- `kickoff:grill`: run the `grilling` skill against the item's design yourself, answering every question the code, records or docs answer. Publish a proposal as the item's report bundle (Report bundles) with a section `open-questions` that holds only what the owner must decide, each a plain question with its options and a recommendation. Then move the item to Needs you and set `ai-owner` (yourself), `bundle` and `brief` on it. The owner answers by section feedback on the proposal or by the item's chips.
+- `kickoff:grill`: run steps 1 to 4 of the grilling round (Grill me) against the item's design, then move the item to Needs you with `ai-owner` set to yourself. The decision page may be the entry page of the item's report bundle (Report bundles) when the owner should comment on it by section; either way it carries the questions heading, so the checker finds it. The owner answers by the item's chips, or by section feedback on a bundle.
 - `deprio` / `undeprio`: run the edit script's `deprio ID` / `undeprio ID`, and nothing else. That makes the page and the `file://` page agree durably.
 
 **Edit script**: `deprio ID` sets `data-deprio` to today's date and `undeprio ID` removes it; both refuse an item outside Loose ends. The checker's `DEPRIO OUTSIDE LOOSE ENDS` and `BAD DEPRIO` flag what a hand edit could leave behind.
+
+## Grill me
+
+The owner can ask for a grilling round on any decision waiting on them. Every expanded Needs-you item carries a **grill me** button after its chips or the default Done, quieter than them, with the note field (the note travels with the click):
+
+| button | answer sent | goes to | wake |
+|---|---|---|---|
+| grill me | `grill` | each AI owner the routing file lists; with none listed, the coordinator | yes |
+
+- **Where it is accepted**: the helper accepts `grill` only for an item whose `data-section` is `needs-you`, and refuses it on any other item (400, naming the item's section). `grill` is the board's own answer: a declared reply of that name sends the grill request on a Needs-you item and is refused elsewhere.
+- **Recipients**: the item's `data-ai-owner` names, read as the security baseline's Owner list says (The helper); a name the routing file does not list is dropped. The coordinator gets the usual notice-only copy, skipped when it is a recipient.
+- **A request, not an answer**: the item keeps its place and its count, never enters the answered strip, and keeps its chips or the default Done, because the decision is still the owner's. The request has its own line beside any answer's, "grilling round requested HH:MM · seen by <agent>", with sending, agent not woken, requested on an older version, and not delivered with **retry**, as for answers; row view shows a short badge beside the age.
+- **Cleared**: once an owner copy is seen and the item's `data-changed` is later than the click, the line and the badge go, and the item's changed-since-you-looked dot shows the new content. Both halves count: the seen copy is the mailbox's own record, which a board edit cannot write.
+- **Older helper**: the helper announces `needs-you-grill` among its features. On a helper without it, the button is disabled with a visible "helper too old" note, and nothing is copied to the clipboard. Offline it copies `<id>: grill` like every button (The helper, No silent copy).
+
+**The grilling round** is what the receiving agent does on `grill`, within its next turn:
+1. Run the `grilling` skill on the item's decision yourself. Answer every question the code, records or docs answer, and continue from the owner's prior rulings rather than re-asking them.
+2. Deliver or refresh the item's decision page (Decision pages): the questions first, plain, each with its recommendation, what it blocks and its continuity; then each explained; then the material. Proportionate to the decision.
+3. Set `data-complexity` to medium or higher and link the page as the item's title.
+4. Rewrite the brief and options to the questions that remain, and reply on the item.
+5. Leave the item in Needs you. When the round leaves nothing for the owner to decide, say so in the brief and recommend Done.
 
 ## Report bundles
 
