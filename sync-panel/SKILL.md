@@ -46,7 +46,7 @@ Done when: the item reflects the event, `changed` is stamped, and `check.py --st
 
 ## Reading it for the owner
 
-"What do I have to do": the owner's rows in order, by id, each with its next action; a theme with several of them is one decision, answered with the theme's next step. The owner's rows are every item whose next actor is the owner, whichever state it sits in, except an item in the answered strip, which waits on its AI owner. "What is going on": the counts per state and actor, the oldest open item, anything overdue or stale. Answer from the board; memory of the conversation is not the record.
+"What do I have to do": the owner's rows in order, by id, each with its next action; a theme with several of them is one decision, answered with the theme's next step. The owner's rows are every item whose next actor is the owner, whichever state it sits in, except an item in the answered strip, which waits on its AI owner. "What is going on": the counts per state and actor, the oldest open item, anything overdue or stale. Answer from the board; memory of the conversation is not the record. To describe a design, its slices or its status, read its agreed record: the local page linked from its item (a decision or grilling page) together with the owner's comments on it, where the owner has commented; otherwise the latest design the owner agreed, which may be a merged document. The coordinator's own rulings and notes are inputs to that record, never the record.
 
 Done when: the answer cites every id whose actor is the owner.
 
@@ -83,6 +83,8 @@ Each open item carries an explain button that copies `Use spell-it-out on sync i
 ## Design record
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
+
+**2026-11-03 — describing a design.** Prompted by a doctrine audit that found this rule held only in a coordinator's notes, and by the owner's ruling that a design need not live in a PR. "Reading it for the owner" now says where a design's description comes from: the linked local page and the owner's comments on it, else the latest design the owner agreed.
 
 **2026-11-03 — grill me.** Prompted by the owner: "Tell skills PM to add "grill me" as button to items in "needs you"." Every Needs-you item gained a **grill me** button whose `grill` answer the helper accepts only in Needs you and routes to the item's AI owners the routing file lists, or to the coordinator when it lists none, with the wake. It is a request rather than an answer: the item keeps its place, its chips and the default Done, and the request has its own line until an owner copy is seen and the item is edited after the click. The receiving agent runs the grilling round, defined once in BOARD-FORMAT.md and ending in the item's decision page, and `kickoff:grill` now runs the same round instead of publishing a proposal with an `open-questions` section, which the decision-page check would flag. The security review converged with two LOWs, both fixed: the line now needs a seen copy as well as an edit, and every click reads the owner list once per name, capped at eight.
 

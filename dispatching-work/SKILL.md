@@ -30,6 +30,12 @@ mechanics implement this doctrine; they do not define task acceptance.
 The coordinator's context and attention are the scarce resource. Delegate even
 small chores — inline work is for what only the coordinator can do.
 
+**Answer from the records first.** Before scoping an investigation, answer from
+what the project already records — its READMEs, its agent instructions, the
+coordinator's notes — and give a lane only what the records cannot answer. Spare
+quota is never a reason for work: finish what is in flight, and start or offer a
+new lane, scope or pipeline only when the owner asks for it.
+
 | Work | Executor |
 |---|---|
 | Long-running implementation that needs its own branch/worktree, PR provenance, and supervision | Orchestration-runtime worker (dispatched task, lifecycle messages) |
@@ -64,12 +70,20 @@ recovery, not after.
 The spec is the worker's whole world — it will not infer your intent. Skeleton:
 
 1. **Objective and source of truth.** If an issue exists, the issue body IS the
-   spec — point at it rather than paraphrasing it.
+   spec — point at it rather than paraphrasing it. Where the owner set the
+   scope, their last scope sentence bounds the spec: what you add goes in a
+   labelled block of additions, never among the owner's rulings, and an unclear
+   phrase gets one question to the owner. A different scope reaches the owner
+   only as a proposal, labelled as one, for them to accept or refuse.
 2. **Reality-check clause** when the issue may be stale: "first establish what
    already exists on main; if the work is already done or not needed, report
    that verdict instead of building."
 3. **Gates**: the exact quality bars (type-check, tests, coverage floors, lint,
-   build, CI green) and any house rules (e.g. no attribution trailers).
+   build, CI green) and any house rules (e.g. no attribution trailers). Every
+   brief carries the tree-safety rule: a question about another version is
+   answered with read-only commands (show, diff, a throwaway worktree), and a
+   work-in-progress commit precedes any experiment that touches the working
+   tree, because a tree-writing command has no undo.
 4. **Parallel-lane warnings**: name the other in-flight lanes that touch nearby
    files, and the merge order (see below).
 5. **Execution boundary**: identify coordinator, model-agent and workload
@@ -80,6 +94,11 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
    dependency. Carry read-only repository exclusions into every worker, review
    and operator brief: use immutable API reads/exports and prohibit checkout,
    index, worktree, status-refresh and remote writes for those repositories.
+   A change to a live host's access path (login keys, the SSH server, the
+   firewall) that the owner did not approve in advance is an ask before it is
+   made, carrying the exact change and its undo; a runbook that implies the
+   change is not approval. Temporary access is removed when the work ends, and
+   the final report confirms the removal.
 6. **Communication contract** — bind the following outcomes to the installed
    runtime or project's verified durable task/result adapter. Use its exact
    commands in the brief; the event names below are labels, not portable CLI:
@@ -128,10 +147,19 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
 - **Wait on actionable state.** Use the runtime's native lifecycle waits or
   events and the durable task/result channel for completion, blockers and
   questions. A lifecycle transition is a wake to inspect task evidence, not a
-  task verdict. Re-arm waits after processing and reconcile after disconnect. On
+  task verdict. Re-arm waits after processing, and reconcile after a
+  disconnect, a compaction or a resume: the first call after any of them is a
+  full mailbox check on every run the agent belongs to, because a summary that
+  says "waiting for X" carries none of the mail that arrived since. On
   Orca, any coordinator or PM can also watch its own mailbox with
   [scripts/watch-inbox.sh](scripts/watch-inbox.sh) — run it as a background
   task, and when it exits, drain and ack the mailbox, then start it again.
+- **Reach an agent through its mailbox.** Text sent to a terminal lands
+  wherever its user is typing, so an agent whose terminal someone writes in —
+  the owner, above all — is reached only through its mailbox. Where a terminal
+  send is needed at all, it is one short line pointing at the message, since a
+  long one arrives cut off. A body over about 2,000 characters goes in a file,
+  and the message carries its path.
 - **One retry, then surface.** On a failure signal, retry once calmly, then
   put the failure in front of the owner with the evidence.
 - **Process whole deliveries.** Where the task channel has consuming batches
@@ -144,7 +172,12 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
 - **Heartbeats and terminal activity mean alive, not done.** Never stop or
   release a worker for mere idleness. On release, a "retained / user-takeover"
   result, where supported, preserves the user's terminal after settlement.
-  Clean up only positively identified resources owned by this attempt.
+  Clean up only positively identified resources owned by this attempt. Before
+  removing any worktree, copy out its ignored files and compare each local
+  settings file with the main checkout's: ignored files are often the only copy
+  of a lane's local state, and the removal deletes them. Force a removal only
+  after that backup ([worktree-lanes.md](worktree-lanes.md), cleanup, has the
+  commands).
 - **Re-engage a finished worker with a fresh dispatch.** A settled dispatch is
   closed to lifecycle messages: prompt its terminal directly and the work still
   happens without a current task identity. Reuse the terminal (keeping its
@@ -167,8 +200,12 @@ positive verdict. Two things feel like review and are not:
 The reviewer needs more **headroom** than the author: a top-tier model at a
 higher effort tier (authors at `high` → reviewer Opus 5 at `xhigh`). Escalate
 with risk: higher effort for security or hardening changes; the strongest
-available model (Fable-tier) for critical infrastructure or high-risk
-vulnerabilities. Use the repo's review procedure/skill if it has one.
+available model for critical infrastructure. Security work runs on a model whose
+safeguards let defensive security work finish — never on Fable-tier, which
+trips guardrails on it mid-turn. The repository's dated lane-routing block,
+where it has one, names the agent and model for each kind of lane and review,
+and overrides this paragraph and Model selection above. Use the repo's review
+procedure/skill if it has one.
 
 **Classify before dispatching.** The review commission carries the review's
 classification, so the reviewer executes rather than re-classifies. Classify
@@ -209,6 +246,12 @@ once caught that a round-1 security fix was under-scoped — a 15-second
 ReDoS still reachable from a shipped path.) Merge on converged review plus
 green CI.
 
+**The owner's words at the gate.** An owner's "good to go" after itemised
+feedback means after those items are applied and their deltas reviewed. An
+owner's "merge" leaves a running review running: merge after its verdict, or on
+an explicit "merge without the review". The gate covers every PR, docs-only and
+skill edits included.
+
 **The record lives on the PR.** The reviewer posts its outcome as a PR
 comment; whoever applies fixes posts what they changed, the same way.
 Preserve the review in the PR timeline as a durable audit trail even when a
@@ -218,13 +261,27 @@ detail they need to act on, and a long report rides in a collapsed
 `<details>` block under the short summary in the same comment — scannable
 timeline, evidence preserved.
 
+**A security finding stays private until its fix merges.** A weakness in a live
+system gets no public issue before the fix: the fix PR carries a generic title
+and body, and a review comment on it carries only the verdict ("changes needed,
+details sent privately"). The finding goes in a file in the coordinator's
+private directory, named in the project's instructions (owner-only, never
+quoted publicly), and its path goes to the coordinator by mailbox. A public
+issue, if one is wanted, comes after the merge.
+
 **Reviewing a test PR**, the decisive question is whether each test is
 *discriminating*: mutate the source and confirm the test fails. A test that
 passes whether or not the code is correct is worse than no test — it
 manufactures a coverage number and the safety feeling that comes with it. Hunt
 **coverage theatre**: asserting that a mock was called rather than that an
 observable outcome happened. Have the verdict separate *verified by mutation*
-from *looks right by reading*.
+from *looks right by reading*. When a PR moves or extracts modules, re-prove
+every comparison test: both sides may now import the same thing and compare it
+with itself. For a guard, the author's mutation proves only what the author
+already had in mind, so ask what else spells the same thing and whether the
+scan covers everything the claim does; a whole-tree scan refuses to pass on an
+empty file list. A test found unable to fail is fixed or deleted in the PR that
+found it.
 
 **Green on the PR's current head SHA**, not on an older commit. A workflow that
 deliberately omits the `synchronize` trigger leaves a stale green on any PR

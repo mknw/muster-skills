@@ -95,9 +95,13 @@ Resume paths: Agent View to attach a running session and answer inline; or a
 fresh foreground `cd <worktree> && claude` that reads `INSTRUCTIONS.md`,
 `STATE.md`, and `git log` — works without Agent View.
 
-Cleanup after merge: `git worktree remove <path>` (`--force` only when sure of
-the dirty state); `git branch -d <branch>` is safe — it refuses unmerged
-branches, so get confirmation before any `-D`.
+Cleanup after merge: back up the ignored files first (the rule is in
+[SKILL.md](SKILL.md), Supervise). `git -C <path> ls-files --others --ignored
+--exclude-standard` lists them; copy out everything but build output, and diff
+each env file against the main checkout's — one that differs is unique state,
+so tell the owner before removing. Then `git worktree remove <path>`, with
+`--force` only after that backup; `git branch -d <branch>` is safe — it refuses
+unmerged branches, so get confirmation before any `-D`.
 
 ## `INSTRUCTIONS.md` template (durable lane brief — written once, git-ignored)
 
