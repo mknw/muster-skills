@@ -227,6 +227,16 @@ otherwise). One documented escalation trigger: if wave 1's Spec report
 returned **three or more** category-(c) suspicions, run correctness one
 model tier up from commissioned.
 
+#### Public-facing pages: a blind first read
+
+When the diff changes a page a newcomer lands on first — a README, a package
+page, a docs landing page — add one more sub-agent to the pattern's first wave:
+a fresh reader given only the rendered page, with no repository, diff or spec.
+The brief: _"Read this page as someone who has never seen the project. Report
+what you understood it to be for, what you would do first, and every place you
+got stuck or had to guess. Under 300 words."_ It catches what accuracy passes
+cannot, such as a page with no install command.
+
 ### Tooling
 
 Correctness is empirical, so the Spec+Correctness (A) and Correctness (B)
@@ -251,8 +261,9 @@ clean one.
 ### 6. Aggregate and report
 
 Present the findings under `## Correctness`, `## Standards`, and `## Spec`
-headings, verbatim or lightly cleaned. In Pattern A, split the merged agent's
-report into the Spec and Correctness headings by its finding labels. Do **not**
+headings, plus `## First read` when a blind read ran, verbatim or lightly
+cleaned. In Pattern A, split the merged agent's report into the Spec and
+Correctness headings by its finding labels. Do **not**
 merge, rerank, or deduplicate across headings — the axes are deliberately
 separate.
 
@@ -284,7 +295,10 @@ counts, the items that matter, and the proposed-test-edits path — with the
 full three-axis report in a collapsed `<details>` block in the same comment.
 Whoever later applies findings reports what changed the same way. The PR
 timeline is the durable audit trail; chat and orchestration messages are not.
-For a local, pre-PR review, the chat report above suffices.
+For a local, pre-PR review, the chat report above suffices. A security fix
+under review before it merges is the exception: its comment carries only the
+verdict, and the finding travels privately (`dispatching-work`, Land the
+results).
 
 When this review is a merge gate inside a coordinated run, the
 `dispatching-work` doctrine governs the surrounding loop: reviews are
@@ -294,7 +308,11 @@ deltas until convergence, and the reviewer's model escalates with risk.
 **This skill reports. It does not fix.** The one carve-out is test writing —
 tests written to verify are evidence, never fixes, and the source under
 review is never modified. If the user wants findings applied, ask them to say
-so explicitly; the executor applies both fixes and the proposed tests.
+so explicitly; the executor applies both fixes and the proposed tests. The same
+holds when the changes are the user's own ("review my changes", "where am I
+wrong?"): answer with analysis and evidence, put an alternative in a new file
+beside theirs, and change a design they are still shaping only after they sign
+off on the exact diff.
 
 ## Relationship to the built-in `/code-review`
 
