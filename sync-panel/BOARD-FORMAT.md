@@ -1,6 +1,6 @@
 # Board format
 
-The reference half of [`sync-panel`](SKILL.md): the item and its decision context, decision pages, the theme, the page, the panels, the checker, the helper, the Loose-ends buttons, grill me, report bundles, the folder. Everything here is created once and then edited by anchor.
+The reference half of [`sync-panel`](SKILL.md): the item and its decision context, decision pages, the theme, the auto level, the page, the panels, the checker, the helper, the Loose-ends buttons, grill me, report bundles, the folder. Everything here is created once and then edited by anchor.
 
 ## The item
 
@@ -31,6 +31,11 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | `data-actions` | optional `Label=kind \| Label=kind`, written by the item's coding agent (a kind such as `explain` or `snooze:<date>`): extra buttons, each sending `action:<kind>` (The helper). The board renders only the buttons an item declares, plus the default Done on an item that declares no chips (The helper) |
 | `data-ai-owner` | required in Needs you: the agent(s) waiting on the owner's answer, space-separated; shown as "for <name>" on the item; the helper sends each click to them |
 | `data-complexity` | required in Needs you: `low`, `medium` or `high`, how much the decision needs beyond its brief and options (Decision context) |
+| `data-category` | required in Needs you: `architecture`, `security`, `changes-ruling`, `irreversible`, or `other` alone, space-separated; who decides it at each auto level (Auto level) |
+| `data-ruling` | required with `changes-ruling`: the owner ruling the decision would change, as a URL, a `file://` path with `:LINE`, or a short cite |
+| `data-auto` | `AGENT LEVEL OPTION`, written only by the edit script's `decided`: the coordinator took this decision on its recommended option under that level (Auto level) |
+| `data-auto-category` | written with `data-auto`: the categories the decision was routed on |
+| `data-overridden` | the stamp of an auto decision the owner overrode, written by the edit script's `override`; the owner decides the item from then on |
 | `data-deprio` | optional, Loose ends only: `YYYY-MM-DD`, written by the item's agent with the edit script's `deprio` and removed by `undeprio`; the item renders in the De-prioritized strip (Loose-ends buttons). A move out of Loose ends or a close drops it |
 
 Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done; then, when the item cites more than one reference, `<p class="links">` with one `<a>` per further PR, issue, comment or page, so a `#NNN` written in the text always has a link to click. The script turns the title link and each anchor in the links row into chips in the link column (a link repeated in both appears once), removes the row, and leaves the title as text. A chip reads `#845` for a PR or issue, `#788 ↳` for a comment, the file's name for a local file or a file in the tracker (without a markdown, HTML, text or log extension), and the hostname for any other link; a file chip shows only its icon until the item is expanded, the name in its tooltip. The script also hides the `<b>actor</b>` prefix because the who column says it; adds the who, id, age and changed cells and the explain button (under **more**, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
@@ -101,12 +106,39 @@ Items that belong together, often because they are one decision for the owner, c
 
 Members stay in the state they are in; the theme adds a view across states and leaves each item where it is. A theme whose work is done gets `data-state="closed"` and its id stays taken.
 
+## The auto level
+
+The board's **level** is one line under the header, written only by the edit script's `auto`:
+
+```html
+<div id="auto" data-level="security" data-changed="2026-11-04T16:00:00Z" data-source="click:<click id>"><b>auto: security</b> — you keep security, changes to your rulings, irreversible actions</div>
+```
+
+**One reading.** The edit script and the helper read the level only from that one line: `id="auto"` exactly once in the file, at the start of its own line and outside a comment, its attributes first-wins. Anything else reads as `off`, so a commented-out old line or a reordered attribute fails safe in every runtime. The checker reads the line both as the page does and as the edit script does, and flags `BAD AUTO LEVEL` when the two disagree; `auto` refuses to write until the line is one again.
+
+**The table** is the whole rule. The edit script holds it once, as the function `route(categories, level)`, and the checker imports it. The page script mirrors the level names and the owner-kept sets, and the helper the level names; each mirror is its literal exactly once, with nothing else in the file writing it, and the checker holds them to that.
+
+| level | the owner keeps |
+|---|---|
+| `off` | everything |
+| `architecture` | `architecture`, `security`, `changes-ruling`, `irreversible` |
+| `security` | `security`, `changes-ruling`, `irreversible` |
+| `decision-changes` (only decision changes) | `changes-ruling`, `irreversible` |
+| `full-autopilot` | `irreversible` |
+
+- **Route**: an item is the owner's when any of its categories is kept at the level; otherwise the coordinator's. An unknown or missing level reads as `off`, and an unknown category, or none, as the owner's. The edit script's `route CATEGORY...` prints `owner` or `coordinator`.
+- **Categories**: `architecture` for structural decisions; `security` for guardrails, isolation and server configuration; `changes-ruling` when the decision would reverse, supersede or narrow a recorded owner ruling, or when the agent cannot tell, with `data-ruling` naming it; `irreversible` for actions that cannot be taken back or that leave the owner's hands (publishing a package, spend above a standing cap, deleting data, promoting a release), which every level keeps; `other` for the rest.
+- **An auto decision**: the item goes where the decision points, with its options and recommendation, brief, complexity and AI owner, and the edit script's `decided ID AGENT "why"` writes `data-auto`, `data-auto-category` (the categories it routed on) and the note `<p class="auto-note">`, one sentence on which option was taken and why. From then on `category` refuses the item, and the checker flags it when its categories differ from the recorded ones. A category changed before `decided` is visible only through the badge, which names the categories the decision was taken as: that is a trust boundary, not a check. In the same locked edit it re-reads the level and the item's categories, and exits 3 when the owner keeps the item, so a level moved meanwhile sends it to Needs you. It refuses an item in Needs you, an item missing its decision context, and an item carrying `data-overridden`. A move or close carries the stamp and the note, and a close keeps a stamped item's options so an override returns the whole decision.
+- **The slider**: the page renders the line as five stops above the band, the current one filled, with what the owner keeps at that level and when and how it was set. A click sends `POST /level` with `{cid, level, version}` (version is the line's `data-changed`); the helper validates the level against the table, records the click under the item id `auto`, sends it to the coordinator with the wake and the command to run, and leaves the board file alone. The coordinator applies the newest level click only: `auto LEVEL CID` takes a click that is the last level click in the inbox and newer than the current line, records `data-source="click:CID"`, and refuses an older one, so an old click id never brings back a level the owner has since lowered; re-applying the click the line names changes nothing. The level is set only from the owner's click or the owner's words: a level the owner typed is `auto LEVEL --typed "the owner's words"`, the words kept on the line (`data-quote`) and shown beside it, and `off` alone needs none. The page shows the click as pending, with not delivered and retry as for every click, until the line names the click or was written after it at that level; a line written after it at another level shows the click as superseded, naming the board's level. The helper takes one JSON object whose fields are strings, and a version that is a `data-changed` stamp or empty.
+- **Override**: a stamped item shows its stamp as a badge ("decided by AGENT under auto=LEVEL as CATEGORIES: OPTION, its text"), its note, the note field and an **override** button, and no option chips, since the decision is taken; row view adds a short badge beside the age. The answer `override` is the one answer a stamped item takes, in any section, Done included; it goes to the coordinator with the wake and a `sync-override` payload carrying the stamp. The coordinator undoes what the decision started where it can, then runs `override ID`: the item returns to Needs you with the owner as actor, its decision context, `data-overridden` in place of the stamp, and the note saying what was overridden.
+- **Older helper**: the helper announces `auto-level` among its features; on a helper without it the stops and override are disabled with a visible note. The `file://` page copies `auto: LEVEL` or `<id>: override` (The helper, No silent copy).
+
 ## The page
 
 One `index.html`, no build step. A `<meta http-equiv="refresh" content="60">` keeps it current; state survives the refresh: per viewer in local storage, each section's view and collapsed state and the open help panel; in session storage, the scroll position, the expanded items and the graph overlay's zoom. Every storage access sits in try/catch, and without storage the defaults render. Parts, top to bottom:
 
 1. **Header**: title, who the board serves, the refresh interval, the last-checked stamp the checker writes, "N new, moved or yours changed since HH:MM" with a **mark seen** button, and "helper on" or "helper offline".
-2. **Band**: the Themes panel across the top while any theme is open, then three panels (next section), each with a one-line heading that names the question it answers.
+2. **Auto level**: the five-stop slider (The auto level). **Band**: the Themes panel across the top while any theme is open, then three panels (next section), each with a one-line heading that names the question it answers.
 3. **Four sections**, `<section id="needs-you">` through `done`, each an `<h2>` (the script appends the count and a `rows | tiles` toggle; clicking the heading collapses the section) over a column-header row and an `<ol class="items">`; without the script they render as one plain table.
    - **Tiles**, the default in Needs you: id and title, due or age in the corner, the next action, the reply and option chips, one meta line (link chips, relations, edited age, the changed dot) and a **more** button for the rest (mechanism glyph or explain button, outcome check, full link labels).
    - **Rows**, the default elsewhere: one line each (id, title, who, due or age, the dot), which a click expands in place to the next action, chips, links and relations.
@@ -167,13 +199,19 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `DEPRIO OUTSIDE LOOSE ENDS` / `BAD DEPRIO`: `data-deprio` on an item outside Loose ends, or a value that is not an ISO date
 - `BAD ID`: an item id outside plain letters, digits and dashes, at most 24 long, which the helper refuses
 - `DUPLICATE ATTRIBUTE`: an attribute an item carries twice; the browser and the helper read only the first
+- `NO AUTO LEVEL` / `BAD AUTO LEVEL`: no level line (it reads as off); a level outside the table, two level lines, `id="auto"` in the text more often than the page sees it, or the page and the edit script reading different levels
+- `NO CATEGORY` / `BAD CATEGORY` / `NO RULING CITE`: a Needs-you item without `data-category`; a category outside the list on any item, or `other` beside another; `changes-ruling` without `data-ruling`
+- `BAD AUTO`: a stamp that is not `AGENT LEVEL OPTION` with a level from the table, whose option is not one of the item's, or without `data-auto-category`
+- `AUTO MISMATCH`: a stamp whose level keeps one of the item's categories for the owner, or an unknown one, an item with none, or categories that differ from the recorded ones: as far as the file can tell, the decision was not the coordinator's to take
+- `AUTO IN NEEDS YOU` / `AUTO NO NOTE`: a stamped item in Needs you; a stamp without its note
+- `AUTO RULE DRIFT`: the edit script's table missing or no longer a superset ladder, or a mirror in the page script or the helper that is not its literal exactly once with nothing else writing it: no second declaration, assignment, index or property assignment, mutating call or alias
 - `STALE`: `data-changed` older than three days on an open item
 
 Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERDUE when it fails past `due`, else pending, and whether it ran without a shell or through `sh -c`; a command with no shell metacharacter runs without one, under a timeout either way); then the lane-deadline ledger the coordinator keeps, whose overdue lines also count as flags; then the counts per state. Exit 1 on any flag. `--stamp` rewrites the last-checked line through the same anchor tool used for items, falling back to a direct write. The mutation run that proves it: a scratch copy with one planted instance of each defect, all flagged, exit 1.
 
 ## The helper
 
-A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry`, `POST /feedback` (Report bundles) and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox, the one-time bootstrap file (rewritten on each use) and the session file.
+A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry`, `POST /feedback` (Report bundles), `POST /level` (The auto level) and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox, the one-time bootstrap file (rewritten on each use) and the session file.
 
 - **Self-reload**: the process the lifecycle script starts is a supervisor that runs the helper as a worker child and watches the helper's code file. When the file changes and passes a syntax check, it swaps the worker; a broken edit is logged and the running worker stays. The session secret, the page token and the pending one-time URL persist in a mode-600 session file, written atomically, so the owner's cookie and open page survive a reload; `start` writes fresh secrets and `stop` deletes them. The supervisor's own code is not reloaded. The page retries a send that gets no HTTP answer, a few times, with the same click id, which covers the moment a reload takes.
 
@@ -197,7 +235,7 @@ A local server with no dependency beyond its runtime, started and stopped by han
 - **Loopback only**: bound to 127.0.0.1, and every request's `Host` equals `127.0.0.1:PORT` exactly, against DNS rebinding.
 - **Session cookie**: every route but a health check and the bootstrap needs it; it is `HttpOnly; SameSite=Strict` and set only by a one-time bootstrap URL, which the helper keeps in a mode-600 file and rotates on each use, and the lifecycle script prints.
 - **Per-start token and Origin**: a random token, rotated at each start, held only in the mode-600 session file beside the session secret and the pending one-time URL (never in the board file, a URL or a log) and injected into the page the helper serves; required on every POST and on `/state`. Every POST also carries an `Origin` equal to the helper's own.
-- **Input**: an open item's id, of plain letters, digits and dashes at most 24 long on every click (an id reaches message bodies, so any other id is refused), an answer that item declares (reply, option or action, or `Done` when it declares none, or one of the four Loose-ends answers when it sits in Loose ends, or `grill` when it sits in Needs you), a note within its cap, a body within a size cap, JSON only.
+- **Input**: an open item's id, of plain letters, digits and dashes at most 24 long on every click (an id reaches message bodies, so any other id is refused), an answer that item declares (reply, option or action, or `Done` when it declares none, or one of the four Loose-ends answers when it sits in Loose ends, or `grill` when it sits in Needs you, or only `override` when it carries `data-auto`, the one answer a Done item takes), a level from the table on `POST /level`, a note within its cap, a body within a size cap, JSON only.
 - **Owner list**: the helper reads `data-ai-owner` once per name, keeping each name's first position, and refuses a list of more than eight distinct names (400, naming the count), for answers, report feedback and grill me alike, so a board edit cannot fan one click into a send per listed name.
 - **File serving**: a file is served only when the board links it, its real path (every symlink resolved) lies inside the reports folder, and it is a regular file; a served file gets a sandbox CSP so it cannot act as the board. The hidden-path refusal sits in the edit script's copy step (Linked files).
 - **Strict CSP on the board**: `script-src 'self'` with no inline script, `frame-ancestors 'none'`, `X-Frame-Options: DENY`.
@@ -384,7 +422,7 @@ with `quote` only on a text comment. Then the wake; the coordinator gets a notic
   assets/<diagram-lib>   600   vendored, version and checksum recorded in README.md
   backups/               700   dated copies taken before any restructure
   archive/               700   one page per month of archived Done items, same item markup
-  <edit script>          600   optional: wraps the anchor tool for ADD / MOVE / CLOSE, themes, links, replies, options, decision context and `deprio` / `undeprio`; `add` refuses an id already on the board, `links` merges into the links row, and `links --replace` prints each href it drops
+  <edit script>          600   optional: wraps the anchor tool for ADD / MOVE / CLOSE, themes, links, replies, options, decision context, `deprio` / `undeprio`, and the auto level's `auto`, `route`, `category`, `ruling`, `decided` and `override`; `add` refuses an id already on the board, `links` merges into the links row, and `links --replace` prints each href it drops
   assets/<page script>   600   the page's script, kept out of index.html for the helper's CSP
   <helper>               600   the click helper (The helper)
   <bootstrap file>       600   the helper's current one-time URL; deleted on stop
