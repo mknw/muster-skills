@@ -84,7 +84,7 @@ Each open item carries an explain button that copies `Use spell-it-out on sync i
 
 **Convention:** every change to this skill records its date, what prompted it, and what changed. A change with no entry here is unreviewed drift.
 
-**2026-11-04 — ids assigned inside the locked edit.** Prompted by two agents reading the same next-free id and one item overwriting another, three times in one night. The Edit-by-anchor passage now states the lock and the assignment: the edit tool holds a board-wide lock across each edit, so a new item's id is assigned inside the same locked edit that inserts it and an attribute changes through the same anchored tool, never by a read-modify-write of the file (BOARD-FORMAT.md, The item).
+**2026-11-04 — ids assigned inside the locked edit.** Prompted by two agents inserting under the same next-free id, and one edit overwriting another's change, three times in one night. The Edit-by-anchor passage now states the lock and the assignment: the edit tool holds a board-wide lock across each edit, so a new item's id is assigned inside the same locked edit that inserts it and an attribute changes through the same anchored tool, never by a read-modify-write of the file (BOARD-FORMAT.md, The item).
 
 **2026-11-03 — describing a design.** Prompted by a doctrine audit that found this rule held only in a coordinator's notes, and by the owner's ruling that a design need not live in a PR. "Reading it for the owner" now says where a design's description comes from: the linked local page and the owner's comments on it, else the latest design the owner agreed.
 
