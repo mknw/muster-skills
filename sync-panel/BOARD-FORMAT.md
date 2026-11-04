@@ -4,7 +4,7 @@ The reference half of [`sync-panel`](SKILL.md): the item and its decision contex
 
 ## The item
 
-One item is one `<li class="item">` carrying its data as attributes, with the human text inside. Attributes are the record; the page's script derives everything else and writes none of them.
+One item is one `<li class="item">` carrying its data as attributes, with the human text inside. Attributes are the record; the page's script derives everything else and writes none of them. Agents change attributes only through the edit tool's anchored edits, never by reading the file and writing it back.
 
 ```html
 <li class="item" data-id="L5" data-section="loose-ends" data-actor="owner" data-since="2026-10-28" data-changed="2026-10-28T17:17:00Z" data-rel="after:N1">
@@ -16,7 +16,7 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 
 | attribute | meaning |
 |---|---|
-| `data-id` | stable, never reused. Prefix by first state (N / R / L / D) and the next free number |
+| `data-id` | stable, never reused. Prefix by first state (N / R / L / D); the edit tool assigns the next free number inside the same locked edit that inserts the item, so an agent never reads it and writes it in a later step |
 | `data-section` | `needs-you` / `running` / `loose-ends` / `done`; must equal the `<section id>` it sits in |
 | `data-actor` | who moves next: the owner, the coordinator, a named agent role, `lane`; `none` on Done |
 | `data-since` | date the item first existed; kept on a move |
