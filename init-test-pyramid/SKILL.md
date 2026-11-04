@@ -1,6 +1,6 @@
 ---
 name: init-test-pyramid
-description: Set up a repository's test pyramid — named layers, one suite and one command per layer, where each runs, and the rule that an escaped failure names the layer that should have caught it. Use when a repository has no stated test layers, is being onboarded to the pyramid, or a failure reached a human that no suite would have caught.
+description: Set up a repository's test pyramid as a layer map. Use when a repository has no stated test layers.
 ---
 
 Writes a repo-local **layer map** for the current repository: every layer named,
@@ -11,8 +11,8 @@ repo; this skill never names a runner or a stack, it discovers them.
 The standard the map holds the repo to — the whole pyramid covered, and then
 some:
 
-- **Every layer has a named suite, UI included.** A layer with no suite is a
-  gap, recorded as one.
+- **Every layer has a named suite, UI included.** A layer not yet built still
+  names its suite and the item that tracks building it.
 - **Suites above unit stay out of the default CI run.** End-to-end and live
   suites need a database, a browser, a server boot or a bill; a gate that goes
   red on infrastructure stops being trusted.
@@ -30,7 +30,7 @@ A layer is defined by the question it answers that the layer below cannot
 express. The usual ladder: unit (a function, module or component), app-path
 end-to-end (the real entry point, faked only at external edges), UI (what a
 person sees, in a real browser or device), live (real external services). A
-repo may need fewer or more; "more of the same, slower" is not a layer.
+repo may need fewer or more.
 
 ## Procedure
 
@@ -41,19 +41,26 @@ manifest's scripts or task runner, every CI workflow, and the test directories
 themselves. For each suite record its command, what it runs against (fakes,
 a database, a browser, a live endpoint), what state it writes, and whether CI
 invokes it. Read the repo's `CLAUDE.md` / `AGENTS.md` for anything already
-stated about testing.
+stated about testing, and look for an existing layer map: a pointer in those
+files, a `*-test-pyramid` skill, or a testing doc. If one exists, audit it
+against the five standard points above and amend it in place, keeping its
+form; steps 2–6 then fill only what the audit found missing.
 
 Completion criterion: every test file is assigned to one suite (or listed as
-orphaned), and every test command CI runs is quoted from the workflow file.
+orphaned), every test command CI runs is quoted from the workflow file, and an
+existing map is either found and audited or confirmed absent.
 
 ### 2. Name the layers with the owner
 
 Map the inventory onto layers. For each layer settle one suite (one directory
-or config) and one command. Where a layer has no suite — most often UI and
-live — ask the owner: build it now, or record it in the map as owed.
+or config) and one command, and record whether it is hermetic (no network
+beyond the machine, no credential, no bill) or live. Where a layer has no
+suite — most often UI and live — ask the owner: build it now, or record it in
+the map as owed. An owed layer still names its suite (the directory, runner
+config and command it will have) and the item that tracks building it.
 
-Completion criterion: every layer has a suite and a command, or an explicit
-owner decision recording it as a gap.
+Completion criterion: every layer has a suite, a command and a hermetic-or-live
+mark; an owed layer also names its tracking item.
 
 ### 3. Place each layer, and make the placement structural
 
@@ -66,8 +73,8 @@ it protects, that fails when the default run would pick that suite up. Record
 for every layer where it runs: every push, pre-merge by hand, pre-release, or a
 coordinated live session.
 
-Completion criterion: the CI workflow invokes only the default layer's
-commands, and each guard has gone red once under the mutation it exists for
+Completion criterion: the CI workflow invokes no test suite other than the
+default layer's, and each guard has gone red once under the mutation it exists for
 (widening a glob, renaming a file to the default suffix).
 
 ### 4. Give each suite its own test state
@@ -82,35 +89,37 @@ writable state apart.
 
 ### 5. Write the one pre-release command
 
-It runs the hermetic layers cheapest first and stops at the first failure,
-because a failure below makes the layers above undiagnosable. It writes one
-report: per-layer counts read from each runner's machine-readable output
-(output that will not parse is reported as unreadable, never as zero), which
-layers were not attempted, and a final section listing every live step it did
-not run — a GO is a statement about the hermetic layers only.
+It runs exactly the layers step 2 marked hermetic, cheapest first, and stops
+at the first failure, because a failure below makes the layers above
+undiagnosable. It writes one report: per-layer counts, which layers were not
+attempted, and a final section listing every live step it did not run and
+every owed layer — a GO is a statement about the hermetic layers only, and
+never hides a missing one.
 
 Completion criterion: the command has been run once, and its report's last
-section names every live-layer command from step 2.
+section names every live-layer command and every owed layer from step 2.
 
 ### 6. Write the layer map
 
 Choose the form from the repo's conventions: a repo-local skill (named with the
 repo's project-skill prefix, `<prefix>-test-pyramid`) when the repo already
 keeps project skills and agents routinely write its tests; otherwise a doc in
-the repo's docs location. Either way it is the single source, and the repo's
-`CLAUDE.md` / `AGENTS.md` carries one pointer to it. A skill's description
-triggers on writing or reviewing a test, deciding where one goes, adding a
-suite, and asking why a failure was not caught.
+the repo's docs location. The map is the single source for the layer table
+and the rules. It may point at docs that hold mechanism detail (the
+pre-release command, isolation), and the agent instruction file points at the
+map. A skill's description triggers on writing or reviewing a test, deciding
+where one goes, adding a suite, and asking why a failure was not caught.
 
 The map holds: a table of layers (suite, command, what it fakes or needs,
-where it runs); the placement ladder — climb from unit and stop at the first
-layer that can prove the claim, so nothing is bought expensively that could be
-proved cheaply; the isolation from step 4; the pre-release command from
+where it runs, hermetic or live); placement — a test goes in the lowest layer
+that can prove its claim; the isolation from step 4; the pre-release command from
 step 5; and the escape rule verbatim. Values that live in a config file
 (thresholds, env vars, scenario lists) are pointed at, not copied.
 
 Completion criterion: the map exists, the agent instruction file points at it,
-and every command it names has been run once.
+every hermetic command it names has been run once, and each live command is
+either run once in a session the owner starts, or recorded in the map as not
+yet run.
 
 ## Scope
 
