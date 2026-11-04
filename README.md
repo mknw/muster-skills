@@ -60,9 +60,11 @@ Two rules keep the set portable:
 | `dispatching-work` | Coordination roles, task briefs, lanes, supervision and independent review; Herdr-native workflow and versioned skill release |
 | `reviewing-changes` | Three-axis review (originating spec, repo standards, empirical correctness) of changes since a fixed point, size-gated into one-wave and two-wave patterns |
 | `init-code-reviewer` | Scaffolding a repo-specific code-reviewer agent — the correctness reviewer the reviewing flow dispatches |
+| `init-test-pyramid` | Setting up a repo's test pyramid: named layers, one suite and one command each, CI placement, isolated test state, one pre-release go/no-go command, and the rule that an escaped failure names its layer |
+| `orca-project-init` | Writing, validating and testing a repo's `orca.yaml` so new Orca worktrees bootstrap themselves |
 | `self-improve` | Turning owner corrections, countermands, and failures into re-engineered decisions, not prose lessons — a five-step correction loop |
 
-Setup skills (the `init-` prefix) run **once per repo**, not per task: reach for `init-code-reviewer` when a repo joins the reviewing flow, when it has no code-reviewer agent yet, or when the kernel changes and its generated reviewer must be regenerated.
+Setup skills (the `init-` prefix) run **once per repo**, not per task: reach for `init-code-reviewer` when a repo joins the reviewing flow, when it has no code-reviewer agent yet, or when the kernel changes and its generated reviewer must be regenerated. Reach for `init-test-pyramid` when a repo has no stated test layers; `orca-project-init`, also run once per repo, when its worktrees need setup, which can include the per-suite test state the pyramid asks for.
 
 The `Skill source` CI check validates YAML frontmatter and local Markdown references on
 each PR update. Runtime invocation and server deployment require separate evidence;
@@ -98,6 +100,10 @@ form per question), Matt Pocock's [teach](https://www.aihero.dev/skills-teach) (
 files rather than chat, small pages sharing one assets folder) and
 [hashline](https://github.com/quangdang46/hashline) (hash-anchored edits that reject
 stale reads, which is what makes one file safe as a record several agents write).
+
+`init-test-pyramid` is homegrown, generalised from one project's working pyramid. `orca-project-init`
+started as a machine-local skill and moved here; its schema notes were derived from the
+shipped Orca application, not adapted from published text.
 
 `dispatching-work` is homegrown: orchestration doctrine distilled from running
 multi-agent coordination sessions.
