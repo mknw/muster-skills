@@ -10,7 +10,7 @@ and schema violations refuse the entire file rather than ignoring one field.
 | Field | Type | Default | Meaning | Validation |
 | --- | --- | --- | --- | --- |
 | `version` | int | required | schema version | must be `1` |
-| `defaults` | map | `{}` | fallback values for every lane | keys come only from: `profile`, `on`, `stack`, `docker`, `size`, `base`, `env` |
+| `defaults` | map | `{}` | fallback values for every lane ( `lane-root` is where new lane workspaces are created; a resolved path inside the main checkout is refused ) | keys come only from: `profile`, `on`, `stack`, `docker`, `size`, `base`, `lane-root`, `env` |
 | `seed.require` | list of paths | `[]` | gitignored secret files that must exist in the primary checkout. A missing source refuses lane creation **before** the workspace exists. **Never copied whole** — a lane receives only the env keys its profile grants, read from these files at lane-creation time. | repo-relative, no `..`, no absolute paths |
 | `seed.copy` | list of paths | `[]` | non-secret gitignored files copied into the lane, which the lane may then diverge from (tool configs, local overrides) | same path rules; may not name a `seed.require` file or an `.env`-shaped path |
 | `seed.link` | list of globs | `[]` | files the lane must read but never own privately; linked to the primary checkout's file, never copied | glob under the repo; resolved targets stay inside it; same prohibition as `seed.copy` |
