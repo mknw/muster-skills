@@ -61,9 +61,11 @@ Two rules keep the set portable:
 | `reviewing-changes` | Three-axis review (originating spec, repo standards, empirical correctness) of changes since a fixed point, size-gated into one-wave and two-wave patterns |
 | `init-code-reviewer` | Scaffolding a repo-specific code-reviewer agent — the correctness reviewer the reviewing flow dispatches |
 | `init-test-pyramid` | Setting up a repo's test pyramid: named layers, one suite and one command each, CI placement, isolated test state, one pre-release go/no-go command, and the rule that an escaped failure names its layer |
+| `init-wft-proj` | Wft only: drafting, validating and testing a repo's `wft.yaml` so new lanes bootstrap themselves — profiles, seed semantics (required-but-never-copied secret files, per-profile granted env keys), setup, host/VM placement and stacks |
+| `proj-init` | The one pass over a newly started project: project-init skills in order — wft setup, test pyramid, code reviewer — skipping a step the repo already has |
 | `self-improve` | Turning owner corrections, countermands, and failures into re-engineered decisions, not prose lessons — a five-step correction loop |
 
-Setup skills (the `init-` prefix) run **once per repo**, not per task: reach for `init-code-reviewer` when a repo joins the reviewing flow, when it has no code-reviewer agent yet, or when the kernel changes and its generated reviewer must be regenerated. Reach for `init-test-pyramid` when a repo has no stated test layers. When Orca worktrees need setup, `orca-project-init` — also run once per repo — covers it, including the per-suite test state the pyramid asks for; the skill no longer rides on main and lives on the `orca-legacy` branch.
+Setup skills (the `init-` prefix) run **once per repo**, not per task: reach for `init-code-reviewer` when a repo joins the reviewing flow, when it has no code-reviewer agent yet, or when the kernel changes and its generated reviewer must be regenerated. Reach for `init-test-pyramid` when a repo has no stated test layers. When Orca worktrees need setup, `orca-project-init` — also run once per repo — covers it, including the per-suite test state the pyramid asks for; the skill no longer rides on main and lives on the `orca-legacy` branch. Run `proj-init` once when a project starts: it runs `init-wft-proj`, then `init-test-pyramid`, then `init-code-reviewer`, in that order, skipping a step the repo already has.
 
 The `Skill source` CI check validates YAML frontmatter and local Markdown references on
 each PR update. Runtime invocation and server deployment require separate evidence;
@@ -103,6 +105,9 @@ stale reads, which is what makes one file safe as a record several agents write)
 `init-test-pyramid` is homegrown, generalised from one project's working pyramid. `orca-project-init`
 started as a machine-local skill, moved here, and now lives on the `orca-legacy` branch; its
 schema notes were derived from the shipped Orca application, not adapted from published text.
+`init-wft-proj` and `proj-init` are homegrown too, written against the wft command-and-config
+design — the CLI, its `wft.yaml` schema and its lane placement doctrine; `init-wft-proj` follows
+the shape of `orca-project-init`, its Orca predecessor.
 
 `dispatching-work` is homegrown: orchestration doctrine distilled from running
 multi-agent coordination sessions.
