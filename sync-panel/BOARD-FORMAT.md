@@ -7,7 +7,7 @@ The reference half of [`sync-panel`](SKILL.md): the item and its decision contex
 One item is one `<li class="item">` carrying its data as attributes, with the human text inside. Attributes are the record; the page's script derives everything else and writes none of them. Agents change attributes only through the edit tool's anchored edits, never by reading the file and writing it back.
 
 ```html
-<li class="item" data-id="L5" data-section="loose-ends" data-actor="owner" data-since="2026-10-28" data-changed="2026-10-28T17:17:00Z" data-rel="after:N1">
+<li class="item" data-id="L5" data-project="…" data-section="loose-ends" data-actor="owner" data-since="2026-10-28" data-changed="2026-10-28T17:17:00Z" data-rel="after:N1">
   <h3><a href="https://host/owner/repo/pull/845">Title as the owner would read it</a></h3>
   <p class="next"><b>owner</b> the one next action, after #845 and #851</p>
   <p class="links"><a href="https://host/owner/repo/pull/851">851</a> <a href="https://host/owner/repo/issues/840">840</a></p>
@@ -17,6 +17,7 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | attribute | meaning |
 |---|---|
 | `data-id` | stable, never reused. Prefix by first state (N / R / L / D); the edit tool assigns the next free number inside the same locked edit that inserts the item, so an agent never reads it and writes it in a later step |
+| `data-project` | required on every item, Done included: a name from the routing file's `projects` list; set with the edit script's `project ID NAME` or `add ... --project NAME`; moves and closes carry it (Projects) |
 | `data-section` | `needs-you` / `running` / `loose-ends` / `done`; must equal the `<section id>` it sits in |
 | `data-actor` | who moves next: the owner, the coordinator, a named agent role, `lane`; `none` on Done |
 | `data-since` | date the item first existed; kept on a move |
@@ -88,6 +89,16 @@ The head of an invented page, continuing an earlier ruling:
 <h2>Each explained</h2> …
 <h2>The mechanism these questions touch</h2> …
 ```
+
+## Projects
+
+Use one board for all of the owner's projects. Every item carries `data-project`; the page renders it as text beside the title. The routing file's `projects` list declares the names, and `project_agents[project]` holds that project's `agents` map and `coordinator` name. A role name may resolve to a different address in each project. Configure `default_project` explicitly for board-wide level changes and for `add` when its project is omitted; a single declared project may be inferred on `add`, while an ambiguous choice is refused. The project filter is optional; the item label is required.
+
+Resolve an item click through that item's project before sending. Its owner copies and notice use only that project's map and coordinator. An agent name outside that map falls back to that project's coordinator, even if another project's map contains the name; deduplicate those fallback owner copies and skip a duplicate notice. Apply this to answers, report feedback, grill, loose-end actions, override and `via:` steering. A direct worker lane still uses its recorded handle/pane, with the owner-facing guard checked against every configured agent pane. A missing or unknown project refuses new delivery. Persist the project with the click so retry/reload finishes the original delivery if the item is later re-tagged.
+
+The edit script's `project ID NAME` validates the declared name before its locked edit. `add ... --project NAME` sets it at creation; move and close retain it. The checker flags `NO PROJECT` for a missing field and `BAD PROJECT` for an undeclared name. At migration, list current open items and propose each one's project for coordinator confirmation; the author works on a scratch copy. An older flat routing map may define the explicitly chosen default during migration, and unscoped historical deliveries belong to that default only. New server configuration should provide every project map explicitly. A Herdr-only deployment needs no Orca executable; retain the Orca adapter for deployments that still use it.
+
+Done when the new flags are planted then fixed, same-named roles in different projects reach different fixture recipients, unknown names reach only their project's coordinator, notices stay in scope, and replay/resume retains the recorded project.
 
 ## The theme
 
@@ -176,6 +187,7 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 
 `check.py`, standard library only, no network. It parses `index.html` with the HTML parser, collecting every element with `data-id` (and every theme with `data-gid`), the `<section id>` enclosing it, its title text, its next-action text, its links, and its brief, terms and link notes; a void tag such as `<br>` closes itself. Flags, one line each with the id (and the line number where the parser has one):
 
+- `NO PROJECT` / `BAD PROJECT`: an item has no `data-project`, or its name is absent from the routing file's `projects` list (Projects).
 - `DUPLICATE id`: the same `data-id` twice, counting the archive pages (whose ids also count as existing for `BAD REL`)
 - `SECTION MISMATCH`: `data-section` differs from the enclosing section
 - `BAD data-changed` / `BAD data-due`: unparsable
@@ -216,7 +228,7 @@ Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERD
 
 ## The helper
 
-A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry`, `POST /feedback` (Report bundles), `POST /level` (The auto level), `POST /steer` (Steering notes) and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox, the one-time bootstrap file (rewritten on each use) and the session file.
+A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://localhost:PORT/` (also accepting `127.0.0.1:PORT`), so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry`, `POST /feedback` (Report bundles), `POST /level` (The auto level), `POST /steer` (Steering notes) and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox, the one-time bootstrap file (rewritten on each use) and the session file.
 
 - **Self-reload**: the process the lifecycle script starts is a supervisor that runs the helper as a worker child and watches the helper's code file. When the file changes and passes a syntax check, it swaps the worker; a broken edit is logged and the running worker stays. The session secret, the page token and the pending one-time URL persist in a mode-600 session file, written atomically, so the owner's cookie and open page survive a reload; `start` writes fresh secrets and `stop` deletes them. The supervisor's own code is not reloaded. The page retries a send that gets no HTTP answer, a few times, with the same click id, which covers the moment a reload takes.
 
@@ -237,9 +249,9 @@ A local server with no dependency beyond its runtime, started and stopped by han
 
 **Security baseline**, each requirement proved by a mutation (SKILL.md, Clicks reach the AI owner):
 
-- **Loopback only**: bound to 127.0.0.1, and every request's `Host` equals `127.0.0.1:PORT` exactly, against DNS rebinding.
+- **Loopback only**: bound to 127.0.0.1, and every request's `Host` is exactly `127.0.0.1:PORT` or `localhost:PORT`, against DNS rebinding.
 - **Session cookie**: every route but a health check and the bootstrap needs it; it is `HttpOnly; SameSite=Strict` and set only by a one-time bootstrap URL, which the helper keeps in a mode-600 file and rotates on each use, and the lifecycle script prints.
-- **Per-start token and Origin**: a random token, rotated at each start, held only in the mode-600 session file beside the session secret and the pending one-time URL (never in the board file, a URL or a log) and injected into the page the helper serves; required on every POST and on `/state`. Every POST also carries an `Origin` equal to the helper's own.
+- **Per-start token and Origin**: a random token, rotated at each start, held only in the mode-600 session file beside the session secret and the pending one-time URL (never in the board file, a URL or a log) and injected into the page the helper serves; required on every POST and on `/state`. Every POST also carries an `Origin` exactly `http://127.0.0.1:PORT` or `http://localhost:PORT`; every other hostname, scheme and port is refused.
 - **Input**: an open item's id, of plain letters, digits and dashes at most 24 long on every click (an id reaches message bodies, so any other id is refused), an answer that item declares (reply, option or action, or `Done` when it declares none, or one of the four Loose-ends answers when it sits in Loose ends, or `grill` when it sits in Needs you, or only `override` when it carries `data-auto`, the one answer a Done item takes), a Running item with a `term:`, `herdr:` or `via:` lane on `POST /steer`, a level from the table on `POST /level`, a note within its cap, a body within a size cap, JSON only.
 - **Owner list**: the helper reads `data-ai-owner` once per name, keeping each name's first position, and refuses a list of more than eight distinct names (400, naming the count), for answers, report feedback and grill me alike, so a board edit cannot fan one click into a send per listed name.
 - **File serving**: a file is served only when the board links it, its real path (every symlink resolved) lies inside the reports folder, and it is a regular file; a served file gets a sandbox CSP so it cannot act as the board. The hidden-path refusal sits in the edit script's copy step (Linked files).
@@ -250,7 +262,17 @@ A local server with no dependency beyond its runtime, started and stopped by han
 - **Delivery resume**: a delivery cut off by a reload (a click recorded, no `sent` or `send-failed` for a recipient) is re-delivered by the new worker at boot and when the page replays that click id, to the recipients recorded with the click when it was made, never to names the routing file gained since; the same request id makes the mailbox replay a copy that did go out instead of sending it twice. Resume only finishes recorded clicks and constructs none. A copy recorded as sent whose wake has no outcome gets that wake, once, at boot, on a replay and on retry, under the same deterministic request id, and the mailbox copy is not sent again for it.
 - **Visible delivery failure**: every send ends as `sent` or `send-failed`, in the inbox and on the page; a malformed mailbox reply is logged and keeps the helper running, and the receipt poll runs at most once every few seconds however often `/state` is fetched.
 - **Lifecycle identity**: `stop` kills only a process whose command line is the runtime running this helper, so a recycled PID survives. The worker exits when its supervisor is gone, deleting the secret files only while they still hold its own. `start`, `stop` and `status` never trust the pidfile alone: each also checks whether the port answers, and none reports success while another process holds it.
-- **Known residual**: cookies are not port-scoped, so the browser also sends the session cookie to any other server on 127.0.0.1 the owner opens; `HttpOnly` keeps page scripts from it, but that server could log it. The cookie stays valid across reloads for as long as the supervisor runs; only stop then start rotates it.
+- **Known residual**: cookies are host-only but not port-scoped, so the browser also sends the session cookie to another server on the same loopback hostname the owner opens; `HttpOnly` keeps page scripts from it, but that server could log it. The cookie stays valid across reloads for as long as the supervisor runs; only stop then start rotates it.
+
+### SSH local forward
+
+Keep the helper bound to `127.0.0.1` on the server. From the owner's machine, run:
+
+```sh
+ssh -N -L <port>:127.0.0.1:<port> <user>@<host>
+```
+
+Open the printed one-time bootstrap URL at `http://localhost:<port>/bootstrap?...`, then use `http://localhost:<port>/`. The bootstrap file and lifecycle output name localhost; the same one-time path also works through the numeric loopback alias. Cookies stay host-only, HttpOnly and SameSite=Strict: open the bootstrap using the hostname you will use for the board. Keep the per-start POST token, exact Host/Origin allowlists and one-time rotation; forwarding adds no password or public listener. Report frames allow exactly the two HTTP loopback origins at that port, while the board and wrapper remain unframeable. Prove both authorities through a TCP relay and refuse suffix hostnames, foreign origins and different ports; reverting to a single authority must make the localhost proof fail.
 
 ### Transports
 
@@ -311,10 +333,10 @@ The owner can ask for a grilling round on any decision waiting on them. Every ex
 
 | button | answer sent | goes to | wake |
 |---|---|---|---|
-| grill me | `grill` | each AI owner the routing file lists; with none left, the coordinator | yes |
+| grill me | `grill` | each AI owner resolved within the item's project; an unlisted name falls back to that project's coordinator | yes |
 
 - **Where it is accepted**: the helper accepts `grill` only for an item whose `data-section` is `needs-you`, and refuses it on any other item (400, naming the item's section). `grill` is the board's own answer: a declared reply of that name sends the grill request on a Needs-you item and is refused elsewhere.
-- **Recipients**: the item's `data-ai-owner` names, read as the security baseline's Owner list says (The helper); a name the routing file does not list is dropped. The coordinator gets the usual notice-only copy, skipped when it is a recipient.
+- **Recipients**: the item's `data-ai-owner` names, read as the security baseline's Owner list says (The helper), resolved within its project (Projects). An unlisted name falls back to that project's coordinator. The coordinator gets the usual notice-only copy, skipped when it is a recipient.
 - **A request, not an answer**: the item keeps its place and its count, never enters the answered strip, and keeps its chips or the default Done, because the decision is still the owner's. The request has its own line beside any answer's, "grilling round requested HH:MM · seen by <agent>", with sending, agent not woken, requested on an older version, and not delivered with **retry**, as for answers; row view shows a short badge beside the age.
 - **Cleared**: once an owner copy is seen and the item's `data-changed` is later than the click, the line and the badge go, and the item's changed-since-you-looked dot shows the new content. Both halves count: the seen copy is the mailbox's own record, which a board edit cannot write.
 - **Older helper**: the helper announces `needs-you-grill` among its features. On a helper without it, the button is disabled with a visible "helper too old" note, and nothing is copied to the clipboard. Offline it copies `<id>: grill` like every button (The helper, No silent copy).
@@ -463,7 +485,7 @@ with `quote` only on a text comment. Then the wake; the coordinator gets a notic
 
 **Security requirements**, each proved by a mutation (SKILL.md, Clicks reach the AI owner):
 
-- **Report serving**: at `/b/<key>/<bundle>/<path>`, with `sandbox allow-scripts allow-popups` and no `allow-same-origin`, `connect-src 'none'`, `form-action 'none'`, and `frame-ancestors` set to the helper's own origin, so only the wrapper can frame it. Only for a bundle some item links, only from inside that bundle's folder (real path, every symlink resolved), and only allowed types and regular files; every escape, raw or encoded, is a 404.
+- **Report serving**: at `/b/<key>/<bundle>/<path>`, with `sandbox allow-scripts allow-popups` and no `allow-same-origin`, `connect-src 'none'`, `form-action 'none'`, and `frame-ancestors` set to the helper's two allowed loopback origins, so only the wrapper can frame it. Only for a bundle some item links, only from inside that bundle's folder (real path, every symlink resolved), and only allowed types and regular files; every escape, raw or encoded, is a 404.
 - **Per-bundle key**: `<key>` is an HMAC of the session secret and the bundle name. It stands in for the session cookie, which a sandboxed page's own subresource requests do not carry, since to the browser they are cross-site. It rotates when the helper stops and starts, and appears in no board URL and no log.
 - **Wrapper**: needs the session cookie, like the board, and cannot itself be framed (`frame-ancestors 'none'`).
 - **The two messages**: the wrapper acts on a message only when its source is its own report frame and its data is a plain object with exactly the keys of one shape: `type: 'sync-feedback'` and a string `section`, or `type: 'sync-select'` and strings `section` and `quote`. The section must be an own property of the manifest's section map, and a quote at most 300 characters; it ignores everything else. It renders every manifest string and every quote as text, and a quote travels in its own field, never in the note.
