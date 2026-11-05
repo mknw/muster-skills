@@ -57,7 +57,7 @@ Two rules keep the set portable:
 | `resolving-merge-conflicts` | In-progress merge/rebase conflict procedure |
 | `living-docs-governance` | Keeping long-lived project docs from rotting |
 | `agent-architecture-audit` | 12-layer diagnostic for agent/LLM applications |
-| `dispatching-work` | Coordination roles, task briefs, lanes, supervision and independent review; Herdr-native workflow and versioned skill release |
+| `dispatching-work` | Coordination roles, task briefs, lanes (where they run, what they may hold), supervision and independent review; Herdr-native workflow and versioned skill release |
 | `reviewing-changes` | Three-axis review (originating spec, repo standards, empirical correctness) of changes since a fixed point, size-gated into one-wave and two-wave patterns |
 | `init-code-reviewer` | Scaffolding a repo-specific code-reviewer agent — the correctness reviewer the reviewing flow dispatches |
 | `init-test-pyramid` | Setting up a repo's test pyramid: named layers, one suite and one command each, CI placement, isolated test state, one pre-release go/no-go command, and the rule that an escaped failure names its layer |
