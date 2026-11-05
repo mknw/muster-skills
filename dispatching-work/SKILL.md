@@ -310,3 +310,15 @@ per-PR review misses.
   in the live checkout.
 - Close the loop: release the worker, acknowledge the final delivery, and
   update the tracking surface (board, issue) — or delegate that update.
+
+## Design record
+
+- 2026-11-05 — **Lane close is a worktree removal.** A lane that releases its
+  terminal but leaves its worktree in place compounds into hundreds of stale
+  directories over a long run, some holding uncommitted edits. Cleanup after
+  merge or a review's final verdict is now: back up ignored/untracked small
+  files, classify and remove via
+  [scripts/prune-merged-worktrees.sh](scripts/prune-merged-worktrees.sh)
+  (dry-run default, protected list, live-session skip), delete the merged
+  branch, and prune. Caution about losing ignored files is handled by the
+  backup step, not by never removing.
