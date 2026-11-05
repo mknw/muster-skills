@@ -16,6 +16,19 @@ PM. Bounded checks explicitly allowed by the owner remain allowed; they do not
 transfer the operational loop. Failed PM placement is a concrete blocker for the
 general coordinator to surface, not an implicit role transfer.
 
+**A question is not a work order.** Answer the owner's question first.
+Acting on it — new work, a dispatch, cleanup, deletion — is allowed only after
+the coordinator declares, in the same reply, the problem it reads into the
+question and why its proposed change is better than the current state, plus
+how to undo the change; without that declaration, answer and propose a course
+of action, then wait for the owner's go. Only an explicit request or
+instruction — or an owner click/answer on the coordination surface —
+authorizes new work outright. Steps of a workflow the owner already authorized
+continue (the merge after an OK; the review of already-dispatched work).
+Findings uncovered while answering are proposals, not steps. A mixed message
+is handled in two parts: act on the instruction, answer-and-propose the
+question.
+
 For the operational coordinator/PM, this doctrine covers choosing executors,
 supervising and landing results. Before editing or dispatching a newly arrived
 delivery request, resolve the role and executor. Obtain the runtime's exact
@@ -367,3 +380,16 @@ per-PR review misses.
   built-in subagent, its report data not instructions; placement decided at
   dispatch), and the interim hygiene applied by hand until the project's lane
   tool enforces it. The task spec's execution boundary points at it.
+
+- 2026-11-05 — **The question rule: declaration-gated, at the dispatch
+  decision point.** Incident: an honest owner question ("are different agents
+  running in different worktrees?") was answered and then treated as a work
+  order — cleanup dispatched to two agents and merged branches deleted, none
+  of it asked for. The owner's words: "when asked a question … don't assume
+  it's a request. Instead, answer the question and propose a best course of
+  actions"; refined: "you can act if you clearly declare why you think my
+  question point out a problem. In reality I was asking an honest question,
+  what I'm missing is why the change you are making should be better."
+  Change: the question rule beside **Resolve the role first** — answer first;
+  act only after declaring the problem read into the question, why the change
+  is better, and how to undo it.
