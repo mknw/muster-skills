@@ -31,10 +31,13 @@ Fires on:
    dispatcher's session context, is the incident record.
 5. **Owner discontent signal (swearing)** — swearing in the owner's own words
    triggers the loop automatically through the Claude Code prompt hook. Carry
-   out the authorized request in the same turn, or acknowledge the mistake in
-   one line, then dispatch a subagent under the extract contract below; quote
-   the owner's words in the extract. The hook excludes pasted content and
-   system reminders. Its signal starts investigation, not a presumed diagnosis.
+   out the authorized request in the same turn — where the request is a
+   question, dispatching-work's question rule applies: answer first; act only
+   after declaring the problem read into it, why the change is better, and how
+   to undo it — or acknowledge the mistake in one line, then dispatch a
+   subagent under the extract contract below; quote the owner's words in the
+   extract. The hook excludes pasted content and system reminders. Its signal
+   starts investigation, not a presumed diagnosis.
 
 For Claude Code, install the [prompt hook](hooks/discontent.py) using the
 [hook setup](hooks/README.md). Codex and pi have no equivalent hook supplied
