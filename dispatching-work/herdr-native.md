@@ -6,7 +6,11 @@ policy in the owning project's instructions, rather than in this shared skill.
 
 ## Establish the contract
 
-1. Record the installed Herdr version, selected server/session, native agent
+1. Run `herdr --skill`, then `herdr api schema --json`. Verify `HERDR_ENV=1`
+   before control commands; if absent, stop. Run `herdr --help` and the relevant
+   command group without a subcommand for syntax (group discovery exits 2).
+   Never discover syntax by invoking a mutating nested command without arguments.
+   Record the installed Herdr version, selected server/session, native agent
    integration and approved provider/model. Read the official
    [agent automation](https://herdr.dev/docs/agent-automation/),
    [CLI](https://herdr.dev/docs/cli-reference/) and
@@ -127,3 +131,55 @@ Return the tested entry/resume commands, endpoint/session identity, provenance,
 actual pass/block evidence and recovery instructions. Label Mac/bootstrap,
 fixture, parser and source-only checks by their limits; server deployment and
 provider-backed acceptance require actual server invocation.
+
+## Executable runtime recipe (0.9.5, protocol 22)
+
+Use the installed contract above to revalidate these commands. Targets below
+are placeholders replaced by returned opaque IDs or a unique live agent name.
+Keep focus with the caller and work only in an owned checkout.
+
+```sh
+herdr status
+# Default topology: sibling pane in the caller's cwd (choose right/down by layout).
+herdr pane split --current --direction right --cwd "$PWD" --no-focus
+# Read .result.pane.pane_id into PANE, then:
+herdr agent start lane --kind pi --pane "$PANE"
+herdr agent prompt lane "<task-bound brief and report path>" --wait --timeout 120000
+herdr agent wait lane --timeout 120000
+herdr agent read lane --source recent-unwrapped --lines 120
+herdr pane read "$PANE" --source recent-unwrapped --lines 120
+# Shell output alternative; match may include old output, so bind a unique marker.
+herdr pane wait-output "$PANE" --match "<attempt-specific marker>" --timeout 120000
+```
+
+`agent wait` defaults to idle/done/blocked; inspect blocked/unknown before
+responding. Never auto-answer approval UI. `agent prompt --wait` requires observed
+activity after a prompt to a settled agent; a timeout/stall leaves delivery
+uncertain. Agent reads may be plain text rather than JSON.
+
+**Reports and inbox:** agree a durable directory per task/attempt before dispatch.
+Persist the brief there; the worker atomically writes one final report containing
+`worker_done`, task/attempt, source SHA, outcome, checks and PR URL. Write asks and
+escalations there too. The coordinator reads these after a native wake and records
+an explicit receipt keyed by task/attempt/report; reconcile all pending files
+on resume. A shared file channel requires a shared filesystem or a verified
+transfer adapter. Lifecycle events and terminal output alone supply no delivery
+receipts, replay, or acknowledgements. Never invent `herdr mailbox` commands.
+
+**Worktrees:** when separately authorized, use
+`herdr worktree create --cwd "$REPO" --branch "$BRANCH" --base main --path "$PATH_TO_NEW_CHECKOUT" --no-focus`.
+Read the returned workspace/worktree identity, inspect with
+`herdr worktree list --cwd "$REPO"`, provision dependencies explicitly, then
+start in the returned available shell pane. `worktree open --cwd "$REPO" --path
+"$CHECKOUT" --no-focus` opens an existing checkout. Herdr does not execute
+`orca.yaml` hooks. An already assigned worktree stays the lane's only edit root.
+
+**Release/close:** settle the exact attempt and harvest reports first. Herdr has
+no orchestration release command. `pane release-agent` relinquishes an integration
+report source; it is not worker shutdown or a portable task release. Close only
+owned disposable resources with `herdr pane close "$PANE"` or
+`herdr workspace close "$WORKSPACE"`. Closing a workspace terminates its panes;
+it does not imply deleting the Git checkout. For an owned linked worktree,
+back up ignored/local state first, then use `herdr worktree remove --workspace
+"$WORKSPACE"` only when removal is authorized. Never add `--force` or `--group`
+as a routine retry. Preserve user-owned panes and sessions.
