@@ -1,6 +1,6 @@
 # Board format
 
-The reference half of [`sync-panel`](SKILL.md): the item and its decision context, decision pages, the theme, the auto level, the page, the panels, the checker, the helper, the Loose-ends buttons, grill me, report bundles, the folder. Everything here is created once and then edited by anchor.
+The reference half of [`sync-panel`](SKILL.md): the item and its decision context, decision pages, the theme, the auto level, the page, the panels, the checker, the helper, the Loose-ends buttons, grill me, steering notes, report bundles, the folder. Everything here is created once and then edited by anchor.
 
 ## The item
 
@@ -36,6 +36,7 @@ One item is one `<li class="item">` carrying its data as attributes, with the hu
 | `data-auto` | `AGENT LEVEL OPTION`, written only by the edit script's `decided`: the coordinator took this decision on its recommended option under that level (Auto level) |
 | `data-auto-category` | written with `data-auto`: the categories the decision was routed on |
 | `data-overridden` | the stamp of an auto decision the owner overrode, written by the edit script's `override`; the owner decides the item from then on |
+| `data-lane` | required on Running: who works the item, `term:<handle>`, `via:<AGENT>` or `none`, written by the dispatcher with the edit script's `lane`; a move out of Running or a close drops it (Steering notes) |
 | `data-deprio` | optional, Loose ends only: `YYYY-MM-DD`, written by the item's agent with the edit script's `deprio` and removed by `undeprio`; the item renders in the De-prioritized strip (Loose-ends buttons). A move out of Loose ends or a close drops it |
 
 Inside: the `<h3>` title, linking the primary PR, issue or page (a Done title links the deliverable when one exists); then `<p class="next"><b>actor</b> next action</p>` for anything not Done; then, when the item cites more than one reference, `<p class="links">` with one `<a>` per further PR, issue, comment or page, so a `#NNN` written in the text always has a link to click. The script turns the title link and each anchor in the links row into chips in the link column (a link repeated in both appears once), removes the row, and leaves the title as text. A chip reads `#845` for a PR or issue, `#788 ↳` for a comment, the file's name for a local file or a file in the tracker (without a markdown, HTML, text or log extension), and the hostname for any other link; a file chip shows only its icon until the item is expanded, the name in its tooltip. The script also hides the `<b>actor</b>` prefix because the who column says it; adds the who, id, age and changed cells and the explain button (under **more**, absent on Done); tints rows whose actor is the owner; sorts rows on the page (due first, then oldest; Done newest first) without touching file order, so an added item goes at the end of its list.
@@ -114,7 +115,7 @@ The board's **level** is one line under the header, written only by the edit scr
 <div id="auto" data-level="security" data-changed="2026-11-04T16:00:00Z" data-source="click:<click id>"><b>auto: security</b> — you keep security, changes to your rulings, irreversible actions</div>
 ```
 
-**One reading.** The edit script and the helper read the level only from that one line, at the start of its own line and outside a comment, its attributes first-wins, and only while the file's tags, commented-out ones included, carry `id="auto"` exactly once. Text that mentions the line, such as a brief about it, is not a tag and does not count. Anything else reads as `off`, so a commented-out old line or a reordered attribute fails safe in every runtime. The checker reads the line both as the page does and as the edit script does, and flags `BAD AUTO LEVEL` when the two disagree; `auto` refuses to write until the line is one again.
+**One reading.** The edit script and the helper read the level only from that one line, at the start of its own line and outside a comment, its attributes first-wins, and only while the file's tags, commented-out ones included, carry `id="auto"` exactly once. Text that mentions the line, such as a brief about it, is not a tag and does not count, and neither does an attribute value that mentions it; a quoted value may hold `>`, and an id counts as the browser decodes it. Anything else reads as `off`, so a commented-out old line or a reordered attribute fails safe in every runtime. The checker reads the line both as the page does and as the edit script does, and flags `BAD AUTO LEVEL` when the two disagree; `auto` refuses to write until the line is one again.
 
 **The table** is the whole rule. The edit script holds it once, as the function `route(categories, level)`, and the checker imports it. The page script mirrors the level names and the owner-kept sets, and the helper the level names; each mirror is its declaration, `NAME = <literal>;` exactly once, with nothing else in the file writing it, and the checker holds them to that.
 
@@ -145,6 +146,7 @@ One `index.html`, no build step. A `<meta http-equiv="refresh" content="60">` ke
    - Tiles pack masonry-style: each spans as many 1 px grid rows as its measured height (no row gap, the spacing inside each span), and a resize observer repacks a section whenever a tile changes size. The grid's forward-only auto-placement lets a short tile start in the gap under a shorter neighbour but never above a tile that sorts before it, so reading and keyboard order stay the sort and theme order; CSS columns would pack tighter and break that order. Rows view drops the spans, and without the script tiles take their natural height (`align-items: start`) and never overlap.
    - In Needs you, an item whose answer was delivered (sent or seen; neither failed, answered an older version, nor edited after the answer) steps into a collapsed strip at the bottom, "Answered, waiting on the agent (N)", one dimmed line each with its answer and state, until its AI owner moves it. The section count covers only the items still to answer.
    - In Needs you, every expanded item gets a **grill me** button (Grill me).
+   - In Running, every expanded item gets the **include feedback** box and the notes sent on it (Steering notes).
    - In Loose ends, every item gets the kick-off and de-prio buttons, and a de-prioritized item steps into a collapsed strip at the end (Loose-ends buttons).
    - The who column is dropped in Needs you, where the owner is the actor by definition, and in Done, where nobody is; in Running and Loose ends, when no item left visible by the theme filter has an actor.
    - An empty section collapses to its header and one line. Done shows the last 24 hours; older Done items sit behind one "N more" row.
@@ -205,13 +207,14 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `AUTO MISMATCH`: a stamp whose level keeps one of the item's categories for the owner, or an unknown one, an item with none, or categories that differ from the recorded ones: as far as the file can tell, the decision was not the coordinator's to take
 - `AUTO IN NEEDS YOU` / `AUTO NO NOTE`: a stamped item in Needs you; a stamp without its note
 - `AUTO RULE DRIFT`: the edit script's table missing or no longer a superset ladder, or a mirror in the page script or the helper that is not its declaration with the literal, exactly once, with nothing else writing it: no second declaration, assignment, index or property assignment, mutating call or alias, directly or through up to two accessors (`KEEPS.security.splice(0, 1)`, `KEEPS.security[0] = ...`)
+- `NO LANE` / `BAD LANE`: a Running item without `data-lane`; a lane outside the three forms, a `via:` agent the routing file does not name, a `term:` handle that is one of the routing file's terminals (an owner-facing one, recorded as `via:` instead), or a lane outside Running
 - `STALE`: `data-changed` older than three days on an open item
 
 Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERDUE when it fails past `due`, else pending, and whether it ran without a shell or through `sh -c`; a command with no shell metacharacter runs without one, under a timeout either way); then the lane-deadline ledger the coordinator keeps, whose overdue lines also count as flags; then the counts per state. Exit 1 on any flag. `--stamp` rewrites the last-checked line through the same anchor tool used for items, falling back to a direct write. The mutation run that proves it: a scratch copy with one planted instance of each defect, all flagged, exit 1.
 
 ## The helper
 
-A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry`, `POST /feedback` (Report bundles), `POST /level` (The auto level) and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox, the one-time bootstrap file (rewritten on each use) and the session file.
+A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry`, `POST /feedback` (Report bundles), `POST /level` (The auto level), `POST /steer` (Steering notes) and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox, the one-time bootstrap file (rewritten on each use) and the session file.
 
 - **Self-reload**: the process the lifecycle script starts is a supervisor that runs the helper as a worker child and watches the helper's code file. When the file changes and passes a syntax check, it swaps the worker; a broken edit is logged and the running worker stays. The session secret, the page token and the pending one-time URL persist in a mode-600 session file, written atomically, so the owner's cookie and open page survive a reload; `start` writes fresh secrets and `stop` deletes them. The supervisor's own code is not reloaded. The page retries a send that gets no HTTP answer, a few times, with the same click id, which covers the moment a reload takes.
 
@@ -235,7 +238,7 @@ A local server with no dependency beyond its runtime, started and stopped by han
 - **Loopback only**: bound to 127.0.0.1, and every request's `Host` equals `127.0.0.1:PORT` exactly, against DNS rebinding.
 - **Session cookie**: every route but a health check and the bootstrap needs it; it is `HttpOnly; SameSite=Strict` and set only by a one-time bootstrap URL, which the helper keeps in a mode-600 file and rotates on each use, and the lifecycle script prints.
 - **Per-start token and Origin**: a random token, rotated at each start, held only in the mode-600 session file beside the session secret and the pending one-time URL (never in the board file, a URL or a log) and injected into the page the helper serves; required on every POST and on `/state`. Every POST also carries an `Origin` equal to the helper's own.
-- **Input**: an open item's id, of plain letters, digits and dashes at most 24 long on every click (an id reaches message bodies, so any other id is refused), an answer that item declares (reply, option or action, or `Done` when it declares none, or one of the four Loose-ends answers when it sits in Loose ends, or `grill` when it sits in Needs you, or only `override` when it carries `data-auto`, the one answer a Done item takes), a level from the table on `POST /level`, a note within its cap, a body within a size cap, JSON only.
+- **Input**: an open item's id, of plain letters, digits and dashes at most 24 long on every click (an id reaches message bodies, so any other id is refused), an answer that item declares (reply, option or action, or `Done` when it declares none, or one of the four Loose-ends answers when it sits in Loose ends, or `grill` when it sits in Needs you, or only `override` when it carries `data-auto`, the one answer a Done item takes), a Running item with a `term:` or `via:` lane on `POST /steer`, a level from the table on `POST /level`, a note within its cap, a body within a size cap, JSON only.
 - **Owner list**: the helper reads `data-ai-owner` once per name, keeping each name's first position, and refuses a list of more than eight distinct names (400, naming the count), for answers, report feedback and grill me alike, so a board edit cannot fan one click into a send per listed name.
 - **File serving**: a file is served only when the board links it, its real path (every symlink resolved) lies inside the reports folder, and it is a regular file; a served file gets a sandbox CSP so it cannot act as the board. The hidden-path refusal sits in the edit script's copy step (Linked files).
 - **Strict CSP on the board**: `script-src 'self'` with no inline script, `frame-ancestors 'none'`, `X-Frame-Options: DENY`.
@@ -293,6 +296,34 @@ The owner can ask for a grilling round on any decision waiting on them. Every ex
 3. Set `data-complexity` to medium or higher and link the page as the item's title.
 4. Rewrite the brief and options to the questions that remain, and reply on the item.
 5. Leave the item in Needs you. When the round leaves nothing for the owner to decide, say so in the brief and recommend Done, then set complexity low and drop the link: this overrides step 3.
+
+## Steering notes
+
+The owner can steer the agent working a Running item while it works. Every expanded Running item carries an **include feedback** box: a line saying where the note goes, a text field of 2000 characters kept across the refresh, and a send button.
+
+**The lane** is `data-lane`, written by the dispatcher when it dispatches the work, in one of three forms:
+
+| `data-lane` | who works the item | where a note goes | wake |
+|---|---|---|---|
+| `term:<handle>` | an agent with a terminal of its own, by the runtime's handle | a mailbox message to that handle | one fixed pointer typed into its terminal |
+| `via:<AGENT>` | an agent with no terminal of its own (a subagent), or any owner-facing agent; AGENT is a routing-file name | AGENT's mailbox | none: AGENT forwards the note with its own tool |
+| `none` | nobody, for now (waiting on CI, a merge, the owner) | nowhere: the box is disabled and says why | — |
+
+A terminal the routing file names belongs to an owner-facing agent, so the dispatcher records that lane as `via:<AGENT>`, and a steering note never types into it. The edit script's `lane ID VALUE` writes the attribute on a Running item only, checking the form; a move into Running keeps it, a move out of Running and a close drop it.
+
+**The answer**: `POST /steer` with `{cid, id, version, note}`, under the cookie, token, Origin, click-id and version rules of every click. The helper accepts it only for a Running item whose lane is `term:` or `via:` (400 otherwise, naming why), with a note of 1 to 2000 characters, control characters other than line breaks removed.
+
+**Delivery** keeps the note's text in the mailbox body, indented, and out of every terminal:
+
+- `term:` — one message to the handle, then the pointer: `You have sync-board a steering note on <id> from the owner: run <mailbox check>.`, as an argument array. An idle agent takes the pointer as a prompt and reads its mailbox at once; a busy one takes it as its next prompt, after its current step. A handle outside the runtime's plain shape is recorded `send-failed` and `wake-failed`, with nothing run.
+- `via:` — one message to AGENT's address, asking it to forward the note word for word to the lane it runs.
+- The coordinator gets the usual notice-only copy, skipped when it is the `via:` agent.
+
+The pointer is the helper's existing wake, which lands in both states and creates no orchestration state; a dispatched task would add a second assignment beside the one the lane already holds.
+
+**On the page**, under the box, every note sent on the item, newest first, read from the inbox: its time, its text, and its state (sending, sent to the handle or agent, woken or not woken, seen once the mailbox marks it read, not delivered with retry, and "sent on an older version" when the page was older than the item). The latest note's state is a short badge beside the age. The helper announces `steer-notes` among its features; the `file://` page copies `<id>: steering note: <text>` and says so. The notes are the board's record of what was said: they live in the inbox, and the board file stays as the edit script leaves it.
+
+**What the receiving agent does**: reads its mailbox, takes the note into its current work with the owner's words governing, and acks the delivery, which the page then shows as seen. A `via:` agent forwards the note word for word to the lane it runs, then carries on.
 
 ## Report bundles
 
@@ -422,7 +453,7 @@ with `quote` only on a text comment. Then the wake; the coordinator gets a notic
   assets/<diagram-lib>   600   vendored, version and checksum recorded in README.md
   backups/               700   dated copies taken before any restructure
   archive/               700   one page per month of archived Done items, same item markup
-  <edit script>          600   optional: wraps the anchor tool for ADD / MOVE / CLOSE, themes, links, replies, options, decision context, `deprio` / `undeprio`, and the auto level's `auto`, `route`, `category`, `ruling`, `decided` and `override`; `add` refuses an id already on the board, `links` merges into the links row, and `links --replace` prints each href it drops
+  <edit script>          600   optional: wraps the anchor tool for ADD / MOVE / CLOSE, themes, links, replies, options, decision context, `deprio` / `undeprio`, the auto level's `auto`, `route`, `category`, `ruling`, `decided` and `override`, and `lane`; `add` refuses an id already on the board, `links` merges into the links row, and `links --replace` prints each href it drops
   assets/<page script>   600   the page's script, kept out of index.html for the helper's CSP
   <helper>               600   the click helper (The helper)
   <bootstrap file>       600   the helper's current one-time URL; deleted on stop
