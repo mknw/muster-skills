@@ -78,13 +78,20 @@ right decision. Not "what was missing" first — what was present and harmful:
 
 1. **system prompt** — tool affordances; note asymmetry when the wrong path is
    one call and the right path needs external knowledge;
-2. **always-loaded surface** (APPEND_SYSTEM and peers) — decision-time rules
-   that should fire here and do not exist;
+2. **always-loaded surface** — decision-time rules that should fire here and
+   do not exist; the surfaces differ per runtime (Claude Code: `CLAUDE.md` at
+   user, project and local scopes, `.claude/rules/`, and its auto memory;
+   Codex: user and repo `AGENTS.md`; pi: `AGENTS.md`/`CLAUDE.md` plus its own
+   `APPEND_SYSTEM` and memory) — verify each against that runtime's own docs
+   or installed CLI, never from a prior run's list;
 3. **skills** — escape-hatch rows without an authority clause; stale defaults;
    era-wrong examples;
 4. **modules, packages, extensions** — hooks and affordances;
 5. **memories** — ambiguities and silences that were read the wrong way;
-6. **in-session habit** — successful uses of the wrong path reinforce it.
+6. **in-session habit** — successful uses of the wrong path reinforce it;
+7. **runtime-specific assumptions** — surfaces or affordances the loop took
+   for granted (a memory hook, an instruction-file path, a tool) that hold in
+   the runtime it ran in but not in the others the owner uses.
 
 Verdict per layer: **active fight / stale default / ambiguity / gap / clean.**
 
@@ -103,6 +110,14 @@ prose > skills > memory):
 - **Prefer environment-level enforcement** — wrappers, hooks, one-command
   paths — over prose: friction asymmetry (right path expensive, wrong path
   cheap) beats any rule.
+- **Harness parity** — a lesson that governs agent behaviour lands on an
+  always-loaded surface **every runtime in use loads** (Claude Code, Codex, pi
+  differ: instructions files, project memory, `APPEND_SYSTEM`), verified
+  against each runtime's own docs or installed CLI — the registry of record —
+  never from a prior run's assumptions. The proposal states which runtimes the
+  lesson reaches and which it does not; a runtime-specific place alone (one
+  runtime's project memory, say) is a gap, named as such in the proposal and
+  covered by each runtime's equivalent surface or an explicit fallback.
 
 ### 5. Propose — fixed format, proportionate gates
 
@@ -214,3 +229,18 @@ The superseded memory was corrected in the originating session; no private
 memory or project-specific authority is carried into this skill.
 Independent review added reversible hook setup and clarified plain-session
 review, unavailable or nonconverging review, and live-contract merge authority.
+
+**2026-11-05 — harness parity and the runtime-specific sweep.** Incident: the
+loop anchored a lesson to a surface only one runtime loads, and the skill's own
+text carried assumptions (hook paths, instruction files, memory tools) that do
+not hold outside the runtime the loop ran in. Steps that failed: **step 3**'s
+autopsy had no runtime-specific layer, and **step 4**'s enforcement had no
+parity rule. Change: step 3 gains a runtime-specific-assumptions layer; step 4
+gains the harness-parity rule — a behaviour-governing lesson lands on an
+always-loaded surface every runtime in use loads, verified against each
+runtime's own docs or installed CLI, with runtime-only surfaces named as gaps;
+the skill's runtime-specific assumptions (hook paths, instruction files, memory
+tools) are now either runtime-neutral or explicitly per-runtime. This entry is
+itself produced by the loop; the FORCED autonomous review gate applies — an
+independent reviewer (neither the author nor the coordinator) ran on this
+change and the review looped to CONVERGED before merge.
