@@ -42,3 +42,11 @@ and is separate from default CI; no binary is downloaded or trusted implicitly.
 
 All these checks are L1 source/Git/CLI contract evidence. They do not establish
 model invocation, server deployment, provider authentication or live acceptance.
+
+`test_runtime_waits.py` exercises both runtime selections with executable CLI
+fixtures: Orca remains the default; herdr uses agent/output waits, preserves
+literal match arguments, bounds waits by the window, retries timeouts and exposes
+other errors. Deadline pins cover argv-only native reads, runtime/context guards,
+ledger forwarding and existing shell outcomes/one-shot reports. Run
+`python3 tests/mutate_runtime_waits.py` to prove the paired mutations go red in
+disposable copies. These pins do not replace the live pi proof recorded on the PR.

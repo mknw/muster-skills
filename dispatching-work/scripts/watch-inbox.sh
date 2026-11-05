@@ -1,18 +1,25 @@
 #!/usr/bin/env bash
-# Watch an Orca orchestration mailbox: wake when a message is waiting or a lane
+# Watch a runtime signal: wake when a message is waiting or a lane
 # deadline goes overdue. Silence is not progress.
 
 set -u
 
 usage() {
   cat <<'EOF'
-watch-inbox.sh — wake an Orca coordinator or PM when its orchestration mailbox
-has a message, or when a deadline in its ledger goes overdue.
+watch-inbox.sh — wake a coordinator or PM on a runtime signal or overdue lane.
 
-This is for Orca's orchestration mailbox. Run it as a background task; when it
+Orca mode watches the orchestration mailbox. Run it as a background task; when it
 exits, drain and ack the mailbox, then start it again.
 
+Herdr mode watches an assigned agent's settled state, or literal pane output.
+It has no mailbox: after waking, read the bound report and record its receipt.
+Idle/done/blocked and historical output matches are signals, not task verdicts.
+Requires HERDR_ENV=1. Timeout errors retry; other herdr errors fail visibly.
+
 Options:
+  --runtime NAME orca (default) or herdr; also $MUSTER_RUNTIME
+  --target ID    herdr agent name or pane ID (pane ID with --match; required in herdr mode)
+  --match TEXT   use pane wait-output instead of agent wait (literal text)
   --run ID       orchestration run id to watch (default: $ORCA_RUN_ID)
   --ledger PATH  deadline ledger to poll with deadlines.py
                  (default: $DEADLINE_LEDGER; no ledger = mailbox only)
@@ -33,8 +40,8 @@ deadlines.py --help.
 The deadline report is one-shot: a deadline the watcher has reported is never
 re-raised. If a wake is missed, recover by running deadlines.py with the same
 --ledger but without --new — it lists every overdue lane. A failed deadline
-check or a failed runtime call never exits the watcher; it logs one line to
-stderr, sleeps 60s and retries.
+check or failed Orca call logs to stderr and retries after 60s. Herdr timeouts
+re-arm within the window; other herdr errors exit 1 for reconciliation.
 EOF
 }
 
@@ -56,6 +63,9 @@ need_int() { # $1 = option name, $2 = value
   esac
 }
 
+runtime="${MUSTER_RUNTIME:-orca}"
+target=""
+match=""
 run_id="${ORCA_RUN_ID:-}"
 ledger="${DEADLINE_LEDGER:-}"
 types="worker_done,escalation,question,status,merge_ready"
@@ -64,6 +74,9 @@ poll=1800
 
 while [ $# -gt 0 ]; do
   case "$1" in
+    --runtime) need_value "$1" "${2:-}"; runtime=$2; shift 2 ;;
+    --target) need_value "$1" "${2:-}"; target=$2; shift 2 ;;
+    --match) need_value "$1" "${2:-}"; match=$2; shift 2 ;;
     --run) need_value "$1" "${2:-}"; run_id=$2; shift 2 ;;
     --ledger) need_value "$1" "${2:-}"; ledger=$2; shift 2 ;;
     --types) need_value "$1" "${2:-}"; types=$2; shift 2 ;;
@@ -74,7 +87,18 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-if [ -z "$run_id" ]; then
+case "$runtime" in
+  orca)
+    command -v orca >/dev/null 2>&1 || { echo "watch-inbox.sh: runtime orca not installed" >&2; exit 2; }
+    ;;
+  herdr)
+    if [ "${HERDR_ENV:-}" != 1 ] || [ -z "$target" ]; then
+      echo "watch-inbox.sh: herdr requires HERDR_ENV=1 and --target" >&2
+      exit 2
+    fi ;;
+  *) echo "watch-inbox.sh: unknown runtime: $runtime" >&2; exit 2 ;;
+esac
+if [ "$runtime" = orca ] && [ -z "$run_id" ]; then
   echo "watch-inbox.sh: no run id given: pass --run or set ORCA_RUN_ID" >&2
   exit 2
 fi
@@ -85,7 +109,7 @@ end=$(( $(date +%s) + window ))
 while [ "$(date +%s)" -lt "$end" ]; do
   nxt=""
   if [ -n "$ledger" ]; then
-    dl=$(python3 "$dir/deadlines.py" --ledger "$ledger" --new)
+    dl=$(python3 "$dir/deadlines.py" --runtime "$runtime" --ledger "$ledger" --new)
     rc=$?
     if [ "$rc" -ne 0 ]; then
       if printf '%s\n' "$dl" | grep -q '^OVERDUE'; then
@@ -96,10 +120,27 @@ while [ "$(date +%s)" -lt "$end" ]; do
       sleep 60
       continue
     fi
-    nxt=$(python3 "$dir/deadlines.py" --ledger "$ledger" --next 2>/dev/null)
+    nxt=$(python3 "$dir/deadlines.py" --runtime "$runtime" --ledger "$ledger" --next 2>/dev/null)
   fi
   ms=$(( poll * 1000 ))
   if [ -n "$nxt" ] && [ "$nxt" -lt "$poll" ]; then ms=$(( (nxt + 5) * 1000 )); fi
+  remaining=$(( (end - $(date +%s)) * 1000 ))
+  if [ "$remaining" -le 0 ]; then break; fi
+  if [ "$ms" -gt "$remaining" ]; then ms=$remaining; fi
+  if [ "$runtime" = herdr ]; then
+    if [ -n "$match" ]; then
+      raw=$(herdr pane wait-output "$target" --match "$match" --source recent-unwrapped --timeout "$ms" 2>&1)
+    else
+      raw=$(herdr agent wait "$target" --timeout "$ms" 2>&1)
+    fi
+    rc=$?
+    if [ "$rc" -eq 0 ]; then printf '%s\n' "$raw"; exit 0; fi
+    if printf '%s' "$raw" | python3 -c 'import json,sys; sys.exit(0 if json.load(sys.stdin).get("error", {}).get("code") == "timeout" else 1)' 2>/dev/null; then
+      continue
+    fi
+    printf 'watch-inbox.sh: herdr wait failed (rc=%s): %s\n' "$rc" "$raw" >&2
+    exit 1
+  fi
   raw=$(orca orchestration check --run "$run_id" --peek --wait --types "$types" \
         --timeout-ms "$ms" --json 2>&1)
   rc=$?

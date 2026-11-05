@@ -95,13 +95,23 @@ Resume paths: Agent View to attach a running session and answer inline; or a
 fresh foreground `cd <worktree> && claude` that reads `INSTRUCTIONS.md`,
 `STATE.md`, and `git log` — works without Agent View.
 
-Cleanup after merge: back up the ignored files first (the rule is in
-[SKILL.md](SKILL.md), Supervise). `git -C <path> ls-files --others --ignored
---exclude-standard` lists them; copy out everything but build output, and diff
-each env file against the main checkout's — one that differs is unique state,
-so tell the owner before removing. Then `git worktree remove <path>`, with
-`--force` only after that backup; `git branch -d <branch>` is safe — it refuses
-unmerged branches, so get confirmation before any `-D`.
+Cleanup after close (merge or final review verdict): every lane closes
+with a worktree removal — the release step is not complete until it is gone.
+
+1. **Back up untracked and ignored small files first.** `git -C <path>
+   ls-files --others --ignored --exclude-standard` lists them; copy out
+   everything but build output, and diff each env file against the main
+   checkout's — one that differs is unique state, so tell the owner before
+   removing.
+2. **Run the prune script** (dry-run by default):
+   `scripts/prune-merged-worktrees.sh` classifies each worktree
+   (merged / PR-merged / closed / open / local-only, clean / dirty), backs up
+   dirty state, skips anything on the protected list and any worktree with a
+   live agent session, and removes merged or PR-merged lanes.
+3. **Remove the worktree and branch.** Pass `--apply` to run the removal:
+   `git worktree remove --force <path>` (through a runtime, its own command,
+   e.g. `orca worktree rm --force <path>`), `git branch -d <branch>`, then
+   `git worktree prune`. Branch `-D` requires confirmation.
 
 ## `INSTRUCTIONS.md` template (durable lane brief — written once, git-ignored)
 
@@ -109,6 +119,11 @@ unmerged branches, so get confirmation before any `-D`.
 # Worktree: <Lane name>
 
 > Local scaffolding — **git-ignored, do not commit.** Branch: `<branch>`.
+
+Worktree path: `<absolute path to this worktree>` — this tree is yours and the
+only place you may write; every other checkout of this repo, above all the
+live checkout, is read-only for you. Before your first write, run
+`git rev-parse --show-toplevel` and confirm it prints the path above — never the live checkout.
 
 ## Goal
 <One paragraph: what shipping this lane achieves.>

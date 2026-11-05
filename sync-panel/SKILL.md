@@ -5,6 +5,28 @@ description: Board an owner and their coordinator agent sync through, one privat
 
 # Sync panel
 
+## Runtime delivery
+
+The mailbox, receipt, replay and wake requirements below are adapter requirements.
+Select the adapter before building the helper.
+
+- **Orca:** use the installed orchestration mailbox contract for delivery,
+  acknowledgement, deterministic request IDs and terminal pointers.
+- **Herdr:** read [the native contract](../dispatching-work/herdr-native.md).
+  Herdr supplies `agent prompt`, `agent wait`, `agent read` and pane output waits,
+  but no durable mailbox, idempotent send or read receipt. Keep the append-only
+  inbox and task-bound message files in a verified durable adapter. Record `seen`
+  only when the recipient explicitly acknowledges that message ID through the
+  adapter; prompt success and idle state are insufficient. Wake an exclusively
+  assigned idle worker with `herdr agent prompt TARGET "<fixed message-file pointer>"`.
+  Queue the pointer in the adapter while busy, blocked or unknown and reconcile
+  before sending; herdr does not promise a durable busy-agent queue or dedup.
+  Route owner-facing panes through `via:` without terminal input. Use the
+  adapter's validated live target mapping and argv-only calls. Persist wake
+  intent/result; after uncertain submission reconcile before retrying. If no
+  adapter provides the board's receipt/replay guarantees, leave delivery visibly
+  unavailable and use the clipboard fallback until it does.
+
 The **board** is the one surface where the **owner** (the human) and the **coordinator** (the agent the owner talks to) see what each is waiting on. The coordinator writes it at every **event**; the owner reads it **at a glance** and answers on it, each click reaching the agent that waits on the answer. It replaces status messages: a result left in a terminal never reaches the other party, and state that lives in a file survives a fresh session.
 
 One board shared by several projects, four **states**: **Needs you** (the owner must act), **Running** (a lane works, with a due time and an outcome check), **Loose ends** (a next actor is named, no lane yet), **Done** (the deliverable). One **item** per thing waited on, each naming its project (BOARD-FORMAT.md, Projects). The issue tracker already shows issues and PRs; the board shows only what the tracker cannot: private items, who moves next, how long each has waited, what unblocks what.
@@ -74,7 +96,7 @@ The owner answers by clicking a reply, option or declared button, or the default
 For a remote helper, keep `ssh -N -L <port>:127.0.0.1:<port> <user>@<host>` running on the owner's machine and open the printed one-time bootstrap URL using `http://localhost:<port>`. Continue with that hostname so the host-only session cookie reaches the board (BOARD-FORMAT.md, SSH local forward).
 
 1. The click carries the item id, the answer, the time, the item's version (`changed`) and the note.
-2. The helper appends it to the **inbox**, an append-only event log, then sends it in full to each of the item's AI owners through the agents' mailbox system (e.g. Orca), and a notice-only copy to that project's coordinator, skipped when the coordinator is itself an owner. A mailbox message does not wake an idle agent, so after each delivered owner copy the helper **wakes** that agent's terminal. The routing file selects each agent's transport (BOARD-FORMAT.md, Transports); its guarantees govern receipt and recovery.
+2. The helper appends it to the **inbox**, an append-only event log, then sends it in full to each of the item's AI owners through the verified durable message adapter, and a notice-only copy to that project's coordinator, skipped when the coordinator is itself an owner. A mailbox message does not wake an idle agent, so after each delivered owner copy the helper **wakes** that agent's terminal. The routing file selects each agent's transport (BOARD-FORMAT.md, Transports); its guarantees govern receipt and recovery.
 3. Each send ends as delivered or failed in the inbox; the page shows sending, sent, seen, not delivered (with retry), answered an older version, and resolved, and a delivered answer steps into the answered strip.
 
 A **steering note** ("include feedback" on a Running item) goes to the agent the item's lane names, the one doing the work. For a `term:` or `herdr:` lane the note travels as a mailbox message to that handle, and a fixed one-line pointer typed into its terminal wakes it to read its mailbox; the note itself is never typed. An idle agent takes the pointer as a prompt at once, and a busy one takes it after its current step. A `via:` lane, an agent with no terminal of its own or any owner-facing agent, gets the mailbox message only and forwards it with its own tool. The coordinator gets its notice.

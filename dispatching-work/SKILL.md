@@ -149,11 +149,9 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
   questions. A lifecycle transition is a wake to inspect task evidence, not a
   task verdict. Re-arm waits after processing, and reconcile after a
   disconnect, a compaction or a resume: the first call after any of them is a
-  full mailbox check on every run the agent belongs to, because a summary that
-  says "waiting for X" carries none of the mail that arrived since. On
-  Orca, any coordinator or PM can also watch its own mailbox with
-  [scripts/watch-inbox.sh](scripts/watch-inbox.sh) — run it as a background
-  task, and when it exits, drain and ack the mailbox, then start it again.
+  full reconciliation of the assigned task/result channel, because a summary
+  that says "waiting for X" carries none of the results that arrived since.
+  See the runtime sections below for waits and receipts.
 - **Reach an agent through its mailbox.** Text sent to a terminal lands
   wherever its user is typing, so an agent whose terminal someone writes in —
   the owner, above all — is reached only through its mailbox. Where a terminal
@@ -184,6 +182,30 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
   context) through a new task/attempt and verify its current occupant first.
 - **Verify results by git state, not the worker's self-report**: the claimed
   commits exist, the tree is clean, CI is green.
+
+## Runtime sections
+
+### Orca
+
+Use the installed Orca contract for dispatch, terminal reads, worktree setup and
+release. Send `worker_done` through its orchestration task channel. For mailbox
+waits run [scripts/watch-inbox.sh](scripts/watch-inbox.sh) with `--run ID`
+(default runtime `orca`), then drain and acknowledge the full batch and re-arm.
+Terminal pointers supplement mailbox delivery only on an exclusively assigned
+worker terminal. Settle the task and harvest evidence before runtime release;
+respect a retained/user-takeover result.
+
+### Herdr
+
+Read [herdr-native.md](herdr-native.md), including its executable runtime recipe,
+for dispatch, agent/output waits, reports, reads, worktrees and close. Herdr has
+no native mailbox or `worker_done` task API: persist task-bound reports and
+receipts in the project adapter or agreed files. The mailbox rules above apply
+to that adapter; they do not authorize typing into an owner-facing pane.
+Use `watch-inbox.sh --runtime herdr --target NAME_OR_PANE` for settled-agent
+signals, or add `--match UNIQUE_MARKER` for pane output. Reconcile the report
+before re-arming: an already idle agent returns immediately. Deadline checks
+support the same runtime selection; see `deadlines.py --help`.
 
 ## Land the results
 
@@ -308,5 +330,22 @@ per-PR review misses.
   (env files, build artifacts, generated code) don't follow a `git mv` — the
   sweep's PR body must carry the migration steps, and the coordinator runs them
   in the live checkout.
-- Close the loop: release the worker, acknowledge the final delivery, and
-  update the tracking surface (board, issue) — or delegate that update.
+- Close the loop: release the worker, acknowledge the final delivery, update
+  the tracking surface (board, issue) — or delegate that update — and remove
+  the lane's worktree: back up untracked/ignored small files, run
+  [scripts/prune-merged-worktrees.sh](scripts/prune-merged-worktrees.sh)
+  (dry-run first, `--apply` to remove), delete the merged branch, and prune
+  (see [worktree-lanes.md](worktree-lanes.md), cleanup, for the no-runtime
+  sequence). A lane is not closed until its worktree is gone.
+
+## Design record
+
+- 2026-11-05 — **Lane close is a worktree removal.** A lane that releases its
+  terminal but leaves its worktree in place compounds into hundreds of stale
+  directories over a long run, some holding uncommitted edits. Cleanup after
+  merge or a review's final verdict is now: back up ignored/untracked small
+  files, classify and remove via
+  [scripts/prune-merged-worktrees.sh](scripts/prune-merged-worktrees.sh)
+  (dry-run default, protected list, live-session skip), delete the merged
+  branch, and prune. Caution about losing ignored files is handled by the
+  backup step, not by never removing.
