@@ -240,7 +240,7 @@ A local server with no dependency beyond its runtime, started and stopped by han
 - **States**, in the expanded item and as a short badge in row view:
   - sending: until a copy is confirmed, never shown as sent;
   - sent: the answer and its time, with "agent not woken" after a `wake-failed`, and "unread 30+ min" in the warning colour once a copy has stayed unread that long;
-  - seen: by whom and when, from the mailbox's read receipt, which the helper polls while a sent message is unread; it means handed to the agent, and says nothing about acting;
+  - seen: by whom and when, from the selected adapter's verified read receipt or message-ID acknowledgement, where supported, which the helper polls while a sent message is unread; it means handed to the agent, and says nothing about acting;
   - not delivered: to whom, with a **retry** button;
   - answered an older version: the click's version differs from the item's `data-changed` at the moment of the click;
   - resolved: the item left Needs you, or was edited after the answer.
@@ -284,7 +284,11 @@ For Orca, retain the existing mailbox calls, fixed terminal pointer, clean proce
 
 Use `"to": "herdr:w1:p2"` for a Herdr route and `data-lane="herdr:w1:p2"` for a lane: these are pane IDs, accepted as agent-prompt targets, rather than agent-name aliases that end when an agent exits. Validate the qualified numeric pane shape, `^w[1-9][0-9]*:p[1-9][0-9]*$`, before writing a mailbox or calling the socket. Capture real IDs from creation responses; update a lane after moving or replacing its pane. Any pane named by an agent route is owner-facing for steering and uses `via:` instead, checked again at delivery and immediately before the pointer.
 
-The Herdr 0.9.5 contract has no durable mailbox or per-message seen state. Supply a helper-owned file mailbox accessible to the recipient: one private JSON file per deterministic delivery ID, atomically published once, containing the sender, subject, body and payload. An agent reads it with its own file tool; `via:` recipients forward its body. The typed line contains only a fixed instruction and a validated mailbox path, never note text. Send that pointer through `agent.prompt` with `{target: <pane-id>, text: <fixed pointer>}`; it accepts idle or working agents and reports a blocked agent without silently sending raw terminal input. A send receipt confirms the file exists, and a prompt receipt confirms submission; neither proves it was read. Show **read status unknown (not supported)** in every click's state. `pane.read`, focus/Done badges and event subscriptions are not read receipts.
+Herdr's native API provides no durable mailbox, idempotent send or read receipt. Supply a helper-owned file mailbox accessible to the recipient: one private JSON file per deterministic delivery ID, atomically published once, containing the sender, subject, body and payload. An agent reads it with its own file tool; `via:` recipients forward its body. The typed line contains only a fixed instruction and a validated mailbox path, never note text. Submit the fixed pointer through `agent.prompt` with `{target: <pane-id>, text: <fixed pointer>}` only after reconciling the live target as an exclusively assigned idle worker. Durably queue the pointer in the adapter while busy, blocked or unknown; reconcile readiness before submission. A send receipt confirms the file exists, and a prompt receipt confirms submission.
+
+For Herdr, record `seen` only after the recipient explicitly acknowledges that delivery ID through the adapter. Until then, show read status unknown; when no acknowledgement channel exists, mark it not supported. Prompt success, lifecycle state and the recipient's local processed-ID record are not acknowledgements. `pane.read`, focus/Done badges and event subscriptions are not read receipts.
+
+Verify durable publication and replay against the selected transport's documented guarantees before enabling delivery. Unsupported read acknowledgements use the unknown state above; Herdr prompt submission uses the weaker guarantee in Prompt recovery. If required durable delivery/replay cannot be provided, show delivery unavailable and preserve the note. Apply The helper's No silent copy rule: an online refusal preserves the note and copies nothing; clipboard fallback is for offline/no-response operation.
 
 ### Receiving file deliveries
 
@@ -293,7 +297,7 @@ Before dispatch, put the private `mailbox_root`, the agent's `recipient_director
 1. On each next turn, list `*.json` files in the bound `mailbox_root/recipient_directory`, before starting other work. This includes copies delivered without a wake.
 2. Skip delivery ids already in the bound `processed_delivery_ids` record; use each immutable filename's delivery id, not a timestamp or directory position.
 3. Read the subject, body and payload of each remaining copy. Handle a coordinator notice as notice-only; forward a `via:` body word for word with the agent's own tool, then take it into the current work as appropriate.
-4. After successful handling, record that delivery id in `processed_delivery_ids` locally, retaining previous ids across turns. Keep the local record private (directory 700, file 600) and the helper mailbox files immutable. A local processed-id record is not a board read receipt: receipts stay unknown/not supported.
+4. After successful handling, record that delivery id in `processed_delivery_ids` locally, retaining previous ids across turns. Keep the local record private (directory 700, file 600) and the helper mailbox files immutable. The local processed-ID record does not acknowledge the message through the adapter (Transports).
 
 Done when a fresh recipient with only this procedure and its runtime binding handles a no-wake copy once, then finds a later copy on its next turn without handling the first again. Prove the procedure with a scripted recipient when no live model is available, and state that limit; removing the discovery/next-turn instruction must make that eval fail.
 
@@ -340,7 +344,7 @@ The owner can ask for a grilling round on any decision waiting on them. Every ex
 - **Where it is accepted**: the helper accepts `grill` only for an item whose `data-section` is `needs-you`, and refuses it on any other item (400, naming the item's section). `grill` is the board's own answer: a declared reply of that name sends the grill request on a Needs-you item and is refused elsewhere.
 - **Recipients**: the item's `data-ai-owner` names, read as the security baseline's Owner list says (The helper), resolved within its project (Projects). An unlisted name falls back to that project's coordinator. The coordinator gets the usual notice-only copy, skipped when it is a recipient.
 - **A request, not an answer**: the item keeps its place and its count, never enters the answered strip, and keeps its chips or the default Done, because the decision is still the owner's. The request has its own line beside any answer's, "grilling round requested HH:MM · seen by <agent>", with sending, agent not woken, requested on an older version, and not delivered with **retry**, as for answers; row view shows a short badge beside the age.
-- **Cleared**: once an owner copy is seen and the item's `data-changed` is later than the click, the line and the badge go, and the item's changed-since-you-looked dot shows the new content. Both halves count: the seen copy is the mailbox's own record, which a board edit cannot write.
+- **Cleared**: once an owner copy is seen and the item's `data-changed` is later than the click, the line and the badge go, and the item's changed-since-you-looked dot shows the new content. Both halves count: the seen copy is the adapter's receipt/acknowledgement record, which a board edit cannot write.
 - **Older helper**: the helper announces `needs-you-grill` among its features. On a helper without it, the button is disabled with a visible "helper too old" note, and nothing is copied to the clipboard. Offline it copies `<id>: grill` like every button (The helper, No silent copy).
 
 **The grilling round** is what the receiving agent does on `grill`, within its next turn:
@@ -359,7 +363,7 @@ The owner can steer the agent working a Running item while it works. Every expan
 | `data-lane` | who works the item | where a note goes | wake |
 |---|---|---|---|
 | `term:<handle>` | an agent with a terminal of its own, by the runtime's handle | a mailbox message to that handle | one fixed pointer typed into its terminal |
-| `herdr:<pane-id>` | a Herdr pane running an agent | the helper-owned file mailbox | one fixed pointer via `agent.prompt` |
+| `herdr:<pane-id>` | a Herdr pane running an agent | the helper-owned file mailbox | one fixed pointer, queued until readiness is reconciled |
 | `via:<AGENT>` | an agent with no terminal of its own (a subagent), or any owner-facing agent; AGENT is a routing-file name | AGENT's mailbox | none: AGENT forwards the note with its own tool |
 | `none` | nobody, for now (waiting on CI, a merge, the owner) | nowhere: the box is disabled and says why | — |
 
@@ -369,11 +373,11 @@ A terminal the routing file names belongs to an owner-facing agent, so the dispa
 
 **Delivery** keeps the note's text in the mailbox body, indented, and out of every terminal:
 
-- `term:` — one message to the handle, then the pointer: `You have sync-board a steering note on <id> from the owner: run <mailbox check>.`, as an argument array. An idle agent takes the pointer as a prompt and reads its mailbox at once; a busy one takes it as its next prompt, after its current step. A handle outside the runtime's plain shape is recorded `send-failed` and `wake-failed`, with nothing run.
+- `term:` — one message to the handle, then the pointer: `You have sync-board a steering note on <id> from the owner: run <mailbox check>.`, as an argument array. For the verified Orca `term:` behavior, an idle agent takes the pointer as a prompt and reads its mailbox at once; a busy one takes it as its next prompt, after its current step. A handle outside the runtime's plain shape is recorded `send-failed` and `wake-failed`, with nothing run.
 - `via:` — one message to AGENT's address, asking it to forward the note word for word to the lane it runs.
 - The coordinator gets the usual notice-only copy, skipped when it is the `via:` agent.
 
-The pointer is the helper's existing wake, which lands in both states and creates no orchestration state; a dispatched task would add a second assignment beside the one the lane already holds.
+The pointer follows the selected transport's wake policy and creates no orchestration assignment.
 
 **On the page**, under the box, every note sent on the item, newest first, read from the inbox, the earlier ones past the newest five behind one toggle: its time, its text, and its state (sending, sent to the handle or agent, woken or not woken, seen once the mailbox marks it read, not delivered with retry, and "sent on an older version" when the page was older than the item). The latest note's state is a short badge beside the age. The helper announces `steer-notes` among its features; the `file://` page copies `<id>: steering note: <text>` and says so. The notes are the board's record of what was said: they live in the inbox, and the board file stays as the edit script leaves it.
 
