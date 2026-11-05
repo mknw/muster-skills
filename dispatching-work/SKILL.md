@@ -308,5 +308,22 @@ per-PR review misses.
   (env files, build artifacts, generated code) don't follow a `git mv` — the
   sweep's PR body must carry the migration steps, and the coordinator runs them
   in the live checkout.
-- Close the loop: release the worker, acknowledge the final delivery, and
-  update the tracking surface (board, issue) — or delegate that update.
+- Close the loop: release the worker, acknowledge the final delivery, update
+  the tracking surface (board, issue) — or delegate that update — and remove
+  the lane's worktree: back up untracked/ignored small files, run
+  [scripts/prune-merged-worktrees.sh](scripts/prune-merged-worktrees.sh)
+  (dry-run first, `--apply` to remove), delete the merged branch, and prune
+  (see [worktree-lanes.md](worktree-lanes.md), cleanup, for the no-runtime
+  sequence). A lane is not closed until its worktree is gone.
+
+## Design record
+
+- 2026-11-05 — **Lane close is a worktree removal.** A lane that releases its
+  terminal but leaves its worktree in place compounds into hundreds of stale
+  directories over a long run, some holding uncommitted edits. Cleanup after
+  merge or a review's final verdict is now: back up ignored/untracked small
+  files, classify and remove via
+  [scripts/prune-merged-worktrees.sh](scripts/prune-merged-worktrees.sh)
+  (dry-run default, protected list, live-session skip), delete the merged
+  branch, and prune. Caution about losing ignored files is handled by the
+  backup step, not by never removing.
