@@ -83,7 +83,8 @@ Each suite gets its own database, schema, temporary directory or fixture
 identity, provisioned on demand so a first run costs one setup step. Where the
 state must exist per worktree, provision it before dispatch.
 
-- **Orca:** put provisioning in the setup hook with `orca-project-init` (Orca only).
+- **Orca:** put provisioning in the setup hook; `orca-project-init`, which
+  lives on the `orca-legacy` branch rather than on main, covers the hook (Orca only).
 - **Herdr:** `worktree create` creates source/layout; it does not promise Orca
   setup hooks. Run the repo's provisioning command in the new checkout, wait for
   it to finish, and verify the per-worktree test state before starting an agent.
