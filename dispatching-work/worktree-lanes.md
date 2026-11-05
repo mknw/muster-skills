@@ -109,9 +109,9 @@ with a worktree removal — the release step is not complete until it is gone.
    dirty state, skips anything on the protected list and any worktree with a
    live agent session, and removes merged or PR-merged lanes.
 3. **Remove the worktree and branch.** Pass `--apply` to run the removal:
-   `orca worktree rm --force <path>` (or `git worktree remove --force`),
-   `git branch -d <branch>`, then `git worktree prune`. Branch `-D` requires
-   confirmation.
+   `git worktree remove --force <path>` (through a runtime, its own command,
+   e.g. `orca worktree rm --force <path>`), `git branch -d <branch>`, then
+   `git worktree prune`. Branch `-D` requires confirmation.
 
 ## `INSTRUCTIONS.md` template (durable lane brief — written once, git-ignored)
 
@@ -119,6 +119,11 @@ with a worktree removal — the release step is not complete until it is gone.
 # Worktree: <Lane name>
 
 > Local scaffolding — **git-ignored, do not commit.** Branch: `<branch>`.
+
+Worktree path: `<absolute path to this worktree>` — this tree is yours and the
+only place you may write; every other checkout of this repo, above all the
+live checkout, is read-only for you. Before your first write, run
+`git rev-parse --show-toplevel` and confirm it prints the path above — never the live checkout.
 
 ## Goal
 <One paragraph: what shipping this lane achieves.>

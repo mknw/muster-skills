@@ -107,9 +107,17 @@ info "Repo: ${REPO_DIR:?}   Merge target: ${BASE_REF:?}   Mode: $([ "${APPLY:?}"
 # live checkout passes --confirm-live-checkout.
 PRIMARY=""
 CWD_TOP="$(git rev-parse --show-toplevel 2>/dev/null || true)"
-for wt in $("${GIT[@]}" worktree list --porcelain | sed -n 's/^worktree //p'); do
-  if [ -d "${wt}/.git" ]; then PRIMARY="${wt}"; break; fi
-done
+detect_primary() {
+  # line-by-line read: an unquoted for-in word-splits paths containing spaces,
+  # which silently emptied PRIMARY and defeated the live-checkout refusal
+  "${GIT[@]}" worktree list --porcelain | sed -n 's/^worktree //p' | while IFS= read -r wt; do
+    if [ -d "${wt}/.git" ]; then
+      echo "${wt}"
+      break
+    fi
+  done
+}
+PRIMARY="$(detect_primary)"
 if [ "${APPLY:?}" = true ] && [ -n "${CWD_TOP}" ] && [ -n "${PRIMARY}" ] \
    && [ "${CWD_TOP}" = "${PRIMARY}" ] && [ "${CONFIRM_LIVE}" = false ]; then
   die "--apply refused: the working directory's toplevel (${CWD_TOP}) is the repo's live checkout (the primary working tree). Lanes must never write there. Run from a lane worktree, or pass --confirm-live-checkout if you are the coordinator pruning from here."
@@ -186,6 +194,9 @@ if [ "${SKIP_LIVE}" = true ]; then
   if [ -n "${REF_TS}" ]; then
     REF_FILE="$(mktemp "${TMPDIR:-/tmp}/prune-ref.XXXXXX")"
     touch -t "${REF_TS}" "${REF_FILE}"
+    trap 'rm -f "${REF_FILE:?}"' EXIT
+  else
+    info "WARNING: --live-minutes '${LIVE_MINUTES}' is not a usable offset; treating every session file as live (fail-safe)."
   fi
 fi
 
@@ -195,10 +206,11 @@ classify() {
   if "${GIT[@]}" merge-base --is-ancestor "${sha}" "${BASE_REF}" >/dev/null 2>&1; then
     echo merged; return
   fi
-  if command -v "${GH_BIN}" >/dev/null 2>&1; then
+  local origin_url=""
+  origin_url="$("${GIT[@]}" remote get-url origin 2>/dev/null || true)"
+  if command -v "${GH_BIN}" >/dev/null 2>&1 && [ -n "${origin_url}" ]; then
     local state
-    state="$("${GH_BIN}" pr list --head "${branch}" --state all \
-              --json state --jq 'if length > 0 then .[0].state else "" end' 2>/dev/null || true)"
+    state="$("${GH_BIN}" -R "${origin_url}" pr list --head "${branch}" --state all --json state,headRefOid --jq "[.[] | select(.headRefOid == \"${sha}\")] | if length > 0 then .[0].state else \"\" end" 2>/dev/null || true)"
     case "${state}" in
       MERGED) echo pr-merged; return ;;
       CLOSED) echo closed; return ;;
@@ -237,7 +249,10 @@ backup_worktree() {
   while IFS= read -r -d '' f; do
     [ -f "${wt}/${f}" ] || continue
     size=$(wc -c < "${wt}/${f}")
-    [ "${size}" -le "${MAX_FILE_BYTES}" ] || continue
+    if [ "${size}" -gt "${MAX_FILE_BYTES}" ]; then
+      info "NOT backed up (over cap): ${f} (${size} bytes)"
+      continue
+    fi
     mkdir -p "${backup_dir}/$(dirname "${f}")"
     cp -p "${wt}/${f}" "${backup_dir}/${f}"
     n_files=$((n_files + 1))
@@ -328,15 +343,15 @@ while [ "${i}" -lt "${#wts[@]}" ]; do
 
   backup_worktree "${wt}" "${branch}"
   info "Removing worktree ${wt}"
-  if orca worktree rm --force "${wt}" 2>/dev/null \
-     || "${GIT[@]}" worktree remove --force -- "${wt}"; then
+  if orca worktree rm --force "${wt:?}" 2>/dev/null \
+     || "${GIT[@]}" worktree remove --force -- "${wt:?}"; then
     removed_any=true
   else
     echo "ERROR: failed to remove worktree ${wt} — left in place" >&2
     continue
   fi
   if [ -n "${branch}" ]; then
-    if "${GIT[@]}" branch -d "${branch}" 2>/dev/null; then
+    if "${GIT[@]}" branch -d "${branch:?}" >/dev/null 2>&1; then
       info "Deleted branch ${branch}"
     else
       echo "NOTE: branch ${branch} kept (git refused deletion)"
@@ -345,7 +360,9 @@ while [ "${i}" -lt "${#wts[@]}" ]; do
 done
 
 echo "---"
-"${GIT[@]}" worktree prune
+if [ "${APPLY}" = true ]; then
+  "${GIT[@]}" worktree prune
+fi
 if [ "${APPLY}" = true ] && [ "${removed_any}" = true ]; then
   info "Backups live outside the repo under ${BACKUP_ROOT}."
 fi

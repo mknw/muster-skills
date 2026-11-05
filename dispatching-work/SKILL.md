@@ -308,8 +308,13 @@ per-PR review misses.
   (env files, build artifacts, generated code) don't follow a `git mv` — the
   sweep's PR body must carry the migration steps, and the coordinator runs them
   in the live checkout.
-- Close the loop: release the worker, acknowledge the final delivery, and
-  update the tracking surface (board, issue) — or delegate that update.
+- Close the loop: release the worker, acknowledge the final delivery, update
+  the tracking surface (board, issue) — or delegate that update — and remove
+  the lane's worktree: back up untracked/ignored small files, run
+  [scripts/prune-merged-worktrees.sh](scripts/prune-merged-worktrees.sh)
+  (dry-run first, `--apply` to remove), delete the merged branch, and prune
+  (see [worktree-lanes.md](worktree-lanes.md), cleanup, for the no-runtime
+  sequence). A lane is not closed until its worktree is gone.
 
 ## Design record
 

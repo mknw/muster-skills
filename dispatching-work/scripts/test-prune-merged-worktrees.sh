@@ -122,6 +122,10 @@ t02_apply_removes_merged_keeps_unmerged() {
   assert_dir_present "$T/wt-open" "t02 apply keeps open worktree"
   assert_dir_present "$T/wt-local" "t02 apply keeps local-only worktree"
   assert_branch_gone "feat-merged" "t02 deletes merged branch"
+  local n
+  n="$(printf '%s\n' "$OUT" | grep -c "Deleted branch feat-merged")"
+  [ "$n" -eq 1 ] && ok "t02 branch deletion printed once" \
+    || fail "t02 'Deleted branch' printed $n times (expected 1)"
   assert_branch_present "feat-open" "t02 keeps open branch"
   assert_branch_present "feat-local" "t02 keeps local-only branch"
 }
@@ -320,6 +324,126 @@ t12_open_and_local_only_kept_without_gh() {
   assert_dir_present "$T/wt-local" "t12 local-only wt kept"
 }
 
+t13_spaces_in_path_guard() {
+  T="$SANDBOX/t13 my repo"   # repo path containing spaces
+  build_repo "$T"
+  add_worktree merged
+  commit_in_wt merged m1
+  merge_branch merged
+  runcap "$R" --repo "$R" --apply
+  assert_rc_nonzero "t13 --apply from live checkout (spaces in path) refused"
+  assert_contains "live checkout" "t13 refusal names the live checkout"
+  assert_dir_present "$T/wt-merged" "t13 refusal removes nothing"
+}
+
+t14_gh_pinned_to_target_repo() {
+  T="$SANDBOX/t14"; build_repo "$T"
+  GH_FAKE="$T/fake-gh"
+  cat > "$GH_FAKE" <<'EOF'
+#!/usr/bin/env bash
+pinned=false
+prev=""
+for a in "$@"; do
+  [ "$prev" = "-R" ] && pinned=true
+  prev="$a"
+done
+if [ "$pinned" = true ]; then
+  echo OPEN     # our repo: this branch has a fresh open PR
+else
+  echo MERGED   # unpinned: gh resolved some other repo whose same-named PR is MERGED
+fi
+EOF
+  chmod +x "$GH_FAKE"
+  git init -q --bare "$T/origin.git"
+  git -C "$R" remote add origin "$T/origin.git"
+  git -C "$R" push -q origin main
+  add_worktree unmerged
+  commit_in_wt unmerged u1
+  git -C "$T/wt-unmerged" push -q origin feat-unmerged
+  runcap "$SANDBOX" --repo "$R" --apply
+  assert_contains "open / clean" "t14 classified open via pinned gh"
+  assert_dir_present "$T/wt-unmerged" "t14 unmerged wt kept when gh is pinned to the target repo"
+}
+
+t15_dry_run_never_touches_worktree_registrations() {
+  T="$SANDBOX/t15"; build_repo "$T"
+  add_worktree stale
+  commit_in_wt stale s1
+  merge_branch stale
+  rm -rf "${T:?}/wt-stale"   # stale registration remains until pruned
+  git -C "$R" worktree list --porcelain | grep -q "wt-stale" \
+    && ok "t15 stale registration present" \
+    || fail "t15 stale registration missing"
+  runcap "$SANDBOX" --repo "$R"   # dry run
+  git -C "$R" worktree list --porcelain | grep -q "wt-stale" \
+    && ok "t15 dry run leaves registration (writes nothing)" \
+    || fail "t15 dry run deregistered the stale worktree (wrote repo state)"
+}
+
+t16_oversized_files_reported_not_silent() {
+  T="$SANDBOX/t16"; build_repo "$T"
+  add_worktree big
+  commit_in_wt big b1
+  merge_branch big
+  head -c 12000000 /dev/zero > "$T/wt-big/huge.bin"
+  runcap "$SANDBOX" --repo "$R" --apply
+  assert_dir_absent "$T/wt-big" "t16 merged wt removed"
+  assert_contains "huge.bin" "t16 oversized file reported by name"
+  assert_contains "NOT backed up" "t16 oversized skip is explicit"
+}
+
+t17_stale_pr_does_not_mask_open_pr() {
+  T="$SANDBOX/t17"; build_repo "$T"
+  GH_FAKE="$T/fake-gh"
+  cat > "$GH_FAKE" <<'EOF'
+#!/usr/bin/env bash
+case "$*" in
+  *headRefOid*) echo OPEN ;;     # sha-matched: the fresh PR is open
+  *)             echo MERGED ;;  # unfiltered .[0]: stale MERGED PR wins
+esac
+EOF
+  chmod +x "$GH_FAKE"
+  git init -q --bare "$T/origin.git"
+  git -C "$R" remote add origin "$T/origin.git"
+  git -C "$R" push -q origin main
+  add_worktree recreated
+  commit_in_wt recreated r1
+  git -C "$T/wt-recreated" push -q origin feat-recreated
+  runcap "$SANDBOX" --repo "$R" --apply
+  assert_dir_present "$T/wt-recreated" "t17 fresh PR (OPEN) not masked by stale MERGED PR"
+}
+
+t18_docs_carry_the_close_contract() {
+  local skill="$HERE/../SKILL.md" lanes="$HERE/../worktree-lanes.md"
+  grep -q "prune-merged-worktrees.sh" "$skill" \
+    && ok "t18 SKILL.md close-the-loop names the prune script" \
+    || fail "t18 SKILL.md close-the-loop missing prune script"
+  grep -q "worktree is gone" "$skill" \
+    && ok "t18 SKILL.md close-the-loop requires removal" \
+    || fail "t18 SKILL.md close-the-loop lacks removal"
+  grep -q "never the live checkout" "$lanes" \
+    && ok "t18 INSTRUCTIONS template bars the live checkout" \
+    || fail "t18 INSTRUCTIONS template lacks live-checkout rule"
+  grep -q "absolute path to this worktree" "$lanes" \
+    && ok "t18 INSTRUCTIONS template carries the worktree path" \
+    || fail "t18 INSTRUCTIONS template lacks worktree path"
+  grep -q "through a runtime" "$lanes" \
+    && ok "t18 fallback doc keeps git worktree remove primary" \
+    || fail "t18 fallback doc still leads with the runtime command"
+}
+
+t19_live_minutes_warning_and_ref_cleanup() {
+  T="$SANDBOX/t19"; build_repo "$T"
+  runcap "$SANDBOX" --repo "$R" --live-minutes abc
+  assert_rc_zero "t19 invalid live-minutes does not crash"
+  assert_contains "WARNING" "t19 silent degrade is warned"
+  runcap "$SANDBOX" --repo "$R" --live-minutes 30   # valid offset: creates REF_FILE
+  assert_rc_zero "t19 valid run exits 0"
+  ls "$SANDBOX"/prune-ref.* >/dev/null 2>&1 \
+    && fail "t19 REF_FILE mktemp leaked" \
+    || ok "t19 REF_FILE mktemp cleaned up"
+}
+
 # =====================================================================
 # Mutation tests: each mutant must be caught by the suite
 # =====================================================================
@@ -337,6 +461,13 @@ run_suite() {
   t10_primary_only_unknown_args_explicit_base
   t11_detached_head_merged_removed_without_branch_delete
   t12_open_and_local_only_kept_without_gh
+  t13_spaces_in_path_guard
+  t14_gh_pinned_to_target_repo
+  t15_dry_run_never_touches_worktree_registrations
+  t16_oversized_files_reported_not_silent
+  t17_stale_pr_does_not_mask_open_pr
+  t18_docs_carry_the_close_contract
+  t19_live_minutes_warning_and_ref_cleanup
 }
 
 # replace the first line containing <old> with <new> (plain substring, no regex)
@@ -414,7 +545,7 @@ run_mutations() {
     t06_live_checkout_guard_refuses_and_confirms
   # branch deletion removed -> merged branch survives apply
   mutate_and_test no-branch-delete \
-    'if "${GIT[@]}" branch -d "${branch}" 2>/dev/null; then' \
+    'if "${GIT[@]}" branch -d "${branch:?}" >/dev/null 2>&1; then' \
     'if false; then' \
     t02_apply_removes_merged_keeps_unmerged
   # open branches misclassified as merged -> open wt removed
@@ -437,11 +568,50 @@ run_mutations() {
     '  "${REPO_DIR:?}"/*) die "--backup-dir must live outside the repository (${REPO_DIR:?}), not inside it" ;;' \
     '  "${REPO_DIR:?}"/*) : ;;' \
     t09_backup_dir_inside_repo_refused
-  # primary detection removed -> primary becomes a removal candidate
+  # primary detection broken -> primary becomes a removal candidate
   mutate_and_test no-primary-detect \
-    '  if [ -d "${wt}/.git" ]; then PRIMARY="${wt}"; break; fi' \
-    '  if [ -d "${wt}/.git" ]; then PRIMARY=""; break; fi' \
+    'if [ -d "${wt}/.git" ]; then' \
+    'if [ -d "${wt}/.git-nope" ]; then' \
     t06_live_checkout_guard_refuses_and_confirms
+  # spaces in the repo path defeated the live-checkout guard (unquoted for-in)
+  mutate_and_test no-space-guard \
+    '| while IFS= read -r wt; do' \
+    '  for wt in $("${GIT[@]}" worktree list --porcelain | sed -n '"'"'s/^worktree //p'"'"'); do' \
+    t13_spaces_in_path_guard
+  # gh not pinned to the target repo -> cross-repo MERGED leak removes unmerged wt
+  mutate_and_test no-gh-pin \
+    '-R "${origin_url}" pr list' \
+    '    state="$("${GH_BIN}" pr list --head "${branch}" --state all --json state,headRefOid --jq "[.[] | select(.headRefOid == \"${sha}\")] | if length > 0 then .[0].state else \"\" end" 2>/dev/null || true)"' \
+    t14_gh_pinned_to_target_repo
+  # dry run runs git worktree prune -> dry run writes repo state
+  mutate_and_test dry-run-prune \
+    'if [ "${APPLY}" = true ]; then' 'if true; then' \
+    t15_dry_run_never_touches_worktree_registrations
+  # oversized skip goes silent again -> file destroyed without mention
+  mutate_and_test no-oversized-report \
+    'info "NOT backed up (over cap): ${f} (${size} bytes)"' \
+    ': # mutation: oversized report removed' \
+    t16_oversized_files_reported_not_silent
+  # unfiltered .[0].state -> stale MERGED PR masks the fresh OPEN one
+  mutate_and_test stale-pr-wins \
+    '--json state,headRefOid' \
+    '    state="$("${GH_BIN}" -R "${origin_url}" pr list --head "${branch}" --state all --json state --jq "if length > 0 then .[0].state else \"\" end" 2>/dev/null || true)"' \
+    t17_stale_pr_does_not_mask_open_pr
+  # git's own "Deleted branch" line no longer suppressed -> printed twice
+  mutate_and_test double-branch-print \
+    'branch -d "${branch:?}" >/dev/null 2>&1; then' \
+    'if "${GIT[@]}" branch -d "${branch:?}" 2>/dev/null; then' \
+    t02_apply_removes_merged_keeps_unmerged
+  # --live-minutes degrade goes silent again
+  mutate_and_test no-live-warning \
+    'info "WARNING: --live-minutes' \
+    ': # mutation: warning removed' \
+    t19_live_minutes_warning_and_ref_cleanup
+  # REF_FILE mktemp never cleaned up
+  mutate_and_test ref-file-leak \
+    "trap 'rm -f" \
+    ': # mutation: cleanup removed' \
+    t19_live_minutes_warning_and_ref_cleanup
 }
 
 # ---------- main ----------
