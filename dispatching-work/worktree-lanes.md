@@ -103,7 +103,7 @@ with a worktree removal — the release step is not complete until it is gone.
    everything but build output, and diff each env file against the main
    checkout's — one that differs is unique state, so tell the owner before
    removing.
-2. **Run the prune script** (dry-run by default): 
+2. **Run the prune script** (dry-run by default):
    `scripts/prune-merged-worktrees.sh` classifies each worktree
    (merged / PR-merged / closed / open / local-only, clean / dirty), backs up
    dirty state, skips anything on the protected list and any worktree with a
