@@ -81,8 +81,13 @@ default layer's, and each guard has gone red once under the mutation it exists f
 
 Each suite gets its own database, schema, temporary directory or fixture
 identity, provisioned on demand so a first run costs one setup step. Where the
-state must exist per worktree and the repo uses Orca worktrees, put the
-provisioning in the setup hook with the `orca-project-init` skill.
+state must exist per worktree, provision it before dispatch.
+
+- **Orca:** put provisioning in the setup hook with `orca-project-init` (Orca only).
+- **Herdr:** `worktree create` creates source/layout; it does not promise Orca
+  setup hooks. Run the repo's provisioning command in the new checkout, wait for
+  it to finish, and verify the per-worktree test state before starting an agent.
+  Follow [the runtime contract](../dispatching-work/herdr-native.md).
 
 Completion criterion: for every pair of suites, the map names what keeps their
 writable state apart.

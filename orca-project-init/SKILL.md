@@ -1,8 +1,8 @@
 ---
 name: orca-project-init
 description: >-
-  Set up or repair a repository's orca.yaml so new Orca worktrees bootstrap
-  themselves — setup/archive hooks, issueCommand, defaultTabs, shared
+  Applies only to Orca. Set up or repair a repository's orca.yaml so new Orca
+  worktrees bootstrap themselves — setup/archive hooks, issueCommand, defaultTabs, shared
   directories, and environment recipes. Use this whenever the user mentions
   orca.yaml, Orca worktree setup or hooks, initializing or onboarding a repo for
   Orca, or complains that a new worktree is missing its .env / node_modules /

@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Deadline ledger check for a waiting Orca coordinator or PM.
+"""Deadline ledger check for a waiting runtime coordinator or PM.
 
 Silence from a dispatched lane is not evidence of progress. This script reads a
 tab-separated ledger of expected completion times and reports the lines that
 have passed theirs, running each line's outcome check so the waiter judges the
 OUTCOME (a report file, a PR, a commit) rather than polling the mailbox. It is
-the deadline half of watch-inbox.sh, Orca's orchestration mailbox watcher: run
-watch-inbox.sh as a background task, and when it exits, drain and ack the
-mailbox, then start it again.
+the deadline half of watch-inbox.sh, the runtime signal watcher: run
+watch-inbox.sh as a background task. On wake, reconcile task-bound reports
+and receipts (Orca: drain and ack the mailbox), then re-arm.
+
+Select --runtime or MUSTER_RUNTIME (default orca). With herdr, the check may
+be `herdr:agent NAME_OR_PANE` or `herdr:pane PANE_ID`; these read recent output
+with argv-only calls and require HERDR_ENV=1. Output is diagnostic evidence,
+not proof the task succeeded. Ordinary checks remain trusted shell commands.
 
 Ledger format, one line per dispatched lane:
 
@@ -34,6 +39,7 @@ import argparse
 import datetime
 import os
 import pathlib
+import shlex
 import subprocess
 import sys
 import time
@@ -69,10 +75,28 @@ def load_rows(ledger):
     return rows
 
 
+def outcome_command(check_cmd, runtime):
+    """Herdr ledger probes use argv; ordinary trusted outcome checks retain shell syntax."""
+    if check_cmd.startswith('herdr:'):
+        if runtime != 'herdr':
+            raise ValueError('herdr ledger probe requires --runtime herdr')
+        if os.environ.get('HERDR_ENV') != '1':
+            raise ValueError('herdr ledger probe requires HERDR_ENV=1')
+        parts = shlex.split(check_cmd)
+        if len(parts) != 2 or parts[0] not in ('herdr:agent', 'herdr:pane'):
+            raise ValueError('use herdr:agent TARGET or herdr:pane PANE_ID')
+        surface = parts[0].split(':')[1]
+        return ['herdr', surface, 'read', parts[1], '--source',
+                'recent-unwrapped', '--lines', '120'], False
+    return check_cmd, True
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--runtime', choices=('orca', 'herdr'),
+                        default=os.environ.get('MUSTER_RUNTIME', 'orca'))
     parser.add_argument('--ledger', default=os.environ.get('DEADLINE_LEDGER'),
                         help='path to the deadline ledger (default: $DEADLINE_LEDGER)')
     parser.add_argument('--next', action='store_true',
@@ -105,9 +129,12 @@ def main():
         due = datetime.datetime.fromtimestamp(expected).isoformat(timespec='minutes')
         print(f'OVERDUE {label} (expected by {due})')
         try:
-            out = subprocess.run(check_cmd, shell=True, capture_output=True,
+            command, shell = outcome_command(check_cmd, args.runtime)
+            out = subprocess.run(command, shell=shell, capture_output=True,
                                  text=True, timeout=60)
             text = (out.stdout + out.stderr).strip()[:400]
+        except (ValueError, OSError) as exc:
+            text = f'(check failed: {exc})'
         except subprocess.TimeoutExpired:
             text = '(check command timed out)'
         print('  check:', text or '(no output)')
