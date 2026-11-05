@@ -12,6 +12,8 @@ REPO = Path(__file__).resolve().parents[1]
 WATCH = 'dispatching-work/scripts/watch-inbox.sh'
 DEADLINES = 'dispatching-work/scripts/deadlines.py'
 PAIRS = [
+    ('test_orca_not_installed', WATCH,
+     'command -v orca >/dev/null 2>&1 || { echo "watch-inbox.sh: runtime orca not installed" >&2; exit 2; }', ':'),
     ('test_herdr_agent', WATCH, 'if [ "$ms" -gt "$remaining" ]; then ms=$remaining; fi', ':'),
     ('test_watcher_deadline_runtime', WATCH, '--runtime "$runtime" --ledger "$ledger" --new', '--runtime orca --ledger "$ledger" --new'),
     ('test_deadline_invalid_probe', DEADLINES, "parts[0] not in ('herdr:agent', 'herdr:pane')", 'False'),

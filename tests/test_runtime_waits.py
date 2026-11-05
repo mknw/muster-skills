@@ -2,6 +2,7 @@
 
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -86,6 +87,17 @@ print(json.dumps({'ok': True, 'count': 1, 'result': {'agent_status': 'done'}, 'o
         self.assertFalse(self.log.exists())
         self.env['HERDR_ENV'] = '1'
         self.assertEqual(self.watch('--runtime', 'herdr').returncode, 2)
+
+    def test_orca_not_installed(self):
+        (self.root / 'orca').unlink()
+        for tool in ('bash', 'date', 'dirname'):
+            (self.root / tool).symlink_to(shutil.which(tool))
+        self.env['PATH'] = str(self.root)
+        result = self.watch('--runtime', 'orca', '--run', 'one', '--window', '0')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('watch-inbox.sh: runtime orca not installed', result.stderr)
+        self.assertEqual(result.stdout, '')
+        self.assertFalse(self.log.exists())
 
     def test_invalid_runtime(self):
         self.assertEqual(self.watch('--runtime', 'unknown', '--run', 'one').returncode, 2)

@@ -136,6 +136,7 @@ provider-backed acceptance require actual server invocation.
 
 Use the installed contract above to revalidate these commands. Targets below
 are placeholders replaced by returned opaque IDs or a unique live agent name.
+Set `LANE` to a unique live agent name.
 Keep focus with the caller and work only in an owned checkout.
 
 ```sh
@@ -143,10 +144,10 @@ herdr status
 # Default topology: sibling pane in the caller's cwd (choose right/down by layout).
 herdr pane split --current --direction right --cwd "$PWD" --no-focus
 # Read .result.pane.pane_id into PANE, then:
-herdr agent start lane --kind pi --pane "$PANE"
-herdr agent prompt lane "<task-bound brief and report path>" --wait --timeout 120000
-herdr agent wait lane --timeout 120000
-herdr agent read lane --source recent-unwrapped --lines 120
+herdr agent start "$LANE" --kind pi --pane "$PANE"
+herdr agent prompt "$LANE" "<task-bound brief and report path>" --wait --timeout 120000
+herdr agent wait "$LANE" --timeout 120000
+herdr agent read "$LANE" --source recent-unwrapped --lines 120
 herdr pane read "$PANE" --source recent-unwrapped --lines 120
 # Shell output alternative; match may include old output, so bind a unique marker.
 herdr pane wait-output "$PANE" --match "<attempt-specific marker>" --timeout 120000
@@ -168,7 +169,9 @@ receipts, replay, or acknowledgements. Never invent `herdr mailbox` commands.
 
 **Worktrees:** when separately authorized, use
 `herdr worktree create --cwd "$REPO" --branch "$BRANCH" --base main --path "$PATH_TO_NEW_CHECKOUT" --no-focus`.
-Read the returned workspace/worktree identity, inspect with
+Read `.result.root_pane.pane_id` for the pane to start in and
+`.result.worktree.open_workspace_id` for the workspace handle used by
+`worktree remove --workspace`, inspect with
 `herdr worktree list --cwd "$REPO"`, provision dependencies explicitly, then
 start in the returned available shell pane. `worktree open --cwd "$REPO" --path
 "$CHECKOUT" --no-focus` opens an existing checkout. Herdr does not execute

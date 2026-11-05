@@ -8,7 +8,7 @@ usage() {
   cat <<'EOF'
 watch-inbox.sh — wake a coordinator or PM on a runtime signal or overdue lane.
 
-This is for Orca's orchestration mailbox. Run it as a background task; when it
+Orca mode watches the orchestration mailbox. Run it as a background task; when it
 exits, drain and ack the mailbox, then start it again.
 
 Herdr mode watches an assigned agent's settled state, or literal pane output.
@@ -18,7 +18,7 @@ Requires HERDR_ENV=1. Timeout errors retry; other herdr errors fail visibly.
 
 Options:
   --runtime NAME orca (default) or herdr; also $MUSTER_RUNTIME
-  --target ID    herdr agent name or pane ID (required in herdr mode)
+  --target ID    herdr agent name or pane ID (pane ID with --match; required in herdr mode)
   --match TEXT   use pane wait-output instead of agent wait (literal text)
   --run ID       orchestration run id to watch (default: $ORCA_RUN_ID)
   --ledger PATH  deadline ledger to poll with deadlines.py
@@ -88,7 +88,9 @@ while [ $# -gt 0 ]; do
 done
 
 case "$runtime" in
-  orca) ;;
+  orca)
+    command -v orca >/dev/null 2>&1 || { echo "watch-inbox.sh: runtime orca not installed" >&2; exit 2; }
+    ;;
   herdr)
     if [ "${HERDR_ENV:-}" != 1 ] || [ -z "$target" ]; then
       echo "watch-inbox.sh: herdr requires HERDR_ENV=1 and --target" >&2

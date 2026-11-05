@@ -214,6 +214,8 @@ Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERD
 
 ## The helper
 
+Select the delivery adapter using [Runtime delivery](SKILL.md#runtime-delivery) before implementing mailbox delivery.
+
 A local server with no dependency beyond its runtime, started and stopped by hand through a lifecycle script (`start`, `stop`, `status`), never as a login item. It serves the board folder at `http://127.0.0.1:PORT/`, so the board opens there with none of `file://`'s limits, and adds `POST /click`, `POST /retry`, `POST /feedback` (Report bundles), `POST /level` (The auto level), `POST /steer` (Steering notes) and `GET /state` (fetched at each page load). It never writes the board file: its writes are appends to the inbox, the one-time bootstrap file (rewritten on each use) and the session file.
 
 - **Self-reload**: the process the lifecycle script starts is a supervisor that runs the helper as a worker child and watches the helper's code file. When the file changes and passes a syntax check, it swaps the worker; a broken edit is logged and the running worker stays. The session secret, the page token and the pending one-time URL persist in a mode-600 session file, written atomically, so the owner's cookie and open page survive a reload; `start` writes fresh secrets and `stop` deletes them. The supervisor's own code is not reloaded. The page retries a send that gets no HTTP answer, a few times, with the same click id, which covers the moment a reload takes.
