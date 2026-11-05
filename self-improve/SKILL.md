@@ -154,11 +154,16 @@ same proportionate gates — tracked-file changes go branch → PR.
 
 In the autonomous self-improvement cycle, every PR receives independent review
 commissioned by the coordinator. The reviewer is neither the author nor the
-coordinator. Apply findings and repeat review on the updated changes until the
-reviewer explicitly returns **CONVERGED**, following the
+coordinator. In a plain session, the originating agent commissions a separate
+reviewer and acts as coordinator. Apply findings and repeat review on the
+updated changes until the reviewer explicitly returns **CONVERGED**, following the
 [review loop](../reviewing-changes/SKILL.md). Green CI alone never authorizes
 merge. Report `merge_ready` only after convergence; merge remains with the
-authorized merger under the tracked-file gate above.
+authorized merger under the tracked-file gate above. Delegation comes from an
+explicit live owner contract; without it, keep the PR for owner review and
+merge. If review is unavailable or cannot reach CONVERGED, leave the PR open
+and escalate the unresolved terms to the coordinator, or the owner in a plain
+session; merge remains gated.
 
 ## Design record — the recursion, made textual
 
@@ -207,3 +212,5 @@ Codex and pi retain an explicit manual trigger. The autonomous cycle now
 requires independent review to CONVERGED before merge, including fix rounds.
 The superseded memory was corrected in the originating session; no private
 memory or project-specific authority is carried into this skill.
+Independent review added reversible hook setup and clarified plain-session
+review, unavailable or nonconverging review, and live-contract merge authority.

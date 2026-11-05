@@ -55,6 +55,9 @@ class DiscontentTests(unittest.TestCase):
     def test_damnation_is_quiet(self):
         self.assertEqual(self.invoke('Damnation'), '')
 
+    def test_fitness_sake_is_quiet(self):
+        self.assertEqual(self.invoke('for fitness sake'), '')
+
     def test_pasted_content_is_quiet(self):
         self.assertEqual(self.invoke('Please read <PASTED_CONTENT source="log">\nfucking shit\n'
                                      '</PASTED_CONTENT> and explain.'), '')
@@ -159,7 +162,7 @@ class DiscontentInstallTests(unittest.TestCase):
         result = self.run_installer('--replace-hook')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(self.link.is_symlink())
-        self.assertEqual(self.link.with_name('discontent.py.pre-muster').read_text(),
+        self.assertEqual(self.link.with_name('discontent.py.pre-self-improve.bak').read_text(),
                          'previous standalone hook\n')
         self.assertEqual(self.run_installer('--replace-hook').returncode, 0)
 
@@ -173,7 +176,7 @@ class DiscontentInstallTests(unittest.TestCase):
         self.assertEqual(self.link.resolve(), foreign)
         self.link.unlink()
         self.link.write_text('current hook')
-        backup = self.link.with_name('discontent.py.pre-muster')
+        backup = self.link.with_name('discontent.py.pre-self-improve.bak')
         backup.write_text('older hook')
         self.assertNotEqual(self.run_installer('--replace-hook').returncode, 0)
         self.assertEqual(self.link.read_text(), 'current hook')
@@ -212,6 +215,63 @@ class DiscontentInstallTests(unittest.TestCase):
         result = self.run_installer()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('main checkout', result.stderr)
+        self.assertFalse(self.settings.exists())
+
+    def test_uninstall_removes_only_owned_hook(self):
+        self.assertEqual(self.run_installer().returncode, 0)
+        own = json.loads(self.settings.read_text())['hooks']['UserPromptSubmit'][0]['hooks'][0]
+        other = {'type': 'command', 'command': 'echo unrelated'}
+        expected = {'theme': 'dark', 'hooks': {
+            'Stop': [{'hooks': [other]}],
+            'UserPromptSubmit': [{'matcher': '*', 'hooks': [other]}, {'hooks': [other]}],
+        }}
+        initial = json.loads(json.dumps(expected))
+        initial['hooks']['UserPromptSubmit'][0]['hooks'].append(own)
+        initial['hooks']['UserPromptSubmit'].append({'hooks': [own]})
+        self.write_settings(initial)
+        result = self.run_installer('--uninstall')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(os.path.lexists(self.link))
+        self.assertEqual(json.loads(self.settings.read_text()), expected)
+        content = self.settings.read_bytes()
+        self.assertEqual(self.run_installer('--uninstall').returncode, 0)
+        self.assertEqual(self.settings.read_bytes(), content)
+
+    def test_uninstall_preserves_foreign_files_and_backup(self):
+        self.link.parent.mkdir(parents=True)
+        foreign = self.root / 'foreign hook.py'
+        foreign.write_text('foreign hook')
+        backup = self.link.with_name('discontent.py.pre-self-improve.bak')
+        backup.write_text('saved hook')
+        self.link.symlink_to(foreign)
+        for kind in ('symlink', 'file'):
+            with self.subTest(kind=kind):
+                self.write_settings({'theme': 'dark', 'hooks': {'UserPromptSubmit': [{'hooks': [{
+                    'type': 'command', 'command': 'python3 ~/.claude/hooks/discontent.py',
+                }]}]}})
+                result = self.run_installer('--uninstall')
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.link.read_text(), 'foreign hook')
+                self.assertEqual(foreign.read_text(), 'foreign hook')
+                self.assertEqual(backup.read_text(), 'saved hook')
+                self.assertEqual(json.loads(self.settings.read_text()), {
+                    'theme': 'dark', 'hooks': {'UserPromptSubmit': []},
+                })
+                if kind == 'symlink':
+                    self.assertTrue(self.link.is_symlink())
+                    self.link.unlink()
+                    self.link.write_text('foreign hook')
+
+    def test_uninstall_without_settings_is_noop(self):
+        for _ in range(2):
+            result = self.run_installer('--uninstall')
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertFalse(self.claude.exists())
+        self.link.parent.mkdir(parents=True)
+        self.link.symlink_to(self.repo / 'self-improve/hooks/discontent.py')
+        result = self.run_installer('--uninstall')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(os.path.lexists(self.link))
         self.assertFalse(self.settings.exists())
 
 

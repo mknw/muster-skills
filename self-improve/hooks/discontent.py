@@ -13,7 +13,7 @@ import sys
 
 WORDS = (
     r"fuck(?:s|ed|ing|in)?|f\*+k(?:ing)?|shit(?:s|ty|head)?|bullshit|crap(?:py)?|damn(?:it)?|goddamn(?:it)?|wtf|ffs|"
-    r"for f\w*'?s sake|piss(?:ed)? off|bloody hell|"
+    r"piss(?:ed)? off|bloody hell|"
     r"cazzo|merda|porca \w+|vaffanculo|"  # Italian
     r"kut|godverdomme|verdomme|klote\w*|"  # Dutch
     r"putain|merde|bordel"  # French
