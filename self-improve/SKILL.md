@@ -31,10 +31,9 @@ Fires on:
    dispatcher's session context, is the incident record.
 5. **Owner discontent signal (swearing)** — swearing in the owner's own words
    triggers the loop automatically through the Claude Code prompt hook. Carry
-   out the authorized request in the same turn — where the request is a
-   question, dispatching-work's declaration-gated question rule applies:
-   answer first, declare, then act — or acknowledge the mistake in one line,
-   then dispatch a
+   out the authorized request in the same turn — a question is not the
+   authorized request: it follows dispatching-work's declaration-gated
+   question rule — or acknowledge the mistake in one line, then dispatch a
    subagent under the extract contract below; quote the owner's words in the
    extract. The hook excludes pasted content and system reminders. Its signal
    starts investigation, not a presumed diagnosis.
@@ -84,9 +83,11 @@ right decision. Not "what was missing" first — what was present and harmful:
 2. **always-loaded surface** — decision-time rules that should fire here and
    do not exist; the surfaces differ per runtime (Claude Code: `CLAUDE.md` at
    user, project and local scopes, `.claude/rules/`, and its auto memory;
-   Codex: user and repo `AGENTS.md`; pi: `AGENTS.md`/`CLAUDE.md` plus its own
-   `APPEND_SYSTEM` and memory) — verify each against that runtime's own docs
-   or installed CLI, never from a prior run's list;
+   Codex: user and repo `AGENTS.md`; pi: user `AGENTS.override.md`/`AGENTS.md`/
+   `CLAUDE.md` (+ uppercase variants), context files from the working
+   directory and its parents, and `SYSTEM.md`/`APPEND_SYSTEM.md`; its memory
+   tool is extension-supplied, not core config) — verify each against that
+   runtime's own docs or installed CLI, never from a prior run's list;
 3. **skills** — escape-hatch rows without an authority clause; stale defaults;
    era-wrong examples;
 4. **modules, packages, extensions** — hooks and affordances;
@@ -236,7 +237,10 @@ review, unavailable or nonconverging review, and live-contract merge authority.
 **2026-11-05 — harness parity and the runtime-specific sweep.** Incident: the
 loop anchored a lesson to a surface only one runtime loads, and the skill's own
 text carried assumptions (hook paths, instruction files, memory tools) that do
-not hold outside the runtime the loop ran in. Steps that failed: **step 3**'s
+not hold outside the runtime the loop ran in. Owner's words, quoted: "We need
+an improvement to the `self-improve` skill itself: it has to account for
+harness parity: between pi-agent, codex and claude-code." Steps that failed:
+**step 3**'s
 autopsy had no runtime-specific layer, and **step 4**'s enforcement had no
 parity rule. Change: step 3 gains a runtime-specific-assumptions layer; step 4
 gains the harness-parity rule — a behaviour-governing lesson lands on an
