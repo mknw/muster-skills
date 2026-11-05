@@ -29,6 +29,17 @@ Fires on:
    with an incident extract (`dispatching-work`'s executor re-decision on scope
    creep; a second same-class worker failure in one run). The extract, not the
    dispatcher's session context, is the incident record.
+5. **Owner discontent signal (swearing)** — swearing in the owner's own words
+   triggers the loop automatically through the Claude Code prompt hook. Carry
+   out the authorized request in the same turn, or acknowledge the mistake in
+   one line, then dispatch a subagent under the extract contract below; quote
+   the owner's words in the extract. The hook excludes pasted content and
+   system reminders. Its signal starts investigation, not a presumed diagnosis.
+
+For Claude Code, install the [prompt hook](hooks/discontent.py) using the
+[hook setup](hooks/README.md). Codex and pi have no equivalent hook supplied
+here: the equivalent manual trigger is `/self-improve` with the discontent
+quote and incident extract, dispatched under the same contract.
 
 Not a trigger: a stumble the next tool call absorbed — a retried command, a
 transient error. Apply severity silently.
@@ -111,7 +122,8 @@ never task size:
   the session. No gate: the session is the review.
 - **Memory** — apply directly; the owner sees entries in the index.
 - **Tracked files** — branch → PR → owner review and merge, in whichever repo
-  owns the file.
+  owns the file. In an owner-authorized autonomous cycle, use the forced review
+  gate below within the delegated merge authority.
 
 For correction-class lessons, draft trigger conditions **from the owner's
 quoted words** and have them confirm the reading — the agent's paraphrase is
@@ -137,6 +149,21 @@ Run the five steps on the extract alone; where it is silent, name the silence
 as a gap in the record rather than reconstructing from the dispatch prompt.
 Propose in the same fixed four-field format, and land the outputs through the
 same proportionate gates — tracked-file changes go branch → PR.
+
+### Autonomous review gate — FORCED
+
+In the autonomous self-improvement cycle, every PR receives independent review
+commissioned by the coordinator. The reviewer is neither the author nor the
+coordinator. In a plain session, the originating agent commissions a separate
+reviewer and acts as coordinator. Apply findings and repeat review on the
+updated changes until the reviewer explicitly returns **CONVERGED**, following the
+[review loop](../reviewing-changes/SKILL.md). Green CI alone never authorizes
+merge. Report `merge_ready` only after convergence; merge remains with the
+authorized merger under the tracked-file gate above. Delegation comes from an
+explicit live owner contract; without it, keep the PR for owner review and
+merge. If review is unavailable or cannot reach CONVERGED, leave the PR open
+and escalate the unresolved terms to the coordinator, or the owner in a plain
+session; merge remains gated.
 
 ## Design record — the recursion, made textual
 
@@ -173,3 +200,17 @@ extract contract above defines what that subagent receives. The description
 pointer is unchanged — the trip-wire line in the calling skill's body is the
 pointer that reaches here, and restating that branch in the description would
 be one branch written twice.
+
+**2026-11-05 — discontent signal and forced autonomous review.** Incident: an
+agent deferred a small authorized fix under a superseded memory rule; repeated
+explanation drew swearing, yet the owner still had to invoke this loop by name.
+Steps that failed: the **trigger** had no discontent branch, and **step 4** left
+the decision-time path dependent on recall. Change: branch 5 routes the prompt
+hook's discontent signal into an extract-only subagent run; the tracked hook
+has exclusion, timeout and mutation-tested behavior plus idempotent setup;
+Codex and pi retain an explicit manual trigger. The autonomous cycle now
+requires independent review to CONVERGED before merge, including fix rounds.
+The superseded memory was corrected in the originating session; no private
+memory or project-specific authority is carried into this skill.
+Independent review added reversible hook setup and clarified plain-session
+review, unavailable or nonconverging review, and live-contract merge authority.
