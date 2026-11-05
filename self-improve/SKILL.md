@@ -32,9 +32,9 @@ Fires on:
 5. **Owner discontent signal (swearing)** — swearing in the owner's own words
    triggers the loop automatically through the Claude Code prompt hook. Carry
    out the authorized request in the same turn — where the request is a
-   question, dispatching-work's question rule applies: answer first; act only
-   after declaring the problem read into it, why the change is better, and how
-   to undo it — or acknowledge the mistake in one line, then dispatch a
+   question, dispatching-work's declaration-gated question rule applies:
+   answer first, declare, then act — or acknowledge the mistake in one line,
+   then dispatch a
    subagent under the extract contract below; quote the owner's words in the
    extract. The hook excludes pasted content and system reminders. Its signal
    starts investigation, not a presumed diagnosis.
@@ -114,10 +114,10 @@ prose > skills > memory):
   paths — over prose: friction asymmetry (right path expensive, wrong path
   cheap) beats any rule.
 - **Harness parity** — a lesson that governs agent behaviour lands on an
-  always-loaded surface **every runtime in use loads** (Claude Code, Codex, pi
-  differ: instructions files, project memory, `APPEND_SYSTEM`), verified
-  against each runtime's own docs or installed CLI — the registry of record —
-  never from a prior run's assumptions. The proposal states which runtimes the
+  always-loaded surface **every runtime in use loads** — the surfaces the
+  autopsy's layer 2 names, verified against each runtime's own docs or
+  installed CLI, the registry of record — never from a prior run's
+  assumptions. The proposal states which runtimes the
   lesson reaches and which it does not; a runtime-specific place alone (one
   runtime's project memory, say) is a gap, named as such in the proposal and
   covered by each runtime's equivalent surface or an explicit fallback.
@@ -243,7 +243,7 @@ gains the harness-parity rule — a behaviour-governing lesson lands on an
 always-loaded surface every runtime in use loads, verified against each
 runtime's own docs or installed CLI, with runtime-only surfaces named as gaps;
 the skill's runtime-specific assumptions (hook paths, instruction files, memory
-tools) are now either runtime-neutral or explicitly per-runtime. This entry is
-itself produced by the loop; the FORCED autonomous review gate applies — an
-independent reviewer (neither the author nor the coordinator) ran on this
-change and the review looped to CONVERGED before merge.
+tools) are verified as runtime-neutral or explicitly per-runtime. This entry
+is itself produced by the loop; the FORCED autonomous review gate applies — an
+independent reviewer (neither the author nor the coordinator) reviews this
+change, and merge follows CONVERGED.
