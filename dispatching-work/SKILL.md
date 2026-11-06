@@ -99,9 +99,9 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
    tree, because a tree-writing command has no undo. Every brief also carries
    the disk-scratch and process-lifecycle rule: put scratch, clones, review
    copies and scripts in a disk scratch directory using host-provided `TMPDIR`,
-   never tmpfs `/tmp`; record each started process's PID, stop each of those
-   still running by its recorded PID before reporting done, and report
-   `processes stopped: N`.
+   never tmpfs `/tmp`; record each started process's PID and stop it by that
+   PID as soon as its job is done. Before reporting done, confirm
+   `processes stopped: N, left running: none`.
 4. **Parallel-lane warnings**: name the other in-flight lanes that touch nearby
    files, and the merge order (see below).
 5. **Execution boundary**: identify coordinator, model-agent and workload
@@ -366,7 +366,8 @@ per-PR review misses.
   temporary storage grew to gigabytes and leaked test servers caused memory
   pressure on a host without swap. Every brief now carries the Gates rule:
   use host-provided `TMPDIR` for disk scratch and stop started processes by
-  recorded PID before reporting done, with the count in the report.
+  recorded PID as soon as their job is done; report the stopped count and
+  confirm none remain running before reporting done.
 
 - 2026-11-05 — **Lane close is a worktree removal.** A lane that releases its
   terminal but leaves its worktree in place compounds into hundreds of stale
