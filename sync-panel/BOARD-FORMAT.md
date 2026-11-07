@@ -4,7 +4,11 @@ The reference half of [`sync-panel`](SKILL.md): the item and its decision contex
 
 ## The item
 
-One item is one `<li class="item">` carrying its data as attributes, with the human text inside. Attributes are the record; the page's script derives everything else and writes none of them. Agents change attributes only through the edit tool's anchored edits, never by reading the file and writing it back.
+**The record has one format per era.** Through S8 the live record is `index.html`: one item is one `<li class="item">` carrying its data as attributes, with the human text inside. At the **S9 cutover** `board.json` replaces it as the record — same items, same fields, one JSON object per item instead of one `<li>` — and from then on `index.html` is a page the renderer writes from the record, never the record itself. The JSON back end is built and proved on scratch copies through S1–S8 (the migration converts, the round trip renders back and compares); the same edit commands flip stores when `board.json` lands beside the board, so no agent changes how it works. The checker runs on either record: the same flags, on fields instead of attributes.
+
+The JSON record's item is the attribute table below with the `data-` prefix dropped; a field the HTML record leaves absent is `null`. The space-separated multi-values (`rel`, `ai-owner`, `category`, `auto-category`) become arrays; the body lines become fields (`title`, `next`, `brief`, `auto-note` plain strings; `terms` and `links` arrays of `{term, meaning, href}` and `{href, note}`); the level is the per-project `levels` map (Auto level). The record's root carries `{schema, levels, themes, items, checked}`; Done items past the archive window live in `archive/<yyyy-mm>.json`, one file per month, ids taken exactly as on the archive pages. The field list is the edit tool's `ITEM_FIELDS` — one declaration, both stores, the migration and the renderer included.
+
+Attributes are the record; the page's script derives everything else and writes none of them. Agents change attributes only through the edit tool's anchored edits, never by reading the file and writing it back.
 
 ```html
 <li class="item" data-id="L5" data-project="…" data-section="loose-ends" data-actor="owner" data-since="2026-10-28" data-changed="2026-10-28T17:17:00Z" data-rel="after:N1">
@@ -120,15 +124,17 @@ Members stay in the state they are in; the theme adds a view across states and l
 
 ## The auto level
 
-The board's **level** is one line under the header, written only by the edit script's `auto`:
+The board's **level** is per project (L109): one level line per project the routing file declares, written only by the edit script's `auto LEVEL CID [--project P]` (the line with no `data-project` is the default project's; the default project's line keeps the pre-L109 readable text, no suffix, every other project's names its project):
 
 ```html
-<div id="auto" data-level="security" data-changed="2026-11-04T16:00:00Z" data-source="click:<click id>"><b>auto: security</b> — you keep security, changes to your rulings, irreversible actions</div>
+<div id="auto" data-project="security-tooling" data-level="security" data-changed="2026-11-04T16:00:00Z" data-source="click:<click id>"><b>auto (security-tooling): security</b> — you keep security, changes to your rulings, irreversible actions</div>
 ```
 
-**One reading.** The edit script and the helper read the level only from that one line, at the start of its own line and outside a comment, its attributes first-wins, and only while the file's tags, commented-out ones included, carry `id="auto"` exactly once. Text that mentions the line, such as a brief about it, is not a tag and does not count, and neither does an attribute value that mentions it; a quoted value may hold `>`, and an id counts as the browser decodes it. Anything else reads as `off`, so a commented-out old line or a reordered attribute fails safe in every runtime. The checker reads the line both as the page does and as the edit script does, and flags `BAD AUTO LEVEL` when the two disagree; `auto` refuses to write until the line is one again.
+On the JSON record (S9) the level is the record root's `levels` map, one entry per declared project, each `{level, changed, source, quote}`; a legacy single `auto` object converts with `auto --convert`, the owner's line kept verbatim. A click, `route` and `decided` all resolve the item's own project, and an unknown project reads as off.
 
-**The table** is the whole rule. The edit script holds it once, as the function `route(categories, level)`, and the checker imports it. The page script mirrors the level names and the owner-kept sets, and the helper the level names; each mirror is its declaration, `NAME = <literal>;` exactly once, with nothing else in the file writing it, and the checker holds them to that.
+**One reading.** The edit script and the helper read a project's level only from its one line, at the start of its own line and outside a comment, its attributes first-wins, and only while the file's tags, commented-out ones included, carry `id="auto"` for that project exactly once. Text that mentions the line, such as a brief about it, is not a tag and does not count, and neither does an attribute value that mentions it; a quoted value may hold `>`, and an id counts as the browser decodes it. Anything else reads as `off`, so a commented-out old line, a duplicate or a reordered attribute fails safe in every runtime. The checker reads the line both as the page does and as the edit script does, and flags `BAD AUTO LEVEL` when the two disagree; `auto` refuses to write until the line is one again. On the JSON record the field is the one reading by construction: the checker flags the map against the routing file and the ladder (`NO AUTO LEVEL` for a project without its entry, `BAD AUTO LEVEL` for a level the ladder does not name, `BAD AUTO PROJECT` for an undeclared project's entry).
+
+**One rules file.** The table is the whole rule, and it lives in `rules.json` beside the board (S2): the ladder (`auto.levels` / `auto.categories` / `auto.keeps`, monotone — each level keeps a superset of the next), the action-kind rule, and the transport/lane rules (`transport.transports`, `transport.herdr-id`, the lane patterns). The edit tool, the checker, the helper and the page all LOAD the same file; no runtime holds a table of its own, and a runtime that stops loading the file is the defect — every consumer fails loudly (the edit tool refuses every op, the helper refuses to start, the page shows its failure, the checker flags it). `rules.json` is a shared contract with the app side, change-controlled with both owners; the migration writes it beside `board.json` at conversion.
 
 | level | the owner keeps |
 |---|---|
@@ -186,11 +192,15 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 
 ## The checker
 
-`check.py`, standard library only, no network. It parses `index.html` with the HTML parser, collecting every element with `data-id` (and every theme with `data-gid`), the `<section id>` enclosing it, its title text, its next-action text, its links, and its brief, terms and link notes; a void tag such as `<br>` closes itself. Flags, one line each with the id (and the line number where the parser has one):
+`check.py`, standard library only, no network, reports and never moves an item. One checker, two records (S2's successor): a `board.json` beside the board (or named by `--index`) engages the JSON record — the same CLI, the same output discipline, the same flags, one flag per line with the id — and its absence keeps the HTML record this section always described. Through S8 the HTML checker is the deployed authority; the JSON mode is proved on scratch copies and lands at S9 with the migration. The HTML mode parses `index.html` with the HTML parser, collecting every element with `data-id` (and every theme with `data-gid`), the `<section id>` enclosing it, its title text, its next-action text, its links, and its brief, terms and link notes; a void tag such as `<br>` closes itself. The JSON mode reads `board.json` first-wins on duplicate keys, and every `archive/*.json` month. The two modes share one flag implementation, so a defect earns the same flag on either record.
+
+**The JSON forms of the HTML-specific flags.** `DUPLICATE ATTRIBUTE` becomes duplicate JSON keys, refused at parse, first value read; `SECTION MISMATCH` becomes the section field's own value (in JSON the field *is* the placement — an item outside the four sections, or an archive month holding a non-Done item, is the flag); `GROUP MISPLACED` retires with the placement it policed (the themes array is the record's one placement; the migration refuses the HTML shape). New, JSON-only: `BAD SCHEMA` (a record that is not the schema's own shape, refused loudly rather than a silent HTML fall-back) and `UNKNOWN FIELD` (an item, theme, level entry or root key the merged schema has no field for — fix it by hand).
+
+Flags, one line each with the id (and the line number where the parser has one):
 
 - `NO PROJECT` / `BAD PROJECT`: an item has no `data-project`, or its name is absent from the routing file's `projects` list (Projects).
 - `DUPLICATE id`: the same `data-id` twice, counting the archive pages (whose ids also count as existing for `BAD REL`)
-- `SECTION MISMATCH`: `data-section` differs from the enclosing section
+- `SECTION MISMATCH`: `data-section` differs from the enclosing section (on the JSON record: a section value outside the four, or an archive month holding a non-Done item)
 - `BAD data-changed` / `BAD data-due`: unparsable
 - `OVERDUE`: `data-due` passed
 - `NO NEXT ACTION`: a Needs-you item with no next action, or one that only names the actor
@@ -200,7 +210,7 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `LONG NEXT`: an open owner row whose next action is longer than 15 words
 - `BAD OPTIONS`: `data-options` that does not parse as `LABEL text|…`, or a `data-recommend` that is not one of its labels
 - `BAD ACTIONS`: a `data-actions` entry that would show no working button. Valid is `Label=kind` with a non-empty label and a kind of one lower-case letter then up to 40 word characters, `:`, `.` or `-`
-- `ACTIONS RULE DRIFT`: the page script or the helper no longer carries that rule verbatim. The checker holds it once and the two mirror it, so nothing the checker passes is refused by the board or the helper
+- `ACTIONS RULE DRIFT`: the action-kind rule no longer loads, or a runtime stopped loading `rules.json` or declared its own rule again (the load checks below)
 - `GROUP UNKNOWN` / `DUPLICATE gid`: an item naming a theme that does not exist; a theme id used twice
 - `GROUP NO NEXT` / `GROUP DONE`: an open theme with no next step; an open theme with no open item (close it)
 - `GROUP MISPLACED`: a theme record outside `<section id="groups">`, where the page cannot see it
@@ -213,19 +223,23 @@ An inbound verb (`after`, `needs`, `blocked-by`, `waits`) is rendered reversed a
 - `BUNDLE …`: the seven report-bundle flags (Report bundles)
 - `DEPRIO OUTSIDE LOOSE ENDS` / `BAD DEPRIO`: `data-deprio` on an item outside Loose ends, or a value that is not an ISO date
 - `BAD ID`: an item id outside plain letters, digits and dashes, at most 24 long, which the helper refuses
-- `DUPLICATE ATTRIBUTE`: an attribute an item carries twice; the browser and the helper read only the first
-- `NO AUTO LEVEL` / `BAD AUTO LEVEL`: no level line (it reads as off); a level outside the table, two level lines, `id="auto"` in the text more often than the page sees it, or the page and the edit script reading different levels
+- `DUPLICATE ATTRIBUTE`: an attribute an item carries twice; the browser and the helper read only the first. On the JSON record: duplicate JSON keys, refused at parse, the first value read
+- `NO AUTO LEVEL` / `BAD AUTO LEVEL`: no level line for a declared project (it reads as off); a level outside the ladder, two level lines for one project, `id="auto"` in the text more often than the page sees it, or the page and the edit script reading different levels. On the JSON record: a project without its `levels` entry; an entry whose level the ladder does not name, or a record still carrying the pre-L109 single auto object (convert it)
 - `NO CATEGORY` / `BAD CATEGORY` / `NO RULING CITE`: a Needs-you item without `data-category`; a category outside the list on any item, or `other` beside another; `changes-ruling` without `data-ruling`
 - `BAD AUTO`: a stamp that is not `AGENT LEVEL OPTION` with a level from the table, whose option is not one of the item's, or without `data-auto-category`
 - `AUTO MISMATCH`: a stamp whose level keeps one of the item's categories for the owner, or an unknown one, an item with none, or categories that differ from the recorded ones: as far as the file can tell, the decision was not the coordinator's to take
 - `AUTO IN NEEDS YOU` / `AUTO NO NOTE`: a stamped item in Needs you; a stamp without its note
-- `AUTO RULE DRIFT`: the edit script's table missing or no longer a superset ladder, or a mirror in the page script or the helper that is not its declaration with the literal, exactly once, with nothing else writing it: no second declaration, assignment, index or property assignment, mutating call or alias, directly or through up to two accessors (`KEEPS.security.splice(0, 1)`, `KEEPS.security[0] = ...`)
+- `AUTO RULE DRIFT`: the ladder in `rules.json` missing, not monotone, or no longer loaded by every runtime; the load checks below
 - `NO LANE` / `BAD LANE`: a Running item without `data-lane`; a lane outside the four forms, a `via:` agent the routing file does not name, a `term:` handle that is one of the routing file's terminals (an owner-facing one, recorded as `via:` instead), or a lane outside Running
 - `UNKNOWN TRANSPORT` / `BAD AGENT ID`: an agent route selects a transport other than `orca` or `herdr`, or a Herdr address is malformed. Missing transport means Orca.
-- `TRANSPORT RULE DRIFT`: the helper no longer mirrors the edit script's transport choices and Herdr ID rule as single declarations, checked like the auto table.
+- `TRANSPORT RULE DRIFT`: the transport/lane rules in `rules.json` missing or no longer loaded by every runtime, checked like the auto table.
 - `STALE`: `data-changed` older than three days on an open item
 
-Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERDUE when it fails past `due`, else pending, and whether it ran without a shell or through `sh -c`; a command with no shell metacharacter runs without one, under a timeout either way); then the lane-deadline ledger the coordinator keeps, whose overdue lines also count as flags; then the counts per state. Exit 1 on any flag. `--stamp` rewrites the last-checked line through the same anchor tool used for items, falling back to a direct write. The mutation run that proves it: a scratch copy with one planted instance of each defect, all flagged, exit 1.
+Then one report line per `data-check` (`CHECK <id>`: DONE when it exits 0, OVERDUE when it fails past `due`, else pending, and whether it ran without a shell or through `sh -c`; a command with no shell metacharacter runs without one, under a timeout either way); then the lane-deadline ledger the coordinator keeps, whose overdue lines also count as flags; then the counts per state. Exit 1 on any flag.
+
+**The load checks** (S2): `AUTO` / `ACTIONS` / `TRANSPORT RULE DRIFT` fire when `rules.json` beside the board does not load — missing, not valid JSON, not the schema:1 rules record, or a ladder that is not one monotone set per level — or when a consumer's source stops loading it or declares its table again; the file is all-or-nothing, so a load failure flags all three, each naming why, and the checker fails closed: it never reports a clean board whose rules it could not read. The per-consumer proof is by mutation: remove the load from the edit tool, the helper, the page or the checker and that consumer fails visibly (the mutation run's four red-then-green plants).
+
+`--stamp` rewrites the last-checked line through the same anchor tool used for items, falling back to a direct write; on the JSON record it writes the record root's `checked` field instead (the header's stamp has a record home), as one locked, schema-validated, atomic write. The mutation run that proves the checker: a scratch copy with one planted instance of every defect, all flagged, exit 1 — the full flag set on both records.
 
 ## The helper
 
@@ -505,9 +519,11 @@ with `quote` only on a text comment. Then the wake; the coordinator gets a notic
 
 ```
 <private dir>/sync/      700
-  index.html             600   the record and the page
+  index.html             600   the record and the page through S8; at S9 a page the renderer writes from board.json
+  board.json             600   the record at S9 (schema:1; absent through S8 — its presence flips every runtime to the JSON store)
+  rules.json             600   THE rules file (S2): the auto-level ladder, the action-kind rule, the transport/lane patterns — one reading, loaded by the edit tool, the checker, the helper and the page; change-controlled with both owners
   README.md              600   the edit protocol: ADD, MOVE, CLOSE, ARCHIVE, with worked examples
-  check.py               600
+  check.py               600   the checker: the HTML record through S8, the JSON record at S9, the same flags
   assets/style.css       600
   assets/<diagram-lib>   600   vendored, version and checksum recorded in README.md
   backups/               700   dated copies taken before any restructure
@@ -523,4 +539,6 @@ with `quote` only on a text comment. Then the wake; the coordinator gets a notic
   reports/               700   the only folder the helper serves linked files and report bundles from
 ```
 
-Back up `index.html` and the stylesheet before a restructure. The Done list is bounded by the **archive window** (default 14 days): a Done item older than that moves to `archive/<yyyy-mm>.html`, where its id stays taken.
+Back up `index.html` and the stylesheet before a restructure. The Done list is bounded by the **archive window** (default 14 days): a Done item older than that moves to `archive/<yyyy-mm>.html` (at S9, `archive/<yyyy-mm>.json`), where its id stays taken.
+
+**The S9 landing order** (one cutover window, owner-approved; through S8 nothing here touches the live board): dated backups of `index.html`, the archive pages and the stylesheet into `backups/`; the migration converts the HTML record to `board.json` + `archive/*.json` on a scratch copy first, writing `rules.json` beside it, and the round-trip proof renders the HTML back and compares; the successor checker reports the same flags on the migrated record; the new runtimes and `rules.json` land in the folder together with `board.json` — one unit, so no consumer runs without the one rules file; the app takes the port and prints a fresh one-time URL. Rollback restores the backups, and the renderer converts any JSON-era edits back.
