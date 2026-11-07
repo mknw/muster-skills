@@ -99,9 +99,16 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
    tree, because a tree-writing command has no undo. Every brief also carries
    the disk-scratch and process-lifecycle rule: put scratch, clones, review
    copies and scripts in a disk scratch directory using host-provided `TMPDIR`,
-   never tmpfs `/tmp`; record each started process's PID and stop it by that
-   PID as soon as its job is done. Before reporting done, confirm
-   `processes stopped: N, left running: none`.
+   never tmpfs `/tmp` — a host's `TMPDIR` may itself be tmpfs, so the rule's
+   intent is a durable directory on disk, whatever the default path is; record
+   each started process's PID and stop it by that PID as soon as its job is
+   done, and the done report carries the line
+   `processes stopped: N, left running: none`. Every brief also carries the
+   report-location rule: reports (ask, done and report files) go to the host's
+   on-disk lane-reports directory — not the worktree, not `/tmp` — and the
+   runtime is started so it can write there (sandboxed Codex:
+   `sandbox_workspace_write.writable_roots` or `--add-dir`; Claude Code:
+   `--add-dir`).
 4. **Parallel-lane warnings**: name the other in-flight lanes that touch nearby
    files, and the merge order (see below).
 5. **Execution boundary**: identify coordinator, model-agent and workload
@@ -197,7 +204,10 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
   settings file with the main checkout's: ignored files are often the only copy
   of a lane's local state, and the removal deletes them. Force a removal only
   after that backup ([worktree-lanes.md](worktree-lanes.md), cleanup, has the
-  commands).
+  commands). Closing a lane also kills the leftover processes it started
+  whose working directory is inside its worktree — each by its recorded PID,
+  never by name — after the backup and before the worktree removal; the
+  close-out records `processes stopped: N, left running: none`.
 - **Re-engage a finished worker with a fresh dispatch.** A settled dispatch is
   closed to lifecycle messages: prompt its terminal directly and the work still
   happens without a current task identity. Reuse the terminal (keeping its
@@ -354,8 +364,9 @@ per-PR review misses.
   in the live checkout.
 - Close the loop: release the worker, acknowledge the final delivery, update
   the tracking surface (board, issue) — or delegate that update — and remove
-  the lane's worktree: back up untracked/ignored small files, run
-  [scripts/prune-merged-worktrees.sh](scripts/prune-merged-worktrees.sh)
+  the lane's worktree: back up untracked/ignored small files, kill the lane's
+  leftover processes (each by its recorded PID, per the cleanup rule above),
+  run [scripts/prune-merged-worktrees.sh](scripts/prune-merged-worktrees.sh)
   (dry-run first, `--apply` to remove), delete the merged branch, and prune
   (see [worktree-lanes.md](worktree-lanes.md), cleanup, for the no-runtime
   sequence). A lane is not closed until its worktree is gone.
