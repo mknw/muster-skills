@@ -118,10 +118,13 @@ prose > skills > tracked files):
   always-loaded surface **every runtime in use loads** — the surfaces the
   autopsy's layer 2 names, verified against each runtime's own docs or
   installed CLI, the registry of record — never from a prior run's
-  assumptions. The proposal states which runtimes the
-  lesson reaches and which it does not; a runtime-specific place alone (one
-  runtime's project memory, say) is a gap, named as such in the proposal and
-  covered by each runtime's equivalent surface or an explicit fallback.
+  assumptions. The proposal states which runtimes the lesson reaches
+  and which it does not; the lesson lands on tracked surfaces — a
+  skill file or an AGENTS.md file every runtime in use loads, or
+  each runtime's equivalent — never one runtime's project memory
+  alone; a runtime-specific place alone is a gap, named as such in
+  the proposal and covered by each runtime's equivalent surface or
+  an explicit fallback.
 
 ### 5. Propose — fixed format, proportionate gates
 
