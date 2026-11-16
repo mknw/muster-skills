@@ -102,7 +102,7 @@ Verdict per layer: **active fight / stale default / ambiguity / gap / clean.**
 ### 4. Ensure — make the right decision the cheap decision
 
 For each fight or gap, in enforcement order (environment > always-loaded
-prose > skills > memory):
+prose > skills > tracked files):
 
 - **Remove or subordinate** the fighting text: an escape-hatch row gains
   "except where the owner has ruled on this"; a stale default is replaced with
@@ -139,7 +139,10 @@ never task size:
 - **Live contract** — a session-scoped behavioural amendment ("every dispatch
   gets sign-off first"), stated in one line, binding immediately, dies with
   the session. No gate: the session is the review.
-- **Memory** — apply directly; the owner sees entries in the index.
+- **Memory — not an improvement layer**: it resets, and it is not shared
+  across harnesses, so it is seldom if ever a layer. An improvement output
+  lands on a tracked surface — a skill file or an AGENTS.md file; memory may
+  carry a session-practical note at most.
 - **Tracked files** — branch → PR → owner review and merge, in whichever repo
   owns the file. In an owner-authorized autonomous cycle, use the forced review
   gate below within the delegated merge authority.
@@ -251,3 +254,17 @@ tools) are verified as runtime-neutral or explicitly per-runtime. This entry
 is itself produced by the loop; the FORCED autonomous review gate applies — an
 independent reviewer (neither the author nor the coordinator) reviews this
 change, and merge follows CONVERGED.
+
+**2026-11-16 — memory is not an improvement layer.** Incident: a coordinator
+session ran this loop on an owner correction and landed the output in memory,
+which the owner then corrected: "memory shouldn't be an improvement layer. It
+can reset and it's not shared across harnesses" and "Usually we chose between
+skills and agents.md file to improve, memory is seldom if ever a layer."
+Step that failed: **step 4** — its gates listed memory as an application
+gate, so the loop's output died with the session that held it and reached no
+other harness. Change: memory removed as a gate and as an improvement layer;
+an improvement output lands on a tracked surface — a skill file or an
+AGENTS.md file — and memory may carry a session-practical note at most. This
+entry is itself produced by the loop; the FORCED autonomous review gate
+applies — an independent reviewer (neither the author nor the coordinator)
+reviews this change, and merge follows CONVERGED.
