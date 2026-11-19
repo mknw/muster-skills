@@ -1,6 +1,6 @@
 ---
 name: dispatching-work
-description: Dispatch and supervise agents, choose executors and models, route a delivery request while coordinating, or install and upgrade canonical skills across agent environments. Resolve owner-defined general-coordinator and operational-PM roles before dispatch. Covers task briefs, lane ownership, recovery, independent review and landing; includes Herdr-native control and the persistent-worktree fallback when no runtime is available.
+description: Dispatch and supervise agents, choose executors and models, route a delivery request or an owner-reported defect while coordinating, or install and upgrade canonical skills across agent environments. Resolve owner-defined general-coordinator and operational-PM roles before dispatch. Covers task briefs, lane ownership, recovery, independent review and landing; includes Herdr-native control and the persistent-worktree fallback when no runtime is available.
 ---
 
 # Dispatching Work
@@ -22,8 +22,8 @@ the coordinator declares, in the same reply, the problem it reads into the
 question and why its proposed change is better than the current state, plus
 how to undo the change; without that declaration, answer and propose a course
 of action, then wait for the owner's go. Only an explicit request or
-instruction — or an owner click/answer on the coordination surface —
-authorizes new work outright. Steps of a workflow the owner already authorized
+instruction — an owner-reported defect counts as one (next paragraph) — or an
+owner click/answer on the coordination surface authorizes new work outright. Steps of a workflow the owner already authorized
 continue (the merge after an OK; the review of already-dispatched work).
 Findings uncovered while answering are proposals, not steps. A mixed message
 is handled in two parts: act on the instruction, answer-and-propose the
@@ -32,9 +32,14 @@ question.
 **An owner-reported defect is a work order.** When the owner says, in their own
 words, what a product did and what it should do ("we should see X after Y"),
 that stated expectation is the defect, its acceptance test, and the
-authorization to fix it. In the same turn, file it as its own issue titled with
-the owner's expectation, and dispatch its fix lane beside the work in flight;
-only the owner sequences it behind other work. A root-cause investigation it
+authorization to fix it. The defect is a statement of what the product should
+do; when the owner asks instead ("should we see X after Y?"), the question rule
+governs: answer, and propose the issue and lane. In the same turn, file it as
+its own issue titled with the owner's expectation, and dispatch its fix lane
+(through the PM, when one is assigned) beside the work in flight; only the
+owner sequences it behind other work. When no capacity is free, ask the owner
+in the same reply which work it displaces; when it shares a hot zone with a
+lane in flight, it starts at once and warns that lane. A root-cause investigation it
 touches gets its own issue linking to it, so the owner's expectation stays a
 whole issue rather than one item of a wider one. A later owner message that
 lowers severity ("not as bad as I thought") covers only the part it names; when
@@ -60,7 +65,7 @@ what the project already records — its READMEs, its agent instructions, the
 coordinator's notes — and give a lane only what the records cannot answer. Spare
 quota is never a reason for work: finish what is in flight, and start or offer a
 new lane, scope or pipeline only when the owner asks for it — an owner-reported
-defect is that ask, and its lane runs beside the work in flight.
+defect is that ask (above).
 
 | Work | Executor |
 |---|---|
@@ -414,14 +419,17 @@ per-PR review misses.
   The coordinator read a later "not AS BAD as I initially thought" (about the
   cause) as lowering the whole report, filed the expectation as item 3 of 3 of
   a wider root-cause issue, and parked its fix lane behind an unrelated label
-  rename. The owner had to repeat it ("We're not just "not giving anything".
+  rename. The owner had to repeat it ("We're not just 'not giving anything'.
   what the fuck!") and then ask "what's the wider issue". The earliest
   decision was the reading of the first report: no rule said a stated
   expectation is itself the work order, "finish what is in flight" read as
   sequencing, and the rename-first merge order read as a dispatch order.
   Change: the owner-reported-defect rule beside the question rule (own issue
   titled with the owner's expectation, fix lane in the same turn beside
-  in-flight work, a severity drop covers only the part it names); the
+  in-flight work, a severity drop covers only the part it names; a question
+  stays under the question rule; no free capacity is an owner ask, a shared
+  hot zone a warning), and the question rule's "Only" sentence names it; the
+  description names the owner-reported defect as a trigger; the
   in-flight clause names the defect as the owner's ask; the merge-order rule
   orders PRs, not dispatch. Produced by the self-improve loop on an incident
   extract; the always-loaded host-rule counterpart is proposed separately.
