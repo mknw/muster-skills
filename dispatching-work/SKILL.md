@@ -66,14 +66,14 @@ whenever you ask the owner to act; an earlier answer is no such reason.
 outcome the current plan does not reach as its end state (a pipeline where the
 plan was a hand-run step), the old plan is evidence, not the frame. Before
 adding a step to it, re-plan as **Re-run, not grandfathered** (below) does,
-against the new goal and from the owner's own words; a relay's gloss
-("otherwise unchanged") is the relay's reading, so ask the relay for the
-owner's words when it gave none. Re-derive every precondition that waits on the
-owner (a manual hold, a hand check, a time window): read the design of the mechanism that now does the
-work (its docs, its own safety steps) and keep the owner step only for a gap
-that design leaves, naming the evidence. Done when each step carried over cites
-the line of the new goal or design that needs it, and the owner is told which
-old steps were dropped.
+against the new goal and from the owner's own words; a relay's gloss ("otherwise
+unchanged") is the relay's reading, so ask the relay for the owner's words when
+it gave none. Re-derive every precondition that waits on the owner (a manual
+hold, a hand check, a time window): read the design of the mechanism that now
+does the work (its docs, its own safety steps) and keep the owner step only for
+a gap that design leaves, naming the evidence. Done when each step carried over
+cites the line of the new goal or design that needs it, and the owner is told
+which old steps were dropped.
 
 For the operational coordinator/PM, this doctrine covers choosing executors,
 supervising and landing results. Before editing or dispatching a newly arrived
