@@ -45,6 +45,36 @@ owner message that lowers severity ("not as bad as I thought") covers only the
 part it names; when the part is unclear, ask in one line while the lane runs.
 The reply quotes the expectation and names the issue and lane that carry it.
 
+**An answer is not a ruling.** A **ruling** is a standing rule the owner states
+for decisions still to come: a policy, a scope, a goal ("lanes go through the
+orchestration runtime", "from now on …"). The owner's pick among options offered
+for one decision (a click, "A", "yes, as recommended") is an **answer**: it
+settles that decision for the run it was asked in, lives on the item that asked,
+and lapses when that run ends or a newer owner request changes the goal. Record
+an answer on its item; a rulings log takes only the owner's standing words,
+quoted, each with what it governs. A pick on an item that asked for a standing
+rule is a ruling. Within its run an answer stands until the owner changes it; a
+decision that departs from an answer whose run has ended or whose goal has
+changed is not a ruling change and routes on its own categories like any other.
+When you cannot tell whether the owner meant a pick to stand, record it as an
+answer, outside the rulings log, and ask the owner in one line before any
+decision departs from it. An owner step in a plan stands on a reason the
+current plan gives (what it protects, why no agent can take it), stated
+whenever you ask the owner to act; an earlier answer is no such reason.
+
+**A newer owner request re-plans from its goal.** When the owner asks for an
+outcome the current plan does not reach as its end state (a pipeline where the
+plan was a hand-run step), the old plan is evidence, not the frame. Before
+adding a step to it, re-plan as **Re-run, not grandfathered** (below) does,
+against the new goal and from the owner's own words; a relay's gloss ("otherwise
+unchanged") is the relay's reading, so ask the relay for the owner's words when
+it gave none. Re-derive every precondition that waits on the owner (a manual
+hold, a hand check, a time window): read the design of the mechanism that now
+does the work (its docs, its own safety steps) and keep the owner step only for
+a gap that design leaves, naming the evidence. Done when each step carried over
+cites the line of the new goal or design that needs it, and the owner is told
+which old steps were dropped.
+
 For the operational coordinator/PM, this doctrine covers choosing executors,
 supervising and landing results. Before editing or dispatching a newly arrived
 delivery request, resolve the role and executor. Obtain the runtime's exact
@@ -432,3 +462,22 @@ per-PR review misses.
   in-flight clause names the defect as the owner's ask; the merge-order rule
   orders PRs, not dispatch. Produced by the self-improve loop on an incident
   extract; the always-loaded host-rule counterpart is proposed separately.
+
+- 2026-11-19 — **An answer is not a ruling; a newer request re-plans.** The
+  owner picked option A on a board item about how to apply a manual maintenance
+  hold (an edge-firewall close) for one hand-run release upgrade. The
+  coordinator logged the click as a standing "ruling". A day later the owner
+  asked for a deploy pipeline for that release; the relay said the run "extends
+  through CD setup", "execution chain unchanged otherwise", and the coordinator
+  extended the old plan, so the owner-applied hold and an owner browser check
+  stayed preconditions of the pipeline for about 53 hours. The pipeline's own
+  deployer design (DB dump, drift checks, health check with automatic rollback)
+  made the hold unnecessary, and nobody read it. Owner's words: "We said it had
+  to be in CD!! why is this hold on?", "For how long this ruling was enforced,
+  IN SPITE of the fact that I asked for a CD pipeline AFTER that ruling?", "And
+  why are you calling a ruling something that was (most probably) one shot".
+  Added the two paragraphs after the owner-reported-defect rule: an answer to
+  one decision is not a ruling and lapses with its run, and a newer owner
+  request is planned from scratch against its goal, every owner-gated
+  precondition re-derived from the design of the mechanism that now does the
+  work. Sync-panel's Auto level points here.
