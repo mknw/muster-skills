@@ -52,22 +52,24 @@ for one decision (a click, "A", "yes, as recommended") is an **answer**: it
 settles that decision for the run it was asked in, lives on the item that asked,
 and lapses when that run ends or a newer owner request changes the goal. Record
 an answer on its item; a rulings log takes only the owner's standing words,
-quoted, each with what it governs. A plan that departs from an earlier answer
-changes no ruling and needs no escalation. When you cannot tell whether the
-owner meant an answer to stand, treat it as an answer and ask in one line. An
-owner step in a plan stands on a reason the current plan gives (what it
-protects, why no agent can take it), stated whenever you ask the owner to act;
-an earlier answer is no such reason.
+quoted, each with what it governs. A pick on an item that asked for a standing
+rule is a ruling. Within its run an answer stands until the owner changes it; a
+decision that departs from an answer whose run has ended or whose goal has
+changed is not a ruling change and routes on its own categories like any other.
+When you cannot tell whether the owner meant a pick to stand, record it as an
+answer, outside the rulings log, and ask the owner in one line before any
+decision departs from it. An owner step in a plan stands on a reason the
+current plan gives (what it protects, why no agent can take it), stated
+whenever you ask the owner to act; an earlier answer is no such reason.
 
 **A newer owner request re-plans from its goal.** When the owner asks for an
 outcome the current plan does not reach as its end state (a pipeline where the
 plan was a hand-run step), the old plan is evidence, not the frame. Before
-adding a step to it, write the from-scratch plan to the new goal as if nothing
-were underway, from the owner's own words; a relay's gloss ("otherwise
-unchanged") is the relay's reading, so ask the relay for the owner's words when
-it gave none. Diff the two and keep from the old plan only what the new one
-needs. Re-derive every precondition that waits on the owner (a manual hold, a
-hand check, a time window): read the design of the mechanism that now does the
+adding a step to it, re-plan as **Re-run, not grandfathered** (below) does,
+against the new goal and from the owner's own words; a relay's gloss
+("otherwise unchanged") is the relay's reading, so ask the relay for the
+owner's words when it gave none. Re-derive every precondition that waits on the
+owner (a manual hold, a hand check, a time window): read the design of the mechanism that now does the
 work (its docs, its own safety steps) and keep the owner step only for a gap
 that design leaves, naming the evidence. Done when each step carried over cites
 the line of the new goal or design that needs it, and the owner is told which
