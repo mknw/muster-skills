@@ -29,6 +29,18 @@ Findings uncovered while answering are proposals, not steps. A mixed message
 is handled in two parts: act on the instruction, answer-and-propose the
 question.
 
+**An owner-reported defect is a work order.** When the owner says, in their own
+words, what a product did and what it should do ("we should see X after Y"),
+that stated expectation is the defect, its acceptance test, and the
+authorization to fix it. In the same turn, file it as its own issue titled with
+the owner's expectation, and dispatch its fix lane beside the work in flight;
+only the owner sequences it behind other work. A root-cause investigation it
+touches gets its own issue linking to it, so the owner's expectation stays a
+whole issue rather than one item of a wider one. A later owner message that
+lowers severity ("not as bad as I thought") covers only the part it names; when
+the part is unclear, ask in one line while the lane runs. The reply quotes the
+expectation and names the issue and lane that carry it.
+
 For the operational coordinator/PM, this doctrine covers choosing executors,
 supervising and landing results. Before editing or dispatching a newly arrived
 delivery request, resolve the role and executor. Obtain the runtime's exact
@@ -47,7 +59,8 @@ small chores — inline work is for what only the coordinator can do.
 what the project already records — its READMEs, its agent instructions, the
 coordinator's notes — and give a lane only what the records cannot answer. Spare
 quota is never a reason for work: finish what is in flight, and start or offer a
-new lane, scope or pipeline only when the owner asks for it.
+new lane, scope or pipeline only when the owner asks for it — an owner-reported
+defect is that ask, and its lane runs beside the work in flight.
 
 | Work | Executor |
 |---|---|
@@ -135,7 +148,8 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
 - **Merge order for cross-cutting changes**: the wide mechanical change (a
   rename, a format sweep) merges FIRST and stays a pure sweep — no
   opportunistic refactors; every other lane rebases over it before opening its
-  PR, and its spec says so.
+  PR, and its spec says so. This orders the PRs, not the dispatch: the other
+  lanes start at once.
 - **Pre-flight the base branch**: lanes inherit only committed state; commit or
   copy in what they need before dispatch.
 - **Match the repo's worktree conventions** (existing folder and branch naming)
@@ -393,3 +407,21 @@ per-PR review misses.
   Change: the question rule beside **Resolve the role first** — answer first;
   act only after declaring the problem read into the question, why the change
   is better, and how to undo it.
+
+- 2026-11-19 — **An owner-reported defect is a work order, dispatched beside
+  in-flight work.** Incident: the owner reported a refused conversation and
+  wrote "This is really bad, we should see the process running after Ctrl+R".
+  The coordinator read a later "not AS BAD as I initially thought" (about the
+  cause) as lowering the whole report, filed the expectation as item 3 of 3 of
+  a wider root-cause issue, and parked its fix lane behind an unrelated label
+  rename. The owner had to repeat it ("We're not just "not giving anything".
+  what the fuck!") and then ask "what's the wider issue". The earliest
+  decision was the reading of the first report: no rule said a stated
+  expectation is itself the work order, "finish what is in flight" read as
+  sequencing, and the rename-first merge order read as a dispatch order.
+  Change: the owner-reported-defect rule beside the question rule (own issue
+  titled with the owner's expectation, fix lane in the same turn beside
+  in-flight work, a severity drop covers only the part it names); the
+  in-flight clause names the defect as the owner's ask; the merge-order rule
+  orders PRs, not dispatch. Produced by the self-improve loop on an incident
+  extract; the always-loaded host-rule counterpart is proposed separately.
