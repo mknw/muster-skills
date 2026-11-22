@@ -1,6 +1,6 @@
 ---
 name: dispatching-work
-description: Dispatch and supervise agents, choose executors and models, route a delivery request while coordinating, or install and upgrade canonical skills across agent environments. Resolve owner-defined general-coordinator and operational-PM roles before dispatch. Covers task briefs, lane ownership, recovery, independent review and landing; includes Herdr-native control and the persistent-worktree fallback when no runtime is available.
+description: Dispatch and supervise agents, choose executors and models, route a delivery request or an owner-reported defect while coordinating, or install and upgrade canonical skills across agent environments. Resolve owner-defined general-coordinator and operational-PM roles before dispatch. Covers task briefs, lane ownership, recovery, independent review and landing; includes Herdr-native control and the persistent-worktree fallback when no runtime is available.
 ---
 
 # Dispatching Work
@@ -16,18 +16,64 @@ PM. Bounded checks explicitly allowed by the owner remain allowed; they do not
 transfer the operational loop. Failed PM placement is a concrete blocker for the
 general coordinator to surface, not an implicit role transfer.
 
-**A question is not a work order.** Answer the owner's question first.
-Acting on it — new work, a dispatch, cleanup, deletion — is allowed only after
-the coordinator declares, in the same reply, the problem it reads into the
-question and why its proposed change is better than the current state, plus
-how to undo the change; without that declaration, answer and propose a course
-of action, then wait for the owner's go. Only an explicit request or
-instruction — or an owner click/answer on the coordination surface —
-authorizes new work outright. Steps of a workflow the owner already authorized
-continue (the merge after an OK; the review of already-dispatched work).
-Findings uncovered while answering are proposals, not steps. A mixed message
-is handled in two parts: act on the instruction, answer-and-propose the
-question.
+**A question is not a work order.** Answer the owner's question first. Acting on
+it — new work, a dispatch, cleanup, deletion — is allowed only after the
+coordinator declares, in the same reply, the problem it reads into the question
+and why its proposed change is better than the current state, plus how to undo
+the change; without that declaration, answer and propose a course of action,
+then wait for the owner's go. Only an explicit request or instruction — an
+owner-reported defect counts as one (next paragraph) — or an owner click/answer
+on the coordination surface authorizes new work outright. Steps of a workflow
+the owner already authorized continue (the merge after an OK; the review of
+already-dispatched work). Findings uncovered while answering are proposals, not
+steps. A mixed message is handled in two parts: act on the instruction,
+answer-and-propose the question.
+
+**An owner-reported defect is a work order.** When the owner says, in their own
+words, what a product did and what it should do ("we should see X after Y"),
+that stated expectation is the defect, its acceptance test, and the
+authorization to fix it. In the same turn, file it as its own issue titled with
+the owner's expectation, and dispatch its fix lane (through the PM, when one is
+assigned) beside the work in flight; only the owner sequences it behind other
+work. When no capacity is free, ask the owner in the same reply which work it
+displaces; when it shares a hot zone with a lane in flight, it starts at once
+and warns that lane. When the owner asks instead ("should we see X after Y?"),
+the question rule governs: answer, and propose the issue and lane. A root-cause
+investigation the defect touches gets its own issue linking to it, so the owner's
+expectation stays a whole issue rather than one item of a wider one. A later
+owner message that lowers severity ("not as bad as I thought") covers only the
+part it names; when the part is unclear, ask in one line while the lane runs.
+The reply quotes the expectation and names the issue and lane that carry it.
+
+**An answer is not a ruling.** A **ruling** is a standing rule the owner states
+for decisions still to come: a policy, a scope, a goal ("lanes go through the
+orchestration runtime", "from now on …"). The owner's pick among options offered
+for one decision (a click, "A", "yes, as recommended") is an **answer**: it
+settles that decision for the run it was asked in, lives on the item that asked,
+and lapses when that run ends or a newer owner request changes the goal. Record
+an answer on its item; a rulings log takes only the owner's standing words,
+quoted, each with what it governs. A pick on an item that asked for a standing
+rule is a ruling. Within its run an answer stands until the owner changes it; a
+decision that departs from an answer whose run has ended or whose goal has
+changed is not a ruling change and routes on its own categories like any other.
+When you cannot tell whether the owner meant a pick to stand, record it as an
+answer, outside the rulings log, and ask the owner in one line before any
+decision departs from it. An owner step in a plan stands on a reason the
+current plan gives (what it protects, why no agent can take it), stated
+whenever you ask the owner to act; an earlier answer is no such reason.
+
+**A newer owner request re-plans from its goal.** When the owner asks for an
+outcome the current plan does not reach as its end state (a pipeline where the
+plan was a hand-run step), the old plan is evidence, not the frame. Before
+adding a step to it, re-plan as **Re-run, not grandfathered** (below) does,
+against the new goal and from the owner's own words; a relay's gloss ("otherwise
+unchanged") is the relay's reading, so ask the relay for the owner's words when
+it gave none. Re-derive every precondition that waits on the owner (a manual
+hold, a hand check, a time window): read the design of the mechanism that now
+does the work (its docs, its own safety steps) and keep the owner step only for
+a gap that design leaves, naming the evidence. Done when each step carried over
+cites the line of the new goal or design that needs it, and the owner is told
+which old steps were dropped.
 
 For the operational coordinator/PM, this doctrine covers choosing executors,
 supervising and landing results. Before editing or dispatching a newly arrived
@@ -47,7 +93,8 @@ small chores — inline work is for what only the coordinator can do.
 what the project already records — its READMEs, its agent instructions, the
 coordinator's notes — and give a lane only what the records cannot answer. Spare
 quota is never a reason for work: finish what is in flight, and start or offer a
-new lane, scope or pipeline only when the owner asks for it.
+new lane, scope or pipeline only when the owner asks for it — an owner-reported
+defect is that ask (above).
 
 | Work | Executor |
 |---|---|
@@ -147,7 +194,8 @@ The spec is the worker's whole world — it will not infer your intent. Skeleton
 - **Merge order for cross-cutting changes**: the wide mechanical change (a
   rename, a format sweep) merges FIRST and stays a pure sweep — no
   opportunistic refactors; every other lane rebases over it before opening its
-  PR, and its spec says so.
+  PR, and its spec says so. This orders the PRs, not the dispatch: the other
+  lanes start at once.
 - **Pre-flight the base branch**: lanes inherit only committed state; commit or
   copy in what they need before dispatch.
 - **Match the repo's worktree conventions** (existing folder and branch naming)
@@ -416,3 +464,43 @@ per-PR review misses.
   Change: the question rule beside **Resolve the role first** — answer first;
   act only after declaring the problem read into the question, why the change
   is better, and how to undo it.
+
+- 2026-11-19 — **An owner-reported defect is a work order, dispatched beside
+  in-flight work.** Incident: the owner reported a refused conversation and
+  wrote "This is really bad, we should see the process running after Ctrl+R".
+  The coordinator read a later "not AS BAD as I initially thought" (about the
+  cause) as lowering the whole report, filed the expectation as item 3 of 3 of
+  a wider root-cause issue, and parked its fix lane behind an unrelated label
+  rename. The owner had to repeat it ("We're not just 'not giving anything'.
+  what the fuck!") and then ask "what's the wider issue". The earliest
+  decision was the reading of the first report: no rule said a stated
+  expectation is itself the work order, "finish what is in flight" read as
+  sequencing, and the rename-first merge order read as a dispatch order.
+  Change: the owner-reported-defect rule beside the question rule (own issue
+  titled with the owner's expectation, fix lane in the same turn beside
+  in-flight work, a severity drop covers only the part it names; a question
+  stays under the question rule; no free capacity is an owner ask, a shared
+  hot zone a warning), and the question rule's "Only" sentence names it; the
+  description names the owner-reported defect as a trigger; the
+  in-flight clause names the defect as the owner's ask; the merge-order rule
+  orders PRs, not dispatch. Produced by the self-improve loop on an incident
+  extract; the always-loaded host-rule counterpart is proposed separately.
+
+- 2026-11-19 — **An answer is not a ruling; a newer request re-plans.** The
+  owner picked option A on a board item about how to apply a manual maintenance
+  hold (an edge-firewall close) for one hand-run release upgrade. The
+  coordinator logged the click as a standing "ruling". A day later the owner
+  asked for a deploy pipeline for that release; the relay said the run "extends
+  through CD setup", "execution chain unchanged otherwise", and the coordinator
+  extended the old plan, so the owner-applied hold and an owner browser check
+  stayed preconditions of the pipeline for about 53 hours. The pipeline's own
+  deployer design (DB dump, drift checks, health check with automatic rollback)
+  made the hold unnecessary, and nobody read it. Owner's words: "We said it had
+  to be in CD!! why is this hold on?", "For how long this ruling was enforced,
+  IN SPITE of the fact that I asked for a CD pipeline AFTER that ruling?", "And
+  why are you calling a ruling something that was (most probably) one shot".
+  Added the two paragraphs after the owner-reported-defect rule: an answer to
+  one decision is not a ruling and lapses with its run, and a newer owner
+  request is planned from scratch against its goal, every owner-gated
+  precondition re-derived from the design of the mechanism that now does the
+  work. Sync-panel's Auto level points here.
